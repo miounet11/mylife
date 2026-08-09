@@ -7,6 +7,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { postToolResultToFoundation } from '@/lib/life-foundation/client-signal';
 import Link from 'next/link';
 import type { NamingMode } from '@/lib/naming';
 import {
@@ -220,6 +221,7 @@ export function NamingLabApp({ locale: _locale }: Props) {
         throw new Error(data.error || '生成失败');
       }
       setStatus('3/3 进入结果页…');
+      postToolResultToFoundation({ toolSlug: 'naming', headline: `${mode === 'company' ? '公司' : '个人'}起名`, summary: `已生成${mode}起名方案`, score: 1 });
       window.location.assign(data.resultUrl);
     } catch (e) {
       const msg =
@@ -237,7 +239,7 @@ export function NamingLabApp({ locale: _locale }: Props) {
   };
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col gap-5 px-3 py-6 sm:px-4">
+    <div className="page-content flex min-h-[70vh] flex-col gap-5 py-6">
       <header>
         <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
           Naming Lab · 起名工坊

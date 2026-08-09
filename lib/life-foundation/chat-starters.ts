@@ -134,6 +134,43 @@ export function buildFoundationChatStarters(
     });
   }
 
+  const naming = foundation.appsHighlights?.naming;
+  if (naming?.top || naming?.summary) {
+    const nameHint = naming.top || naming.summary?.slice(0, 20) || '';
+    out.unshift({
+      id: 'naming_followup',
+      text: en
+        ? `About my naming result${nameHint ? ` (${nameHint})` : ''}: how should I use it with my Bazi structure?`
+        : `结合起名结果${nameHint ? `（${nameHint}）` : ''}：该怎么和八字结构一起用，而不是只挑好听？`,
+      source: 'foundation_starter_naming',
+    });
+  }
+
+  const space = foundation.appsHighlights?.space;
+  if (space?.summary) {
+    out.unshift({
+      id: 'space_followup',
+      text: en
+        ? `On my space-field note (${space.summary.slice(0, 40)}): what should I adjust first?`
+        : `结合空间场结论（${space.summary.slice(0, 36)}…）：最先该调整哪一处环境？`,
+      source: 'foundation_starter_space',
+    });
+  }
+
+  const lastTool = foundation.appsHighlights?.lastTool;
+  if (lastTool?.title || lastTool?.summary) {
+    const toolLabel = lastTool.title || lastTool.slug || '工具';
+    const snip = (lastTool.summary || '').slice(0, 36);
+    out.unshift({
+      id: 'last_tool_followup',
+      text: en
+        ? `From my last tool “${toolLabel}”${snip ? `: ${snip}` : ''} — how should I act this week?`
+        : `结合最近跑过的「${toolLabel}」${snip ? `（${snip}…）` : ''}：这周最该落地哪一件？`,
+      href: lastTool.slug ? `/tools/${encodeURIComponent(lastTool.slug)}?source=chat_foundation_starter` : undefined,
+      source: 'foundation_starter_last_tool',
+    });
+  }
+
   // Deduplicate by text
   const seen = new Set<string>();
   const unique = out.filter((s) => {

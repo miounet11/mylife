@@ -52,7 +52,7 @@ export function StickyAnalyzeBar({
 
   return (
     <div className="fixed inset-x-0 bottom-0 z-40 border-t border-[color:var(--hairline)] bg-[color:var(--paper)]/95 px-3 py-2.5 shadow-[0_-4px_16px_rgba(15,17,21,0.06)] backdrop-blur supports-[padding:max(0px)]:pb-[max(0.625rem,env(safe-area-inset-bottom))]">
-      <div className="mx-auto flex max-w-3xl items-center gap-2">
+      <div className="page-content flex items-center gap-2">
         <div className="min-w-0 flex-1">
           <div className="truncate text-[13px] font-bold text-[color:var(--ink-1)]">{label}</div>
           <div className="truncate text-[11px] text-[color:var(--ink-4)]">{sublabel}</div>

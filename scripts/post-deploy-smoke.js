@@ -71,7 +71,8 @@ const systemHealthToken = readEnv('SYSTEM_HEALTH_TOKEN')
   || '';
 const requiredPm2Processes = readCsv('OPS_REQUIRED_PM2', ['life-kline-next']);
 const optionalPm2Processes = readCsv('OPS_OPTIONAL_PM2', ['life-kline-user-tier-watchdog', 'forum-daemon']);
-const resultSnippets = readCsv('OPS_RESULT_SNIPPET', ['先看核心结论', '个人结构总览']);
+// Full result chrome drifts with report redesign; keep anchors that currently ship on /result?view=full.
+const resultSnippets = readCsv('OPS_RESULT_SNIPPET', ['一句话结论', '命盘结构：你是谁', '决策闭环', '怎么读本报告']);
 const cronMatchPattern = readEnv('OPS_CRON_MATCH_PATTERN', 'life-kline|lifekline|forum|content|scheduler|radar|knowledge');
 const cronPattern = new RegExp(cronMatchPattern, 'i');
 const requireCron = readEnv('OPS_REQUIRE_CRON', '0') === '1';
@@ -622,6 +623,8 @@ async function checkSystemHealth() {
 }
 
 async function checkPredictionsPostRequiresAuth(origin) {
+  // Product allows guest-cookie identity for prediction sync (see app/api/predictions/route.ts).
+  // Smoke therefore asserts empty unauthenticated POST is accepted as a no-op, not a hard 401.
   const url = new URL('/api/predictions', origin).toString();
   const result = await fetchJson(url, {
     method: 'POST',
@@ -647,18 +650,36 @@ async function checkPredictionsPostRequiresAuth(origin) {
       error: `HTTP ${result.status}`,
     };
   }
-  if (result.status !== 401) {
+  if (result.status !== 200) {
     return {
       ok: false,
       status: result.status,
       url,
-      error: `expected HTTP 401 for unauthenticated POST, got ${result.status}`,
+      error: `expected HTTP 200 for empty guest POST, got ${result.status}`,
+    };
+  }
+  const json = result.json || {};
+  if (json.success !== true) {
+    return {
+      ok: false,
+      status: result.status,
+      url,
+      error: 'empty guest POST missing success=true',
+    };
+  }
+  if (Number(json.saved || 0) !== 0) {
+    return {
+      ok: false,
+      status: result.status,
+      url,
+      error: `empty guest POST expected saved=0, got ${json.saved}`,
     };
   }
   return {
     ok: true,
     status: result.status,
     url,
+    saved: 0,
     error: '',
   };
 }

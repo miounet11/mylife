@@ -32,7 +32,7 @@ export default async function LiuyaoCastPage({
         page="/tools/liuyao-cast"
         meta={{ surfaceKey: 'tools', tool: 'liuyao-cast', source: sp.source || null, geoReady: true }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={en ? 'Educational cast' : '教育排卦'}
           title={en ? 'Six Lines · coin method' : '六爻 · 三枚铜钱起卦'}

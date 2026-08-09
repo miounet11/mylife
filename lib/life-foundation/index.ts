@@ -23,3 +23,11 @@ export {
   milestoneProgress,
 } from '@/lib/life-foundation/milestones';
 export { buildFoundationChatStarters } from '@/lib/life-foundation/chat-starters';
+export {
+  postFoundationSignal,
+  postToolResultToFoundation,
+} from '@/lib/life-foundation/client-signal';
+export type {
+  FoundationClientSignal,
+  FoundationSignalKind,
+} from '@/lib/life-foundation/client-signal';

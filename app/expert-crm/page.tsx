@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 export default function ExpertCrmPage() {
   return (
     <AppPage header={{ ctaHref: '/history', ctaLabel: '报告历史', compact: true }}>
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow="专业"
           title="客户脚本 · 待回访"

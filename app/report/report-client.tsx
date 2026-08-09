@@ -197,7 +197,7 @@ export default function ReportClient() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-4 py-6 space-y-5">
+    <main className="page-content-wide space-y-5 py-6">
       <header className="premium-card space-y-5">
         <div className="space-y-3">
           <p className="text-xs text-gold uppercase tracking-[0.2em]">免费八字命理测算</p>

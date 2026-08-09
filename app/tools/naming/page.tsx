@@ -27,7 +27,7 @@ export default function NamingToolPage() {
     <AppPage header={{ ctaHref: '/tools/fengshui-space', ctaLabel: '空间场', compact: true }}>
       <NamingLabApp />
       {pack ? (
-        <div className="mx-auto max-w-5xl px-3 pb-12 sm:px-4">
+        <div className="page-content-wide pb-12">
           <ToolSeoGeoSection pack={pack} />
         </div>
       ) : null}

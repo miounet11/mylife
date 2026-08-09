@@ -63,7 +63,7 @@ export default async function PublicSpaceReportPage({ params }: Props) {
         compact: true,
       }}
     >
-      <article className="mx-auto max-w-3xl space-y-6 px-4 py-8 pb-16">
+      <article className="page-content space-y-6 py-8 pb-16">
         <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
           公开空间场完整报表 · 已脱敏
           {article.profileLinked ? ' · 含人宅合参摘要' : ''}

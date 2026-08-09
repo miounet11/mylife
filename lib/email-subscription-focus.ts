@@ -77,6 +77,12 @@ export const EMAIL_SUBSCRIPTION_PREFERENCE_GROUPS: EmailSubscriptionPreferenceGr
         defaultEnabled: false,
       },
       {
+        tag: 'astro:weekly',
+        label: '星座周运简报',
+        description: '每周十二星座周均排名与较顺/宜稳摘要（不含个人命盘）。',
+        defaultEnabled: false,
+      },
+      {
         tag: 'timing:monthly',
         label: '月度窗口汇总',
         description: '每月初发送本月值得留意的时点列表。',

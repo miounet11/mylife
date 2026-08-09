@@ -41,7 +41,7 @@ export default async function FengshuiSpacePage({
       <div className="mx-auto max-w-[1680px] px-2 md:px-3">
         <SpaceLabApp locale={locale} />
       </div>
-      <div className="mx-auto mt-8 max-w-3xl px-3 pb-12">
+      <div className="page-content mt-8 pb-12">
         <ToolSeoGeoSection pack={pack} compact />
       </div>
     </AppPage>

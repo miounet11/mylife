@@ -64,6 +64,14 @@ export type AdminOpsDashboardSnapshot = {
     new24h: number;
     new7d: number;
     guestNew24h: number;
+    /** Distinct users with fortune/tool/analytics activity in last 24h */
+    active24h: number;
+    activeFortunes24h: number;
+    activeTools24h: number;
+    /** Distinct union activity last 7d (matches ops-prod-usage-1d active7dUnion) */
+    active7d: number;
+    activeFortunes7d: number;
+    activeTools7d: number;
   };
   email: {
     subscriptions: number;
@@ -123,7 +131,7 @@ export type AdminOpsDashboardSnapshot = {
 };
 
 export function getAdminOpsDashboardSnapshot(): AdminOpsDashboardSnapshot {
-  return memoize('admin-ops-dashboard-v1', () => {
+  return memoize('admin-ops-dashboard-v4', () => {
     const usersTotal = num(safeGet(`SELECT COUNT(*) AS c FROM users`));
     const guests = num(
       safeGet(`SELECT COUNT(*) AS c FROM users WHERE id LIKE 'guest_%' OR email IS NULL OR trim(email) = ''`),
@@ -145,6 +153,92 @@ export function getAdminOpsDashboardSnapshot(): AdminOpsDashboardSnapshot {
         `SELECT COUNT(*) AS c FROM users
          WHERE (id LIKE 'guest_%' OR email IS NULL OR trim(email) = '')
            AND datetime(created_at) >= datetime('now', '-1 day')`,
+      ),
+    );
+    const activeFortunes24h = num(
+      safeGet(
+        `SELECT COUNT(DISTINCT user_id) AS c FROM fortunes
+         WHERE (deleted_at IS NULL OR deleted_at = '')
+           AND user_id IS NOT NULL AND trim(user_id) != ''
+           AND datetime(created_at) >= datetime('now', '-1 day')`,
+      ),
+    );
+    const activeTools24h = num(
+      safeGet(
+        `SELECT COUNT(DISTINCT user_id) AS c FROM tool_sessions
+         WHERE user_id IS NOT NULL AND trim(user_id) != ''
+           AND (
+             datetime(created_at) >= datetime('now', '-1 day')
+             OR created_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day')
+           )`,
+      ),
+    );
+    const activeAnalytics24h = num(
+      safeGet(
+        `SELECT COUNT(DISTINCT user_id) AS c FROM analytics_events
+         WHERE user_id IS NOT NULL AND trim(user_id) != ''
+           AND datetime(created_at) >= datetime('now', '-1 day')`,
+      ),
+    );
+    // True distinct union across fortune / tool / analytics activity (matches ops-prod-usage-1d).
+    const active24h = num(
+      safeGet(
+        `SELECT COUNT(*) AS c FROM (
+           SELECT DISTINCT user_id FROM fortunes
+             WHERE (deleted_at IS NULL OR deleted_at = '')
+               AND user_id IS NOT NULL AND trim(user_id) != ''
+               AND datetime(created_at) >= datetime('now', '-1 day')
+           UNION
+           SELECT DISTINCT user_id FROM tool_sessions
+             WHERE user_id IS NOT NULL AND trim(user_id) != ''
+               AND (
+                 datetime(created_at) >= datetime('now', '-1 day')
+                 OR created_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-1 day')
+               )
+           UNION
+           SELECT DISTINCT user_id FROM analytics_events
+             WHERE user_id IS NOT NULL AND trim(user_id) != ''
+               AND datetime(created_at) >= datetime('now', '-1 day')
+         )`,
+      ),
+    );
+    const activeFortunes7d = num(
+      safeGet(
+        `SELECT COUNT(DISTINCT user_id) AS c FROM fortunes
+         WHERE (deleted_at IS NULL OR deleted_at = '')
+           AND user_id IS NOT NULL AND trim(user_id) != ''
+           AND datetime(created_at) >= datetime('now', '-7 day')`,
+      ),
+    );
+    const activeTools7d = num(
+      safeGet(
+        `SELECT COUNT(DISTINCT user_id) AS c FROM tool_sessions
+         WHERE user_id IS NOT NULL AND trim(user_id) != ''
+           AND (
+             datetime(created_at) >= datetime('now', '-7 day')
+             OR created_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-7 day')
+           )`,
+      ),
+    );
+    const active7d = num(
+      safeGet(
+        `SELECT COUNT(*) AS c FROM (
+           SELECT DISTINCT user_id FROM fortunes
+             WHERE (deleted_at IS NULL OR deleted_at = '')
+               AND user_id IS NOT NULL AND trim(user_id) != ''
+               AND datetime(created_at) >= datetime('now', '-7 day')
+           UNION
+           SELECT DISTINCT user_id FROM tool_sessions
+             WHERE user_id IS NOT NULL AND trim(user_id) != ''
+               AND (
+                 datetime(created_at) >= datetime('now', '-7 day')
+                 OR created_at >= strftime('%Y-%m-%dT%H:%M:%fZ', 'now', '-7 day')
+               )
+           UNION
+           SELECT DISTINCT user_id FROM analytics_events
+             WHERE user_id IS NOT NULL AND trim(user_id) != ''
+               AND datetime(created_at) >= datetime('now', '-7 day')
+         )`,
       ),
     );
     const verifiedUsers = num(
@@ -321,6 +415,12 @@ export function getAdminOpsDashboardSnapshot(): AdminOpsDashboardSnapshot {
         new24h,
         new7d,
         guestNew24h,
+        active24h,
+        activeFortunes24h,
+        activeTools24h,
+        active7d,
+        activeFortunes7d,
+        activeTools7d,
       },
       email: {
         subscriptions,

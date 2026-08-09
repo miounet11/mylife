@@ -36,7 +36,7 @@ export default async function UpdatesPage({ searchParams }: UpdatesPageProps) {
 
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta }}>
-      <div className="mx-auto max-w-3xl px-4 pt-5 md:pt-6">
+      <div className="page-content pt-5 md:pt-6">
         <DailyWindowStrip compact source="updates_daily_strip" locale={uiLocale} />
       </div>
       <FocusHero
@@ -49,7 +49,7 @@ export default async function UpdatesPage({ searchParams }: UpdatesPageProps) {
           </Link>
         }
       />
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="page-content">
         <PageIllustrationStrip
           surface="updates/hub"
           title={copy.stripTitle}

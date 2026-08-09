@@ -27,7 +27,35 @@ export default function FoundationMilestoneCard({ source = 'membership' }: { sou
     };
   }, []);
 
-  if (!snap) return null;
+  if (!snap) {
+    return (
+      <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <div className="text-[11px] font-medium text-[color:var(--ink-5)]">人生数据底座</div>
+            <h3 className="mt-0.5 text-[15px] font-semibold text-[color:var(--ink-1)]">
+              完整度与里程碑
+            </h3>
+            <p className="mt-1 text-[12px] text-[color:var(--ink-5)]">
+              正在读取底座完整度…补齐生辰 / 报告 / 问答 / 工具后，会员深度服务更贴你。
+            </p>
+          </div>
+          <Link
+            href={`/profile/foundation?source=${encodeURIComponent(source)}`}
+            className="shrink-0 rounded-md bg-slate-900 px-3 py-1.5 text-[12px] font-medium text-white hover:bg-slate-800"
+          >
+            完善底座
+          </Link>
+        </div>
+        <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-[color:var(--bg-sunken)]">
+          <div className="h-full w-1/5 animate-pulse rounded-full bg-[color:var(--ink-4)]" />
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--ink-5)]">
+          参数越全，会员深度服务与每日提醒越能贴你的固定背景。底座免费完善；会员解锁更完整交付与回访。
+        </p>
+      </section>
+    );
+  }
 
   const next = snap.milestones?.find((m) => !m.done);
   const done = snap.milestoneProgress?.done ?? 0;

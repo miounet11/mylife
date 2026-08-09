@@ -2,9 +2,10 @@
 
 /**
  * 快速问答向导 — 逐步补齐生活参数
+ * 填写即自动保存：输入 debounce 写库，无需每次手动点「下一项」才落库。
  */
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { trackClientEvent } from '@/lib/analytics-client';
 import { fetchJsonWithTimeout } from '@/lib/utils';
 
@@ -87,8 +88,11 @@ export function FoundationQaWizard({
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [input, setInput] = useState('');
   const [saving, setSaving] = useState(false);
+  const [autoSaveHint, setAutoSaveHint] = useState('');
   const [error, setError] = useState('');
   const [done, setDone] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastAutoKeyRef = useRef('');
 
   const step = STEPS[index];
   const progress = Math.round(((index + (done ? 1 : 0)) / STEPS.length) * 100);
@@ -119,6 +123,48 @@ export function FoundationQaWizard({
     }
   }
 
+  // Debounced autosave while typing / chip select — no need to tap 下一项 first.
+  useEffect(() => {
+    if (done) return;
+    const v = input.trim();
+    if (!v) {
+      setAutoSaveHint('');
+      return;
+    }
+    const fingerprint = `${answerKey}:${v}`;
+    if (fingerprint === lastAutoKeyRef.current) return;
+    if (answers[answerKey] === v) {
+      setAutoSaveHint('已保存');
+      return;
+    }
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    setAutoSaveHint('输入将自动保存…');
+    debounceRef.current = setTimeout(() => {
+      void (async () => {
+        try {
+          setSaving(true);
+          await persist(step.domain, step.fieldKey, v);
+          lastAutoKeyRef.current = fingerprint;
+          setAnswers((prev) => ({ ...prev, [answerKey]: v }));
+          setAutoSaveHint('已自动保存');
+          void trackClientEvent({
+            eventName: 'foundation_qa_autosaved',
+            page: '/profile/foundation',
+            meta: { domain: step.domain, fieldKey: step.fieldKey },
+          });
+        } catch {
+          setAutoSaveHint('自动保存失败，可点下一项重试');
+        } finally {
+          setSaving(false);
+        }
+      })();
+    }, 700);
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentional step/input-driven autosave
+  }, [input, answerKey, done]);
+
   async function commitCurrent(value: string, skip = false) {
     setError('');
     const v = value.trim();
@@ -127,11 +173,20 @@ export function FoundationQaWizard({
       return;
     }
 
+    if (debounceRef.current) {
+      clearTimeout(debounceRef.current);
+      debounceRef.current = null;
+    }
+
     setSaving(true);
     try {
       if (!skip && v) {
-        await persist(step.domain, step.fieldKey, v);
-        setAnswers((prev) => ({ ...prev, [answerKey]: v }));
+        // Skip duplicate write if autosave already flushed same value.
+        if (answers[answerKey] !== v) {
+          await persist(step.domain, step.fieldKey, v);
+          setAnswers((prev) => ({ ...prev, [answerKey]: v }));
+          lastAutoKeyRef.current = `${answerKey}:${v}`;
+        }
         void trackClientEvent({
           eventName: 'foundation_qa_saved',
           page: '/profile/foundation',
@@ -143,6 +198,7 @@ export function FoundationQaWizard({
       } else {
         setIndex((i) => i + 1);
         setInput('');
+        setAutoSaveHint('');
       }
     } catch (e) {
       setError(e instanceof Error ? e.message : '保存失败');
@@ -235,7 +291,7 @@ export function FoundationQaWizard({
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 placeholder={step.placeholder || '也可以自己写'}
-                className="w-full rounded-lg border border-[color:var(--hairline)] bg-white px-3 py-2.5 text-[14px] text-[color:var(--ink-1)] outline-none focus:border-[color:var(--ink-3)]"
+                className="w-full rounded-lg border border-[color:var(--hairline)] bg-white px-3 py-2.5 text-[14px] text-[color:var(--ink-1)] outline-none focus:border-[color:var(--brand)]"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault();
@@ -244,7 +300,18 @@ export function FoundationQaWizard({
                 }}
               />
 
-              {error && <p className="text-[12px] text-red-600">{error}</p>}
+              {(autoSaveHint || error) && (
+                <p
+                  className={
+                    error
+                      ? 'text-[12px] text-red-600'
+                      : 'text-[11px] text-[color:var(--ink-4)]'
+                  }
+                  aria-live="polite"
+                >
+                  {error || autoSaveHint}
+                </p>
+              )}
 
               <div className="flex gap-2">
                 <button
@@ -259,7 +326,7 @@ export function FoundationQaWizard({
                   type="button"
                   disabled={saving}
                   onClick={() => void commitCurrent(input)}
-                  className="flex-[2] rounded-lg bg-slate-900 py-2.5 text-[13px] font-medium text-white hover:bg-slate-800 disabled:opacity-60"
+                  className="flex-[2] rounded-lg bg-[color:var(--brand)] py-2.5 text-[13px] font-medium text-white hover:bg-[color:var(--brand-strong)] disabled:opacity-60"
                 >
                   {saving ? '保存中…' : index >= STEPS.length - 1 ? '完成' : '下一项'}
                 </button>

@@ -39,7 +39,7 @@ export default async function ProfileSettingsPage({
     <AppPage
       header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}
       showFooter={false}
-      mainClassName="page-frame max-w-3xl py-6 pb-20 md:py-8 md:pb-24"
+      mainClassName="page-content py-6 pb-20 md:py-8 md:pb-24"
     >
       <div className="space-y-5 px-4 md:px-0">
         <FocusHero

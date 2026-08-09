@@ -4,6 +4,7 @@
  * 面相 / 手相 · 录入页
  * 视觉对齐全站：浅色壳 · ink/hairline/brand · 与起名工坊一致
  */
+import { postToolResultToFoundation } from '@/lib/life-foundation/client-signal';
 
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -135,6 +136,7 @@ export function XiangxueLabApp({ kind }: Props) {
         throw new Error(data.error || '分析失败');
       }
       setStatus('进入系统报告…');
+      postToolResultToFoundation({ toolSlug: 'xiangxue', headline: `面相手相分析`, summary: `完成${kind === 'face' ? '面相' : '手相'}分析`, score: 1 });
       window.location.assign(data.resultUrl);
     } catch (e) {
       setError(
@@ -152,7 +154,7 @@ export function XiangxueLabApp({ kind }: Props) {
   };
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col gap-5 px-3 py-6 sm:px-4 pb-16">
+    <div className="page-content flex min-h-[70vh] flex-col gap-5 py-6 pb-16">
       {/* Header — 对齐 FocusHero / 起名工坊 */}
       <header className="border-b border-[color:var(--hairline)] pb-5">
         <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">

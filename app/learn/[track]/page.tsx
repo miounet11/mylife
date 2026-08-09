@@ -89,7 +89,7 @@ export default async function LearnTrackPage({ params, searchParams }: LearnTrac
         meta={{ surfaceKey: 'learning_track', trackKey: track.key }}
       />
 
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <div className="text-[13px]">
           <Link href="/learn" className="text-[color:var(--ink-4)] underline-offset-2 hover:underline">
             {copy.backToTopics}

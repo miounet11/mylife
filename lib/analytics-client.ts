@@ -126,3 +126,22 @@ export async function trackClientEvent(input: {
 export function trackAnalyticsEvent(event: string, meta?: Record<string, unknown>) {
   void trackClientEvent({ eventName: event, meta });
 }
+
+/** GA4 gtag helper — no-ops when gtag is unavailable */
+export function trackGoogleAnalyticsEvent(
+  eventName: string,
+  params?: Record<string, unknown>,
+): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const gtag = (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag;
+    if (typeof gtag === 'function') {
+      gtag('event', eventName, params || {});
+    }
+  } catch {
+    // ignore analytics failures
+  }
+  // Also mirror into first-party track when useful
+  void trackClientEvent({ eventName, meta: params });
+}
+

@@ -14,6 +14,8 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { isEnglishUiLocale, localizeTeacher } from '@/lib/i18n/teacher-copy';
 import { getTeacher } from '@/lib/teachers';
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: '顾问开场｜基于报告继续深问',
   description: '老师先开场，一点即发。结合报告、档案与事件，把判断拆成可执行动作。',

@@ -35,7 +35,7 @@ export default async function PredictionsPage({ searchParams }: PredictionsPageP
 
   return (
     <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.headerCta, compact: true }}>
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}

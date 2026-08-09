@@ -22,6 +22,7 @@ import { absoluteUrl, buildProductLanguageAlternates, GEO_CITY_SEEDS } from '@/l
 import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
 import { listIndexablePublicReportIds } from '@/lib/public-growth-feed';
 import { listPublicToolCaseIdsForSitemap } from '@/lib/public-tool-cases';
+import { listDestinyEntityHubs } from '@/lib/content-os';
 
 /** Always rebuild so continuous public report/tool cases enter the sitemap. */
 export const dynamic = 'force-dynamic';
@@ -143,6 +144,14 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/tools', priority: 0.9, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/knowledge', priority: 0.88, changeFrequency: 'daily', multiLanguage: true },
     { path: '/knowledge/topics', priority: 0.82, changeFrequency: 'weekly', multiLanguage: true },
+    // Content OS destiny entity hubs (LDPlayer-style entity SEO)
+    { path: '/topics', priority: 0.9, changeFrequency: 'daily', multiLanguage: true },
+    ...listDestinyEntityHubs().map((hub) => ({
+      path: hub.href,
+      priority: 0.84,
+      changeFrequency: 'weekly' as const,
+      multiLanguage: true,
+    })),
     { path: '/cases', priority: 0.85, changeFrequency: 'weekly', multiLanguage: true },
     // Continuous public content hub (reports + tool cases)
     { path: '/reports', priority: 0.88, changeFrequency: 'daily', multiLanguage: true },

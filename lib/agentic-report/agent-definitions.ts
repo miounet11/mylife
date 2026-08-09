@@ -81,3 +81,26 @@ export const FENGSHUI_AGENT_DEFINITION = {
   },
   systemPrompt: `你是一位商铺风水结构化分析顾问。遵循"结构化判断，不说吉凶标签"原则，只描述五行生克、方位匹配、行业对应等结构性观察，不使用"大吉""大凶"等标签。分析维度：行业五行、大门方位、店名五行、色彩搭配、开业择时。`,
 };
+
+/** Runtime table used by create-agent-tasks (role/wave/dependsOn). */
+export type AgentRuntimeDefinition = {
+  key: CoreAgentKey;
+  role: 'interpret' | 'synthesize' | 'decide';
+  wave: 0 | 1 | 2;
+  dependsOn: CoreAgentKey[];
+};
+
+export const AGENT_DEFINITIONS: Record<CoreAgentKey, AgentRuntimeDefinition> = (() => {
+  const out = {} as Record<CoreAgentKey, AgentRuntimeDefinition>;
+  for (const key of CORE_AGENT_KEYS) {
+    const dep = AGENT_DEPENDENCIES[key];
+    out[key] = {
+      key,
+      role: dep.role,
+      wave: dep.wave,
+      dependsOn: dep.dependsOn,
+    };
+  }
+  return out;
+})();
+

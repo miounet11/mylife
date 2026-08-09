@@ -461,7 +461,7 @@ export default function TrustReport({ result: rawResult }: { result: ReportResul
   const hideUnless = (id: TrustChapterId) => (activeChapter === id ? '' : 'hidden');
 
   return (
-    <div className="mx-auto max-w-6xl space-y-4 pb-8 md:space-y-5">
+    <div className="page-content-wide space-y-4 pb-8 md:space-y-5">
       {/* 证据层总览：浅底深字，避免 gradient 失效导致白字叠白底 */}
       <section
         id="overview"

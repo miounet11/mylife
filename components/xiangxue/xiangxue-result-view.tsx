@@ -67,7 +67,7 @@ export function XiangxueResultView({ sessionId, result }: Props) {
   const conf = result.confidenceScore ?? result.photoQuality?.score ?? 50;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-5 px-3 py-6 sm:px-4 pb-16">
+    <div className="page-content-wide space-y-5 py-6 pb-16">
       {/* Header */}
       <header className="flex flex-wrap items-start justify-between gap-4 border-b border-[color:var(--hairline)] pb-5">
         <div className="min-w-0 flex-1">

@@ -53,7 +53,7 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   return (
     <div className="page-shell min-h-screen bg-[color:var(--bg-sunken)]">
       <AdminHeader />
-      <main className="page-frame mx-auto max-w-7xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
+      <main className="page-frame py-8 pb-16">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
           <div>
             <Link href="/admin/dashboard" className="text-[12px] font-semibold text-[color:var(--brand)] hover:no-underline">

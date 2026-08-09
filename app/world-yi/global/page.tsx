@@ -1,253 +1,216 @@
 import Link from 'next/link';
-import { ArrowRight, Globe2, Sparkles } from 'lucide-react';
-import AnalyticsPageView from '@/components/analytics-page-view';
-import ContentCardLink from '@/components/content-card-link';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
+import { ArrowRight, BookOpen, Globe, Layers3, Network, Sparkles, BarChart3, TrendingUp, Presentation } from 'lucide-react';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
-import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
-import { isPublicKnowledgeEntry, listPublishedManagedContentEntriesByType } from '@/lib/content-store';
-import {
-  createCollectionPageSchema,
-  createItemListSchema,
-  createPublicContentMetadata,
-} from '@/lib/public-content-seo';
 
-export const metadata = createPublicContentMetadata({
-  title: '世界易全球传播 | 人生K线',
-  description: '面向海外华人和跨文化读者的世界易入口，重点讨论迁移、身份、环境与 AI 时代的高维判断。',
-  path: '/world-yi/global',
-  type: 'website',
-  languages: {
-    'zh-CN': '/world-yi/global',
-    'en-US': '/world-yi/en',
-    'x-default': '/world-yi/global',
+const globalFeatures = [
+  {
+    title: '多维度叠加',
+    icon: Layers3,
+    description: '将事业、财富、关系、健康、家庭、迁移六个维度的K线走势叠加在同一时间轴上，直观展示各领域之间的联动与共振效应。'
   },
-});
+  {
+    title: '交叉影响分析',
+    icon: Network,
+    description: '一个维度的波动如何影响其他维度？事业上升期是否伴随健康压力？财富增长是否影响家庭关系？全局矩阵揭示这些隐藏的关联规律。'
+  },
+  {
+    title: '周期性趋势',
+    icon: TrendingUp,
+    description: '基于大运十年周期与流年波动，全局矩阵自动识别各维度的高低周期，帮助你在正确的时间做出正确的人生决策。'
+  },
+  {
+    title: '全景报告',
+    icon: Presentation,
+    description: '将全局分析结果整合为可视化报告，包含各维度评分、联动系数、周期标注与��议时机，一次获取完整的人生导航。'
+  }
+];
 
-export const dynamic = 'force-dynamic';
+const usageSteps = [
+  {
+    step: 1,
+    title: '完成八字排盘',
+    description: '输入出生年月日时，获取准确的八字四柱与五行分析'
+  },
+  {
+    step: 2,
+    title: '进入生命矩阵',
+    description: '在排盘结果中选择"生命矩阵"视图，查看各维度K线走势'
+  },
+  {
+    step: 3,
+    title: '切换到全局视图',
+    description: '点击"全局矩阵"标签，将所有维度K线叠加显示'
+  },
+  {
+    step: 4,
+    title: '解读联动趋势',
+    description: '观察各维度走势的同步与背离，发现关键的人生转折信号'
+  }
+];
 
-const globalThemes = ['迁移', '身份', '家庭', '事业'];
+const ctaCards = [
+  {
+    href: '/analyze',
+    title: '开始排盘',
+    description: '输入出生信息，获取完整八字分析'
+  },
+  {
+    href: '/world-yi/matrix',
+    title: '生命矩阵',
+    description: '查看各维度独立K线走势'
+  },
+  {
+    href: '/world-yi/domains',
+    title: '维度详解',
+    description: '了解六大领域与八字的对应关系'
+  }
+];
 
 export default function WorldYiGlobalPage() {
-  const globalEntries = listPublishedManagedContentEntriesByType('knowledge')
-    .filter((entry) => isPublicKnowledgeEntry(entry) && [
-      'world-yi-overseas-chinese',
-      'world-yi-global-chinese-decision-map',
-      'world-yi-cross-cultural-identity',
-      'world-yi-overseas-career-reset',
-      'world-yi-bicultural-marriage',
-      'world-yi-overseas-eldercare',
-      'world-yi-global-child-education',
-      'world-yi-era-cognition',
-      'world-yi-judgment-crisis',
-      'world-yi-environment-method',
-      'world-yi-family-generational-order',
-    ].includes(entry.slug))
-    .slice(0, 8);
-  const globalCases = listPublishedManagedContentEntriesByType('case')
-    .filter((entry) => [
-      'world-yi-case-return-or-stay',
-      'world-yi-case-global-family-balance',
-      'world-yi-case-cross-border-founder',
-      'world-yi-case-child-language-identity',
-      'world-yi-case-overseas-career-reset',
-      'world-yi-case-bicultural-marriage',
-      'world-yi-case-overseas-eldercare',
-      'world-yi-case-global-school-choice',
-    ].includes(entry.slug))
-    .slice(0, 8);
-  const schemas = [
-    createCollectionPageSchema({
-      headline: '世界易全球传播',
-      description: '面向海外华人和跨文化读者的世界易入口，重点讨论迁移、身份、环境与 AI 时代的高维判断。',
-      path: '/world-yi/global',
-      keywords: ['海外华人', '跨文化', '迁移', '身份', '全球传播'],
-    }),
-    createItemListSchema(
-      '全球传播知识主线',
-      globalEntries.map((entry, index) => ({
-        name: entry.title,
-        path: `/knowledge/${entry.slug}`,
-        position: index + 1,
-      })),
-    ),
-    createItemListSchema(
-      '全球传播案例主线',
-      globalCases.map((entry, index) => ({
-        name: entry.title,
-        path: `/cases/${entry.slug}`,
-        position: index + 1,
-      })),
-    ),
-  ].filter(Boolean);
-
   return (
-    <div className="page-shell">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
-      <AnalyticsPageView
-        eventName="knowledge_page_viewed"
-        page="/world-yi/global"
-        meta={{ surfaceKey: 'world_yi_global_page', contentType: 'knowledge', series: 'world-yi-global' }}
+    <main className="min-h-screen bg-[color:var(--color-ming-bg)]">
+      <WorldYiSurfaceHero
+        title="全局矩阵"
+        subtitle="六大维度叠加，洞见人生全景趋势"
+        badge="Global Matrix"
       />
-      <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <WorldYiSurfaceHero
-          label={(
-            <>
-              <Globe2 className="h-3.5 w-3.5" />
-              世界易全球传播
-            </>
-          )}
-          title="全球华人"
-          description="把迁移、身份、跨文化家庭与海外发展放进同一条判断路径里，帮助全球华人用更完整的结构看长期选择。"
-          hint="如果你的问题和迁移、留学、海外定居或跨文化关系有关，可以从这里进入；如果要先看个人底盘，先去分析入口。"
-          actions={[
-            { href: '/world-yi/global/topics', label: '看全球专题网络', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
-            { href: '/world-yi/global/cases', label: '看全球案例路径' },
-            { href: '/world-yi/en', label: 'English Gateway' },
-            { href: '/world-yi', label: '回到世界易总入口' },
-          ]}
-          highlights={globalThemes.map((body) => ({ body }))}
-          highlightsColumns="grid-cols-1"
-        />
-
-        <div className="mt-8">
-          <LightBirthBridge
-            source="world_yi_global"
-            page="/world-yi/global"
-            title="迁移与身份之前，先看清结构"
-            description="全球路径讨论环境与阶段；结构报告把判断接到你的生辰与节奏。"
-          />
-        </div>
-
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-              <Sparkles className="h-3.5 w-3.5" />
-            全球入口
+      <div className="page-content">
+        {/* Overview */}
+        <section className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-6">
+          <div className="flex items-start gap-3">
+            <Globe className="w-6 h-6 text-[var(--color-ming-gold)] shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-lg font-bold mb-2">什么是全局矩阵</h2>
+              <p className="text-sm text-[var(--color-ming-text-dim)] leading-relaxed">
+                全局矩阵（Global Matrix）是生命矩阵的最高维度视图，将事业、财富、关系、健康、家庭、迁移
+                六个独立的K线走势叠加在同一时间轴上，形成一张全方位的人生趋势全景图。
+              </p>
+              <p className="text-sm text-[var(--color-ming-text-dim)] leading-relaxed mt-3">
+                与单维度分析不同，全局矩阵帮助你发现各领域之间的交叉影响与联动规律。
+                例如，事业K线上升的同时健康K线是否在下降？财富K线的波动是否与家庭K线的变化同步？
+                这些跨维度的洞察，正是全局矩阵的核心价值。
+              </p>
             </div>
-            <div className="mt-5 grid gap-4 md:grid-cols-3">
-            {[
-              ['结构'],
-              ['环境'],
-              ['动作'],
-            ].map(([title]) => (
-              <div key={title} className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5">
-                <div className="text-lg font-bold text-[color:var(--ink)]">{title}</div>
+          </div>
+        </section>
+
+        {/* Features Grid */}
+        <section className="grid gap-4 sm:grid-cols-2">
+          {globalFeatures.map((feature) => {
+            const Icon = feature.icon;
+            return (
+              <div
+                key={feature.title}
+                className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-5"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Icon className="w-5 h-5 text-[var(--color-ming-gold)]" />
+                  <h3 className="font-semibold text-sm">{feature.title}</h3>
+                </div>
+                <p className="text-xs text-[var(--color-ming-text-dim)] leading-relaxed">
+                  {feature.description}
+                </p>
+              </div>
+            );
+          })}
+        </section>
+
+        {/* How to Use */}
+        <section className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-6">
+          <h2 className="text-lg font-bold mb-2 flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-[var(--color-ming-gold)]" />
+            如何使用全局矩阵
+          </h2>
+          <p className="text-sm text-[var(--color-ming-text-dim)] mb-6">
+            只需几步，即可解锁全局矩阵的完整分析能力
+          </p>
+          <div className="space-y-4">
+            {usageSteps.map((step) => (
+              <div key={step.step} className="flex items-start gap-3">
+                <div className="w-7 h-7 rounded-full bg-[var(--color-ming-gold)] text-white flex items-center justify-center text-xs font-bold shrink-0">
+                  {step.step}
+                </div>
+                <div>
+                  <h3 className="font-semibold text-sm">{step.title}</h3>
+                  <p className="text-xs text-[var(--color-ming-text-dim)] mt-0.5">
+                    {step.description}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mt-10 grid gap-4 lg:grid-cols-3">
-          <ContentCardLink
-            href="/world-yi"
-            page="/world-yi/global"
-            meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'world_yi_page', contentType: 'knowledge', series: 'world-yi' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到母入口</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">世界易总入口</h2>
-          </ContentCardLink>
-
-          <ContentCardLink
-            href="/cases"
-            page="/world-yi/global"
-            meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'cases_page', contentType: 'case', series: 'world-yi-global' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">回到案例库</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">公开案例库</h2>
-          </ContentCardLink>
-
-          <ContentCardLink
-            href="/world-yi/en"
-            page="/world-yi/global"
-            meta={{ surfaceKey: 'world_yi_global_page_network', targetSurfaceKey: 'world_yi_en_page', contentType: 'knowledge', series: 'world-yi-en' }}
-            className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
-          >
-            <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">切到英文层</div>
-            <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">English Gateway</h2>
-          </ContentCardLink>
+        {/* What to Look For */}
+        <section className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-6">
+          <h2 className="text-lg font-bold mb-3 flex items-center gap-2">
+            <TrendingUp className="w-5 h-5 text-[var(--color-ming-gold)]" />
+            全局�阵的关键信号
+          </h2>
+          <div className="space-y-3">
+            <div className="bg-[var(--color-ming-surface-light)] rounded-[var(--radius)] p-3">
+              <h3 className="font-semibold text-xs mb-1">同步共振</h3>
+              <p className="text-xs text-[var(--color-ming-text-dim)]">
+                多个维度同时出现上升趋势，意味着人生进入整体上升周期。这是抓住机遇、全面布局的最佳时机。
+              </p>
+            </div>
+            <div className="bg-[var(--color-ming-surface-light)] rounded-[var(--radius)] p-3">
+              <h3 className="font-semibold text-xs mb-1">背离信号</h3>
+              <p className="text-xs text-[var(--color-ming-text-dim)]">
+                事业K线上升而健康K线下降，提示需要在工作与健康之间寻找平衡。背离是重新调整优先级的重要信号。
+              </p>
+            </div>
+            <div className="bg-[var(--color-ming-surface-light)] rounded-[var(--radius)] p-3">
+              <h3 className="font-semibold text-xs mb-1">周期转换</h3>
+              <p className="text-xs text-[var(--color-ming-text-dim)]">
+                大运交替年份，各维度K线可能出现集体转向。这是人生的重要转折节点，需要提前规划与准备。
+              </p>
+            </div>
+            <div className="bg-[var(--color-ming-surface-light)] rounded-[var(--radius)] p-3">
+              <h3 className="font-semibold text-xs mb-1">极端值预警</h3>
+              <p className="text-xs text-[var(--color-ming-text-dim)]">
+                某个维度K线出现极端高位或低位时，提示该领域即将发生重大变化或需要特别关注。
+              </p>
+            </div>
+          </div>
         </section>
 
-        <section className="mt-10">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">相关阅读</div>
-              <h2 className="mt-3 text-3xl font-black text-[color:var(--ink)]">相关阅读</h2>
-            </div>
-            <Link href="/world-yi/global/topics" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">
-              查看全部全球专题
-              <ArrowRight className="h-4 w-4" />
+        {/* Quick Links */}
+        <section className="grid gap-3 sm:grid-cols-3">
+          {ctaCards.map((card) => (
+            <Link
+              key={card.href}
+              href={card.href}
+              className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-4 hover:opacity-80 transition-opacity block text-center"
+            >
+              <h3 className="font-semibold text-sm mb-1">{card.title}</h3>
+              <p className="text-xs text-[var(--color-ming-text-dim)]">
+                {card.description}
+              </p>
             </Link>
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {globalEntries.map((entry) => (
-              <ContentCardLink
-                key={entry.slug}
-                href={`/knowledge/${entry.slug}`}
-                page="/world-yi/global"
-                meta={{
-                  surfaceKey: 'world_yi_global_page',
-                  targetSurfaceKey: `knowledge_article:${entry.slug}`,
-                  contentType: 'knowledge',
-                  slug: entry.slug,
-                  title: entry.title,
-                  category: entry.category,
-                  tags: entry.tags,
-                  series: 'world-yi-global',
-                }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
-              >
-                <div className="text-xs tracking-[0.18em] text-[color:var(--muted)]">{entry.category}</div>
-                <h2 className="mt-3 text-2xl font-bold text-[color:var(--ink)]">{entry.title}</h2>
-                <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5 inline-flex items-center gap-2">
-                  继续阅读
-                  <ArrowRight className="h-4 w-4" />
-                </div>
-              </ContentCardLink>
-            ))}
-          </div>
+          ))}
         </section>
 
-        <section className="mt-10 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
-          <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div>
-              <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">全球案例层</div>
-              <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">全球案例层</h2>
-              <Link href="/world-yi/global/cases" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-5">
-                进入全球案例入口
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-            <div className="grid gap-4 md:grid-cols-2">
-              {globalCases.slice(0, 4).map((item) => (
-                <ContentCardLink
-                  key={item.slug}
-                  href={`/cases/${item.slug}`}
-                  page="/world-yi/global"
-                  meta={{
-                    surfaceKey: 'world_yi_global_page',
-                    targetSurfaceKey: `case_article:${item.slug}`,
-                    contentType: 'case',
-                    slug: item.slug,
-                    title: item.title,
-                    tags: item.tags,
-                    series: 'world-yi-global',
-                  }}
-                  className="rounded-[var(--radius-md)] bg-[color:var(--paper)] p-5 transition hover:-translate-y-0.5"
-                >
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                </ContentCardLink>
-              ))}
-            </div>
-          </div>
+        {/* Conversion Strip */}
+        <section className="shadow-[var(--shadow-card)] bg-gradient-to-r from-[var(--color-ming-gold)]/10 to-[var(--color-ming-accent)]/10 rounded-[var(--radius)] p-6 text-center">
+          <h3 className="font-bold text-base mb-2">保存你的全景分析</h3>
+          <p className="text-sm text-[var(--color-ming-text-dim)] mb-4">
+            注册账号即可保存全局矩阵分析结果，随时回顾各维度K线走势，跟踪人生趋势变化
+          </p>
+          <Link
+            href="/profile/foundation"
+            className="inline-flex items-center gap-2 bg-[var(--color-ming-gold)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <BookOpen className="w-4 h-4" />
+            免费注册，保存命盘
+          </Link>
+          <p className="text-xs text-[var(--color-ming-text-subtle)] mt-3">
+            已有账号？<Link href="/login" className="text-[var(--color-ming-gold)] hover:underline">立即登录</Link>
+          </p>
         </section>
-      </main>
+      </div>
 
-      <SiteFooter />
-    </div>
+    </main>
   );
 }

@@ -17,7 +17,7 @@ export default async function AdminLlmPage() {
   return (
     <div className="page-shell min-h-screen bg-[color:var(--bg-sunken)]">
       <AdminHeader />
-      <main className="page-frame mx-auto max-w-5xl px-4 py-8 pb-16 sm:px-6 lg:px-8">
+      <main className="page-content-wide py-8 pb-16">
         <div className="mb-6">
           <Link href="/admin/dashboard" className="text-[12px] font-semibold text-[color:var(--brand)] hover:no-underline">
             ← 返回看板

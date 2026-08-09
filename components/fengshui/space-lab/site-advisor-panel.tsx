@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { postToolResultToFoundation } from '@/lib/life-foundation/client-signal';
 import type { SpaceGeoPlace } from '@/lib/fengshui/space/types';
 import {
   SITE_PURPOSE_LABELS,
@@ -156,6 +156,7 @@ export function SiteAdvisorPanel({
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || '评估失败');
       setResult(data.result as SiteAdviseResult);
+      postToolResultToFoundation({ toolSlug: 'site-advisor', headline: '空间选址评估', summary: `${purpose === 'shop' ? '商铺' : '阳宅'}选址分析完成`, score: 1 });
       setSelectedId(data.result?.winnerId || data.result?.candidates?.[0]?.id || null);
     } catch (e) {
       setError(e instanceof Error ? e.message : '评估失败');

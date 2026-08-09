@@ -24,6 +24,10 @@ export const LEGACY_PATH_REDIRECTS: Record<string, string> = {
 
   // Old member / report entry
   '/member-report': '/membership',
+
+  // Typo / truncated foundation hub (common bookmark misspell)
+  '/profile/foundatio': '/profile/foundation',
+  '/foundatio': '/profile/foundation',
 };
 
 /** Normalize trailing slash and case for lookup. */

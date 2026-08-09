@@ -32,7 +32,7 @@ export default async function FengshuiSimulatorPage({
         page="/tools/fengshui-simulator"
         meta={{ surfaceKey: 'tools', tool: 'fengshui-simulator', source: sp.source || null, geoReady: true }}
       />
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content-wide space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={en ? 'Shop Fengshui Simulator' : '商铺风水模拟器'}
           title={en ? 'Industry · Direction · Color · Timing' : '行业 · 方位 · 色彩 · 择时'}

@@ -49,7 +49,7 @@ export function NamingResultView({ sessionId, result }: Props) {
   };
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6 px-3 py-6 sm:px-4 pb-16">
+    <div className="page-content-wide space-y-6 py-6 pb-16">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo-600">

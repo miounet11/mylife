@@ -70,7 +70,7 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
         dangerouslySetInnerHTML={{ __html: JSON.stringify(membershipJsonLd) }}
       />
       <AnalyticsPageView eventName="membership_page_viewed" page="/membership" />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={copy.eyebrow}
           title={copy.title}

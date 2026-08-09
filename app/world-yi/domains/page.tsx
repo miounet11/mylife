@@ -1,194 +1,252 @@
 import Link from 'next/link';
-import { ArrowRight, Compass, LibraryBig, Sparkles } from 'lucide-react';
-import AnalyticsPageView from '@/components/analytics-page-view';
-import ContentCardLink from '@/components/content-card-link';
-import SiteFooter from '@/components/site-footer';
-import SiteHeader from '@/components/site-header';
+import { ArrowRight, BookOpen, Briefcase, Coins, Heart, Home, HeartPulse, Plane, Sparkles, Target, ScanSearch } from 'lucide-react';
 import WorldYiSurfaceHero from '@/components/world-yi-surface-hero';
-import { createCollectionPageSchema, createItemListSchema, createPublicContentMetadata } from '@/lib/public-content-seo';
-
-export const metadata = createPublicContentMetadata({
-  title: '世界易人生六域 | 人生K线',
-  description: '世界易的人生六域入口，围绕事业、财富、关系、健康、家庭、迁移建立可持续扩写的主问题路径。',
-  path: '/world-yi/domains',
-  type: 'website',
-  languages: {
-    'zh-CN': '/world-yi/domains',
-    'x-default': '/world-yi/domains',
-  },
-});
-
-export const dynamic = 'force-dynamic';
 
 const domains = [
   {
-    title: '事业',
-    href: '/knowledge/world-yi-career-role-fit',
-    hubHref: '/world-yi/domains/career',
+    id: 'career',
+    title: '事业 Career',
+    icon: Briefcase,
+    color: 'text-blue-600',
+    bg: 'bg-blue-50',
+    description: '事业维度对应八字中的官杀与印星，反映职业发展轨迹、权力结构与事业周期的势能变化。官星代表事业平台与官方认可，杀星代表压力突破与竞争激烈，印星代表资源、贵人与学习能力。',
+    details: [
+      '官星有力者适合体制内、大平台发展',
+      '杀星旺相者适合创业、竞争性行业',
+      '印星得力者学业顺遂、易获贵人提携',
+      '官杀混杂则需要明确职业定位'
+    ],
+    tools: [
+      { href: '/analyze', label: '八字排盘分析' },
+      { href: '/profile/foundation', label: '基础档案' }
+    ],
+    baziLink: '/analyze'
   },
   {
-    title: '财富',
-    href: '/knowledge/world-yi-wealth-rhythm',
-    hubHref: '/world-yi/domains/wealth',
+    id: 'wealth',
+    title: '财富 Wealth',
+    icon: Coins,
+    color: 'text-amber-600',
+    bg: 'bg-amber-50',
+    description: '财富维度对应八字中的财星与食伤，反映收入趋势、投资周期与财富积累的节奏。正财为稳定工资收入，偏财为投资、副业等非固定收入，食伤为生财的创意与技能。',
+    details: [
+      '财星旺相且得食伤生助，财运亨通',
+      '偏财透干者适合投资、副业创收',
+      '财星入库需要大运流年才能引动',
+      '比劫夺财则需注意合作与借贷风险'
+    ],
+    tools: [
+      { href: '/analyze', label: '财运分析' },
+      { href: '/profile/foundation', label: '基础档案' }
+    ],
+    baziLink: '/analyze'
   },
   {
-    title: '关系',
-    href: '/knowledge/world-yi-relationship-order',
-    hubHref: '/world-yi/domains/relationship',
+    id: 'relationship',
+    title: '关系 Relationship',
+    icon: Heart,
+    color: 'text-rose-600',
+    bg: 'bg-rose-50',
+    description: '关系维度对应八字中的夫妻宫与日支，反映亲密关系、婚姻质量与人际互动的深层模式。日支为婚姻宫，配偶星（正财/正官）的状态决定关系质量与伴侣特征。',
+    details: [
+      '夫妻宫稳定者婚姻关系和谐',
+      '配偶星得位者易遇良缘',
+      '日支逢冲则需要更多磨合',
+      '合婚分析可综合判断两人匹配度'
+    ],
+    tools: [
+      { href: '/hehun', label: '合婚分析' },
+      { href: '/analyze', label: '八字排盘分析' }
+    ],
+    baziLink: '/hehun'
   },
   {
-    title: '健康',
-    href: '/knowledge/world-yi-health-recovery-order',
-    hubHref: '/world-yi/domains/health',
+    id: 'health',
+    title: '健康 Health',
+    icon: HeartPulse,
+    color: 'text-emerald-600',
+    bg: 'bg-emerald-50',
+    description: '健康维度对应八字中的五行平衡与用神状态，反映身体节奏、能量低谷与恢复周期。五行分为木火土金水，对应人体的不同脏腑系统，五行失衡往往是健康问题的根源。',
+    details: [
+      '木弱者易有肝胆、筋骨问题',
+      '火弱者需关注心血管、循环系统',
+      '土弱者注意脾胃消化功能',
+      '金水失调则与呼吸、泌尿系统相关'
+    ],
+    tools: [
+      { href: '/analyze', label: '健康走势分析' },
+      { href: '/profile/foundation', label: '基础档案' }
+    ],
+    baziLink: '/analyze'
   },
   {
-    title: '家庭',
-    href: '/knowledge/world-yi-family-generational-order',
-    hubHref: '/world-yi/domains/family',
+    id: 'family',
+    title: '家庭 Family',
+    icon: Home,
+    color: 'text-violet-600',
+    bg: 'bg-violet-50',
+    description: '家庭维度对应八字中的印星与比劫，反映家庭结构、代际关系与归属感的深层动力。印星为长辈、父母与庇护，比劫为兄弟姐妹、同辈与社交圈层。',
+    details: [
+      '印星旺相者家庭支持强、易得祖荫',
+      '比劫有力者兄弟姐妹助力多',
+      '印星受损则需关注长辈健康',
+      '家庭宫位受冲预示家庭变动'
+    ],
+    tools: [
+      { href: '/analyze', label: '家庭运势分析' },
+      { href: '/profile/foundation', label: '基础档案' }
+    ],
+    baziLink: '/analyze'
   },
   {
-    title: '迁移',
-    href: '/knowledge/world-yi-migration-stage-logic',
-    hubHref: '/world-yi/domains/migration',
-  },
+    id: 'migration',
+    title: '迁移 Migration',
+    icon: Plane,
+    color: 'text-cyan-600',
+    bg: 'bg-cyan-50',
+    description: '迁移维度对应八字中的驿马星与冲合，反映人生轨迹的流动性、迁徙运势与地理变迁的势能。驿马星动则远行，冲合变化则环境更迭，方位五行则影响迁徙吉凶。',
+    details: [
+      '驿马星逢冲则远行机会多',
+      '迁移方位与用神五行相符则顺遂',
+      '大运引动驿马时为迁徙窗口期',
+      '留学、移民、外地发展均与此相关'
+    ],
+    tools: [
+      { href: '/analyze', label: '迁移运势分析' },
+      { href: '/profile/foundation', label: '基础档案' }
+    ],
+    baziLink: '/analyze'
+  }
 ];
 
 export default function WorldYiDomainsPage() {
-  const schemas = [
-    createCollectionPageSchema({
-      headline: '世界易人生六域',
-      description: '世界易的人生六域入口，围绕事业、财富、关系、健康、家庭、迁移建立可持续扩写的主问题路径。',
-      path: '/world-yi/domains',
-      keywords: ['世界易', '人生六域', '事业', '财富', '关系', '健康', '家庭', '迁移'],
-    }),
-    createItemListSchema(
-      '世界易人生六域列表',
-      domains.map((item, index) => ({
-        name: item.title,
-        path: item.href,
-        position: index + 1,
-      })),
-    ),
-  ].filter(Boolean);
-
   return (
-    <div className="page-shell">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(schemas) }} />
-      <AnalyticsPageView
-        eventName="knowledge_page_viewed"
-        page="/world-yi/domains"
-        meta={{ surfaceKey: 'world_yi_domains_page', contentType: 'knowledge', series: 'world-yi-domains' }}
+    <main className="min-h-screen bg-[color:var(--color-ming-bg)]">
+      <WorldYiSurfaceHero
+        title="人生维度"
+        subtitle="六大领域深度解析，从八字看透人生全景"
+        badge="Life Domains"
       />
-      <SiteHeader ctaHref="/analyze" ctaLabel="开始分析" />
 
-      <main className="page-frame py-10 pb-16 md:py-16 md:pb-20">
-        <WorldYiSurfaceHero
-          label={(
-            <>
-              <Compass className="h-3.5 w-3.5" />
-              世界易人生六域
-            </>
-          )}
-          title="人生六域"
-          description="把事业、财富、关系、健康、家庭、迁移六条问题线拆开，让你先确认自己现在最需要进入哪一个判断场景。"
-          hint="如果你已经知道卡点在哪一域，就直接进入对应分科页；如果还不确定，先做综合分析会更稳。"
-          actions={[
-            { href: '/world-yi', label: '回到世界易总入口', primary: true, icon: <ArrowRight className="ml-1 h-4 w-4" /> },
-            { href: '/world-yi/matrix', label: '看执行矩阵' },
-            { href: '/world-yi/applications', label: '看生活应用' },
-          ]}
-          highlights={[
-            { body: '事业' },
-            { body: '财富' },
-            { body: '关系' },
-            { body: '健康' },
-          ]}
-        />
-
-        <section className="mt-10">
-          <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-            <Sparkles className="h-3.5 w-3.5" />
-            六域入口
-          </div>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {domains.map((item) => (
-              <ContentCardLink
-                key={item.href}
-                href={item.href}
-                page="/world-yi/domains"
-                meta={{
-                  surfaceKey: 'world_yi_domains_page',
-                  targetSurfaceKey: item.href.replace('/knowledge/', 'knowledge_article:'),
-                  contentType: 'knowledge',
-                  series: 'world-yi-domains',
-                }}
-                className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 transition hover:-translate-y-0.5"
-          >
-            <h2 className="text-2xl font-bold text-[color:var(--ink)]">{item.title}</h2>
-            <div className="text-xs font-bold text-[color:var(--brand-strong)] mt-5">快速操作</div>
-            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-2 mt-2 flex flex-wrap gap-3 text-sm font-semibold">
-                  <span className="inline-flex items-center gap-2">
-                    进入知识主线
-                    <ArrowRight className="h-4 w-4" />
-                  </span>
-                  <Link href={item.hubHref} className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)]">进入分科页</Link>
-                </div>
-              </ContentCardLink>
-            ))}
+      <div className="page-content">
+        {/* Introduction */}
+        <section className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-6">
+          <div className="flex items-start gap-3">
+            <Target className="w-6 h-6 text-[var(--color-ming-gold)] shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-lg font-bold mb-2">六大生命维度</h2>
+              <p className="text-sm text-[var(--color-ming-text-dim)] leading-relaxed">
+                八字命理并非单一的命运预测，而是通过多维度的十神体系与五行生克，
+                全面解读人生的不同侧面。每个维度都有其独特的对应关系与作用机制，
+                共同构成一幅完整的人生图景。
+              </p>
+              <p className="text-sm text-[var(--color-ming-text-dim)] leading-relaxed mt-3">
+                点击下方维度，了解其与八字命理的深层关联，并通过对应的分析工具获取你个人的命理解读。
+              </p>
+            </div>
           </div>
         </section>
 
-        <section className="mt-10 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
-            <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-              <LibraryBig className="h-3.5 w-3.5" />
-              结构联动
-            </div>
-            <div className="mt-5 grid gap-3">
-              {[
-                { title: '主书工程', href: '/world-yi/book', target: 'world_yi_book_page', series: 'world-yi-book' },
-                { title: '内容矩阵', href: '/world-yi/matrix', target: 'world_yi_matrix_page', series: 'world-yi-matrix' },
-                { title: '环境洞察', href: '/world-yi/insights', target: 'world_yi_insights_page', series: 'world-yi-insights' },
-              ].map((item) => (
-                <ContentCardLink
-                  key={item.href}
-                  href={item.href}
-                  page="/world-yi/domains"
-                  meta={{ surfaceKey: 'world_yi_domains_page_network', targetSurfaceKey: item.target, contentType: 'knowledge', series: item.series }}
-                  className="block rounded-[var(--radius)] bg-[color:var(--paper)] p-4 transition hover:bg-[color:var(--paper)]"
-                >
-                  <div className="text-sm font-semibold text-[color:var(--ink)]">{item.title}</div>
-                </ContentCardLink>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] backdrop-blur-md rounded-[var(--radius-md)] p-6 md:p-8">
-            <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-              <div>
-                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-                  <Sparkles className="h-3.5 w-3.5" />
-                  生活应用层
-                </div>
-                <h2 className="mt-4 text-3xl font-black text-[color:var(--ink)]">应用入口</h2>
-                <Link href="/world-yi/applications" className="inline-flex h-10 items-center justify-center gap-1.5 rounded-[var(--radius)] border border-[color:var(--hairline-strong)] bg-[color:var(--paper)] px-3 text-sm font-semibold text-[color:var(--ink-3)] transition hover:border-[color:var(--brand)] mt-5">
-                  进入生活应用入口
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {['起名系统', '寻物复原', '择时窗口', '家宅恢复'].map((item) => (
-                  <div key={item} className="rounded-[var(--radius)] bg-[color:var(--paper)] p-4 text-sm font-semibold text-[color:var(--ink)]">
-                    {item}
+        {/* Domain Cards */}
+        <section className="space-y-4">
+          {domains.map((domain) => {
+            const Icon = domain.icon;
+            return (
+              <div
+                key={domain.id}
+                className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-6"
+              >
+                <div className="flex items-start gap-3 mb-4">
+                  <div className={`${domain.bg} ${domain.color} p-2.5 rounded-lg shrink-0`}>
+                    <Icon className="w-5 h-5" />
                   </div>
-                ))}
+                  <div>
+                    <h3 className="font-bold text-base">{domain.title}</h3>
+                    <Link
+                      href={domain.baziLink}
+                      className="text-xs text-[var(--color-ming-gold)] hover:underline"
+                    >
+                      查看八字对应分析 &rarr;
+                    </Link>
+                  </div>
+                </div>
+
+                <p className="text-sm text-[var(--color-ming-text-dim)] leading-relaxed mb-4">
+                  {domain.description}
+                </p>
+
+                <div className="bg-[var(--color-ming-surface-light)] rounded-[var(--radius)] p-3 mb-4">
+                  <h4 className="text-xs font-semibold mb-2 text-[var(--color-ming-text-subtle)]">
+                    核心要点
+                  </h4>
+                  <ul className="space-y-1.5">
+                    {domain.details.map((detail, i) => (
+                      <li key={i} className="flex items-start gap-2 text-xs text-[var(--color-ming-text-subtle)]">
+                        <span className="mt-1.5 w-1 h-1 rounded-full bg-[var(--color-ming-gold)] shrink-0" />
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  {domain.tools.map((tool) => (
+                    <Link
+                      key={tool.href}
+                      href={tool.href}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--color-ming-gold)] border border-[var(--color-ming-gold)]/20 rounded-lg px-3 py-1.5 hover:bg-[var(--color-ming-gold)]/5 transition-colors"
+                    >
+                      <ScanSearch className="w-3.5 h-3.5" />
+                      {tool.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
+            );
+          })}
+        </section>
+
+        {/* Cross-Domain Analysis */}
+        <section className="shadow-[var(--shadow-card)] bg-[color:var(--paper)] rounded-[var(--radius)] p-6">
+          <div className="flex items-start gap-3">
+            <Sparkles className="w-6 h-6 text-[var(--color-ming-gold)] shrink-0 mt-0.5" />
+            <div>
+              <h2 className="text-lg font-bold mb-2">维度联动解读</h2>
+              <p className="text-sm text-[var(--color-ming-text-dim)] leading-relaxed">
+                各维度并非孤立存在，它们之间存在着复杂的联动关系。事业的起落影响财富的积累，
+                健康的狀態制约事业的发展，家庭的稳定为关系提供基础。生命矩阵将这些维度整合在同一框架下，
+                让你看到人生全貌而非孤立片段。
+              </p>
+              <Link
+                href="/world-yi/matrix"
+                className="inline-flex items-center gap-1.5 mt-3 text-sm font-medium text-[var(--color-ming-gold)] hover:underline"
+              >
+                探索生命矩阵
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </section>
-      </main>
 
-      <SiteFooter />
-    </div>
+        {/* Conversion Strip */}
+        <section className="shadow-[var(--shadow-card)] bg-gradient-to-r from-[var(--color-ming-gold)]/10 to-[var(--color-ming-accent)]/10 rounded-[var(--radius)] p-6 text-center">
+          <h3 className="font-bold text-base mb-2">开始你的人生探索</h3>
+          <p className="text-sm text-[var(--color-ming-text-dim)] mb-4">
+            输入出生信息，获取完整的八字排盘与六大维度深度分析
+          </p>
+          <Link
+            href="/analyze"
+            className="inline-flex items-center gap-2 bg-[var(--color-ming-gold)] text-white px-5 py-2.5 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+          >
+            <BookOpen className="w-4 h-4" />
+            免费排盘分析
+          </Link>
+          <p className="text-xs text-[var(--color-ming-text-subtle)] mt-3">
+            保存分析结果？<Link href="/profile/foundation" className="text-[var(--color-ming-gold)] hover:underline">注册账号</Link>
+          </p>
+        </section>
+      </div>
+
+    </main>
   );
 }

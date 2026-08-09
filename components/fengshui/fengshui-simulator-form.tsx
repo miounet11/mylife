@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { postToolResultToFoundation } from '@/lib/life-foundation/client-signal';
 import { FengshuiRadarChart, type FengshuiRadarDataPoint } from './fengshui-radar-chart';
 import { ShopColorSwatch } from './shop-color-swatch';
 import { analyzeShopFengshui, resolveIndustryElement } from '@/lib/fengshui';
@@ -73,6 +73,7 @@ export function FengshuiSimulatorForm() {
           '行业五行结构',
         );
         setResult(output);
+        postToolResultToFoundation({ toolSlug: 'fengshui-simulator', headline: '风水模拟', summary: `行业${industry}方位评估`, score: output.radarScores.industry });
         setCalculating(false);
       }, 300);
     },

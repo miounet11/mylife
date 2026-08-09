@@ -122,6 +122,9 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
               <Link href="/cases" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {copy.ctaCases}
               </Link>
+              <Link href="/topics" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                主题库
+              </Link>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
                 {copy.ctaTools}
               </Link>

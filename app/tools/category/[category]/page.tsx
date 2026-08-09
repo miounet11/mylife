@@ -56,7 +56,7 @@ export default async function ToolCategoryPage({ params, searchParams }: PagePro
         page={`/tools/category/${key}`}
         meta={{ surfaceKey: 'tools', category: key }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={chrome.eyebrow}
           title={meta.title}

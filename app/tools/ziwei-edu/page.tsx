@@ -32,7 +32,7 @@ export default async function ZiweiEduPage({
         page="/tools/ziwei-edu"
         meta={{ surfaceKey: 'tools', tool: 'ziwei-edu', source: sp.source || null, geoReady: true }}
       />
-      <div className="mx-auto max-w-3xl space-y-6 px-4 py-6 pb-16 md:py-8">
+      <div className="page-content space-y-6 py-6 pb-16 md:py-8">
         <FocusHero
           eyebrow={en ? 'Educational chart' : '教育排盘'}
           title={en ? 'Ziwei · structure layout' : '紫微 · 结构示意盘'}

@@ -133,7 +133,7 @@ export default async function DimensionDetailPage({ params, searchParams }: Page
         }
       />
       <JourneyStrip active="dimensions" locale={uiLocale} />
-      <div className="mx-auto max-w-3xl px-4">
+      <div className="page-content">
         <CapabilityIllustrationPanel
           surface={dimensionCapabilitySurface(slug)}
           title={copy.capabilityTitle(ui.title)}
