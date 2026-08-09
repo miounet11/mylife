@@ -128,6 +128,14 @@ export function loginFormCopy(locale: SiteLocale) {
       'zh-Hant': '免費 · 無需密碼 · 約 1 分鐘',
       en: 'Free · no password · about 1 minute',
     }),
+    /** Gmail deliverability is weak on self-hosted SMTP (prod: ~0% code use vs QQ). */
+    gmailDeliverabilityHint: pick(locale, {
+      'zh-CN':
+        'Gmail 用户请务必检查「垃圾邮件 / 促销」分类；若 2 分钟仍未收到，建议改用 QQ 邮箱或企业邮完成绑定。',
+      'zh-Hant':
+        'Gmail 用戶請務必檢查「垃圾郵件 / 促銷」分類；若 2 分鐘仍未收到，建議改用 QQ 郵箱或企業郵完成綁定。',
+      en: 'Gmail often files our code under Spam/Promotions. If nothing in 2 minutes, try QQ or a work email.',
+    }),
     /** Prefix only — email is rendered bold separately in the form. */
     codeSentPrefix: pick(locale, {
       'zh-CN': '验证码已发送至',

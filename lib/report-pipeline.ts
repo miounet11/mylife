@@ -1103,16 +1103,17 @@ function buildPastEventTemplates(
     ])
   );
 
-  // v6-Q1: birth accuracy gates absolute past claims
+  // v6-Q4: always soft-frame past nodes (prod feedback: many denies even when birth exact)
+  // Never assert "过去出现过" as fact — templates are calibration prompts, not verdicts.
   const accuracy = `${(result.analysis as { birthAccuracy?: string } | undefined)?.birthAccuracy || ''}`.toLowerCase();
   const uncertainBirth =
     accuracy === 'unknown' ||
     accuracy === 'range' ||
     accuracy.includes('uncertain') ||
     accuracy.includes('大概');
-  const soft = uncertainBirth;
-  const confHigh = soft ? 'low' : 'medium';
-  const confMed = soft ? 'low' : 'low';
+  const soft = true;
+  const confHigh = uncertainBirth ? 'low' : 'medium';
+  const confMed = 'low';
 
   // v6-Q3: respect prior user calibrations (denied templates stay out / stay low)
   const prev = extras?.previousTemplates || result.analysis?.pastEventTemplates || [];
@@ -1216,8 +1217,8 @@ function buildPastEventTemplates(
       };
     })
     .filter((item) => item.title && item.description && item.reason)
-    // Prefer 2 high-signal items when birth uncertain — less false past claims
-    .slice(0, soft ? 2 : 3);
+    // Cap at 2 soft prompts — lower false-positive fatigue (feedback: multi-deny storms)
+    .slice(0, uncertainBirth ? 2 : 2);
 }
 
 function readAgentSummary(agentResults: Record<string, unknown>, key: string) {

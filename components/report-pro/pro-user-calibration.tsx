@@ -86,13 +86,21 @@ export default function ProUserCalibration({
           return;
         }
       } else {
-        // 未发生：记一条反馈，帮助系统降权该模板
+        // 未发生：结构化校准信号（admin 可归类；回写只降权 templateKey）
         const { response, data } = await fetchJsonWithTimeout<SaveResponse>('/api/feedback', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             category: 'content_wrong',
-            message: `校准：报告节点「${item.title}」用户标记为未发生。窗口：${item.occurrenceWindow || '未知'}。原因参考：${item.reason || ''}`,
+            message: [
+              `校准：报告节点「${item.title}」用户标记为未发生。`,
+              `templateKey=${item.key}`,
+              `reportId=${reportId}`,
+              `窗口：${item.occurrenceWindow || '未知'}`,
+              item.reason ? `原因参考：${item.reason}` : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
             pageUrl: typeof window !== 'undefined' ? window.location.href : `/result/${reportId}`,
           }),
           timeoutMs: 12_000,
@@ -130,7 +138,7 @@ export default function ProUserCalibration({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           category,
-          message: `报告准确度反馈：${label}。reportId=${reportId}`,
+          message: `报告准确度反馈：${label}。level=${level} reportId=${reportId}`,
           pageUrl: typeof window !== 'undefined' ? window.location.href : `/result/${reportId}`,
         }),
         timeoutMs: 12_000,
@@ -162,12 +170,18 @@ export default function ProUserCalibration({
     try {
       const label =
         level === 'exact' ? '时辰确定' : level === 'approx' ? '时辰大概知道' : '时辰不确定';
+      const weightNote =
+        level === 'unknown'
+          ? '后续应降低时柱相关权重。'
+          : level === 'approx'
+            ? '时柱结论中等置信，避免绝对期限。'
+            : '时柱可正常使用。';
       const { response, data } = await fetchJsonWithTimeout<SaveResponse>('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           category: 'suggestion',
-          message: `出生时辰把握：${label}。reportId=${reportId}。时辰不确定时后续应降低时柱相关权重。`,
+          message: `出生时辰把握：${label}。level=${level} reportId=${reportId}。${weightNote}`,
           pageUrl: typeof window !== 'undefined' ? window.location.href : `/result/${reportId}`,
         }),
         timeoutMs: 12_000,
@@ -270,10 +284,10 @@ export default function ProUserCalibration({
       {templates.length > 0 ? (
         <div className="mt-3 border-t border-[color:var(--hairline)] pt-3">
           <div className="text-[13px] font-medium text-[color:var(--ink-1)]">
-            3. 这些节点是否在你身上发生过？
+            3. 这些是结构上的「可能窗口」，不是断言
           </div>
           <p className="mt-1 text-[11px] text-[color:var(--ink-5)]">
-            「发生了」记入事件样本；「没有」帮助少推类似模板。
+            对照你的真实经历：「发生了」记入事件样本；「没有」帮助少推类似模板。多数人只会命中其中 0–1 条。
           </p>
           <ul className="mt-2 divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
             {templates.map((item) => {

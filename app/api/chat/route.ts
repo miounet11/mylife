@@ -1127,7 +1127,21 @@ function getChatReport(userId: string, requestedReportId?: string) {
     }
   }
 
-  return fortuneOperations.getByUserId(userId)?.[0] || null;
+  // Prefer primary/most recent report so teachers_gallery chat can "read" user data
+  // (feedback: 读取不了我的信息 when opening chat without reportId).
+  const list = fortuneOperations.getByUserId(userId) || [];
+  if (!Array.isArray(list) || list.length === 0) return null;
+  const primary =
+    list.find((r: any) => r?.isPrimary === true || r?.is_primary === 1 || r?.is_primary === true) ||
+    null;
+  if (primary) return primary;
+  // newest first if createdAt present
+  const sorted = [...list].sort((a: any, b: any) => {
+    const ta = Date.parse(a?.createdAt || a?.created_at || 0) || 0;
+    const tb = Date.parse(b?.createdAt || b?.created_at || 0) || 0;
+    return tb - ta;
+  });
+  return sorted[0] || null;
 }
 
 /**
