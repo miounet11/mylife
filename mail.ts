@@ -1,7 +1,10 @@
 /**
  * 邮件发送工具
+ * - Resend HTTP（RESEND_API_KEY）优先：Gmail 投递显著优于自建 :25
+ * - SMTP 回退 + 可选 DKIM（MAIL_DKIM_PRIVATE_KEY / MAIL_DKIM_SELECTOR）
  */
 import nodemailer from 'nodemailer'
+import { isResendConfigured, sendViaResend } from '@/lib/mail-resend'
 
 interface SendMailOptions {
   to: string | string[]
@@ -83,7 +86,23 @@ function getMailRuntimeConfig() {
   };
 }
 
+function getDkimOptions() {
+  const privateKey = readString('MAIL_DKIM_PRIVATE_KEY').replace(/\\n/g, '\n');
+  const keySelector = readString('MAIL_DKIM_SELECTOR') || 'lk1';
+  const domainName =
+    readString('MAIL_DKIM_DOMAIN') ||
+    readString('MAIL_FROM').split('@')[1] ||
+    'life-kline.com';
+  if (!privateKey || privateKey.length < 40) return null;
+  return {
+    domainName,
+    keySelector,
+    privateKey,
+  };
+}
+
 function getTransportOptions(config = getMailRuntimeConfig()) {
+  const dkim = getDkimOptions();
   return {
     host: config.host,
     port: config.port,
@@ -96,6 +115,7 @@ function getTransportOptions(config = getMailRuntimeConfig()) {
     tls: {
       rejectUnauthorized: false
     },
+    ...(dkim ? { dkim } : {}),
     ...(config.disableAuth
       ? {}
       : {
@@ -105,6 +125,14 @@ function getTransportOptions(config = getMailRuntimeConfig()) {
           }
         })
   };
+}
+
+function preferResendFirst(): boolean {
+  if (!isResendConfigured()) return false;
+  const mode = readString('MAIL_PROVIDER').toLowerCase();
+  if (mode === 'smtp') return false;
+  // auto | resend | empty → Resend first when key present
+  return mode === 'resend' || mode === 'auto' || !mode;
 }
 
 function getMailConfigError(config = getMailRuntimeConfig()) {
@@ -202,8 +230,62 @@ export async function sendMail(options: SendMailOptions) {
 
 /**
  * 发送邮件 V2（支持HTML模板）
+ * Prefer Resend when configured (Gmail), else SMTP (+ optional DKIM).
  */
 export async function sendMailV2(options: SendMailV2Options) {
+  const mailTo = typeof options.to === 'string' ? options.to : `${options.to}`
+  const mailFromName = readString('MAIL_FROM_NAME') || readString('EMAIL_APP_NAME') || '人生K线'
+  const domainHint = mailTo.split('@')[1]?.toLowerCase() || ''
+  const isGmail =
+    domainHint === 'gmail.com' ||
+    domainHint === 'googlemail.com' ||
+    domainHint.endsWith('.gmail.com')
+
+  // 为HTML邮件生成纯文本版本
+  let textContent = options.text
+  if (!textContent && options.subtype === 'html') {
+    textContent = options.content
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
+  // ── Resend first (when key present) ─────────────────────────────────────
+  if (preferResendFirst()) {
+    const resend = await sendViaResend({
+      to: mailTo,
+      subject: options.subject,
+      html: options.subtype === 'html' ? options.content : undefined,
+      text: textContent || (options.subtype !== 'html' ? options.content : undefined),
+      fromName: mailFromName,
+      tags: [
+        { name: 'app', value: 'life-kline' },
+        { name: 'gmail', value: isGmail ? '1' : '0' },
+      ],
+    })
+    console.log('[mail] resend', {
+      success: resend.success,
+      messageId: resend.messageId,
+      to: mailTo,
+      error: resend.message,
+    })
+    if (resend.success) {
+      return {
+        success: true,
+        messageId: resend.messageId,
+        provider: 'resend',
+        accepted: [mailTo],
+      }
+    }
+    // fall through to SMTP
+    console.warn('[mail] resend failed, falling back to SMTP', resend.message)
+  }
+
   const config = getMailRuntimeConfig()
   const configError = getMailConfigError(config)
   if (configError) {
@@ -211,71 +293,40 @@ export async function sendMailV2(options: SendMailV2Options) {
   }
 
   const { mailFrom } = config
-  const mailFromName = readString('MAIL_FROM_NAME') || readString('EMAIL_APP_NAME') || '人生K线'
+  const dkim = getDkimOptions()
 
   const transporter = nodemailer.createTransport({
     ...getTransportOptions(config),
-    // 启用调试日志（仅在开发环境）
     debug: process.env.NODE_ENV === 'development',
-    logger: process.env.NODE_ENV === 'development'
+    logger: process.env.NODE_ENV === 'development',
   })
 
-  const mailTo = typeof options.to === 'string' ? options.to : `${options.to}`
-
   try {
-    // 为HTML邮件生成纯文本版本（163邮箱更喜欢有纯文本版本的邮件）
-    let textContent = options.text
-    if (!textContent && options.subtype === 'html') {
-      // 简单地从HTML中提取文本内容
-      textContent = options.content
-        .replace(/<[^>]+>/g, '') // 移除HTML标签
-        .replace(/&nbsp;/g, ' ')
-        .replace(/&amp;/g, '&')
-        .replace(/&lt;/g, '<')
-        .replace(/&gt;/g, '>')
-        .replace(/&quot;/g, '"')
-        .replace(/\s+/g, ' ')
-        .trim()
-    }
-
-    // 构建完整的邮件选项，添加必要的邮件头
+    // Gmail: prefer text-first multipart; OTP-friendly headers
+    const useHtml = options.subtype === 'html' && !(isGmail && readBooleanFlag('MAIL_GMAIL_TEXT_ONLY', true))
     const mailOptions: any = {
-      from: `"${mailFromName}" <${mailFrom}>`, // 格式化的发件人
+      from: `"${mailFromName}" <${mailFrom}>`,
       to: mailTo,
       subject: options.subject,
-      // 如果提供了纯文本版本，同时发送HTML和文本版本（multipart/alternative）
-      ...(options.subtype === 'html' && textContent
-        ? {
-            html: options.content,
-            text: textContent
-          }
-        : {
-            [options.subtype === 'html' ? 'html' : 'text']: options.content
-          }),
-      // 添加必要的邮件头，提高163邮箱的接收率
+      ...(useHtml && textContent
+        ? { html: options.content, text: textContent }
+        : useHtml
+          ? { html: options.content }
+          : { text: textContent || options.content }),
       headers: {
-        'Message-ID': `<${Date.now()}-${Math.random().toString(36).substring(7)}@${mailFrom.split('@')[1]}>`,
-        'Date': new Date().toUTCString(),
-        'Reply-To': mailFrom, // 设置回复地址
-        'X-Mailer': 'Nodemailer',
-        'X-Priority': '3', // 普通优先级
-        // 移除Content-Type头，让nodemailer自动处理multipart
-        ...(options.subtype === 'html' && textContent
-          ? {} // multipart时让nodemailer自动处理
-          : {
-              'MIME-Version': '1.0',
-              'Content-Type': options.subtype === 'html' 
-                ? 'text/html; charset=UTF-8' 
-                : 'text/plain; charset=UTF-8',
-              'Content-Transfer-Encoding': '8bit'
-            })
-      }
+        'Message-ID': `<${Date.now()}-${Math.random().toString(36).substring(7)}@${mailFrom.split('@')[1] || 'life-kline.com'}>`,
+        Date: new Date().toUTCString(),
+        'Reply-To': mailFrom,
+        'X-Mailer': 'LifeKLine-Mail/1',
+        'X-Priority': '1',
+        'X-Entity-Ref-ID': `${Date.now()}`,
+        'Auto-Submitted': 'auto-generated',
+        'X-Auto-Response-Suppress': 'All',
+      },
     }
 
-    // 发送邮件
     const info = await transporter.sendMail(mailOptions)
 
-    // 记录详细的发送信息
     const logInfo = {
       messageId: info.messageId,
       response: info.response,
@@ -283,27 +334,31 @@ export async function sendMailV2(options: SendMailV2Options) {
       rejected: info.rejected,
       pending: info.pending,
       to: mailTo,
-      from: mailFrom
+      from: mailFrom,
+      provider: 'smtp',
+      dkim: Boolean(dkim),
+      gmailTextOnly: isGmail && !useHtml,
     }
 
     console.log('邮件发送详情:', JSON.stringify(logInfo, null, 2))
 
-    // 检查是否有被拒绝的收件人
     if (info.rejected && info.rejected.length > 0) {
       console.error('部分收件人被拒绝:', info.rejected)
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: `部分收件人被拒绝: ${info.rejected.join(', ')}`,
-        rejected: info.rejected
+        rejected: info.rejected,
       }
     }
 
     if (info.messageId) {
-      return { 
-        success: true, 
+      return {
+        success: true,
         messageId: info.messageId,
         response: info.response,
-        accepted: info.accepted
+        accepted: info.accepted,
+        provider: 'smtp',
+        dkim: Boolean(dkim),
       }
     }
 
@@ -316,13 +371,13 @@ export async function sendMailV2(options: SendMailV2Options) {
       command: error?.command,
       response: error?.response,
       responseCode: error?.responseCode,
-      stack: error?.stack
+      stack: error?.stack,
     })
-    return { 
-      success: false, 
+    return {
+      success: false,
       message: error?.message || '发送邮件失败',
       errorCode: error?.code,
-      errorResponse: error?.response
+      errorResponse: error?.response,
     }
   } finally {
     transporter.close()
@@ -405,10 +460,11 @@ export async function sendVerificationCode(
     'zh-Hant': '郵箱驗證碼',
     en: 'Email verification code',
   });
+  // Shorter subjects reduce Gmail spam scoring for OTP mail
   const subject = pickLocaleString(locale, {
-    'zh-CN': `${appName} · ${typeText}验证码`,
-    'zh-Hant': `${appName} · ${typeText}驗證碼`,
-    en: `${appName} · ${typeText} code`,
+    'zh-CN': `${appName}验证码 ${code}`,
+    'zh-Hant': `${appName}驗證碼 ${code}`,
+    en: `${appName} code ${code}`,
   });
   const actionLine = pickLocaleString(locale, {
     'zh-CN': `你正在进行${typeText}操作。`,

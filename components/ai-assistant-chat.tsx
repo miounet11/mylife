@@ -93,21 +93,27 @@ export default function AIAssistantChat({
   uiLocale?: string | null;
 } = {}) {
   const searchParams = useSearchParams();
-  const urlReportId = searchParams?.get('reportId') || '';
-  const eventId = searchParams?.get('eventId') || '';
-  const intent = searchParams?.get('intent') || '';
-  const source = searchParams?.get('source') || '';
-  const ctaStrategyKey = searchParams?.get('ctaStrategyKey') || '';
-  const sourceFamily = searchParams?.get('sourceFamily') || '';
-  const prefilledQuestion =
-    searchParams?.get('question') || searchParams?.get('q') || '';
-  const urlTeacher = searchParams?.get('teacher') || searchParams?.get('teacherId') || '';
-  const urlTopic = searchParams?.get('topic') || '';
-  const urlWindow = searchParams?.get('window') || '';
+  // Defensive: rare null searchParams under suspended navigation / soft-nav
+  const spGet = (key: string) => {
+    try {
+      return searchParams?.get?.(key) || '';
+    } catch {
+      return '';
+    }
+  };
+  const urlReportId = spGet('reportId');
+  const eventId = spGet('eventId');
+  const intent = spGet('intent');
+  const source = spGet('source');
+  const ctaStrategyKey = spGet('ctaStrategyKey');
+  const sourceFamily = spGet('sourceFamily');
+  const prefilledQuestion = spGet('question') || spGet('q');
+  const urlTeacher = spGet('teacher') || spGet('teacherId');
+  const urlTopic = spGet('topic');
+  const urlWindow = spGet('window');
   /** Default opening product mode; only explicit prefill fills the input. */
-  const urlMode = searchParams?.get('mode') || 'opening';
-  const resolvedLocale =
-    uiLocale || searchParams?.get('lang') || searchParams?.get('locale') || '';
+  const urlMode = spGet('mode') || 'opening';
+  const resolvedLocale = uiLocale || spGet('lang') || spGet('locale') || '';
   const enUi = isEnglishUiLocale(resolvedLocale);
   /** Client chrome copy — not LLM answers. */
   const t = (zh: string, en: string) => (enUi ? en : zh);

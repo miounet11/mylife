@@ -31,6 +31,7 @@ const adminNavItems: AdminNavItem[] = [
   { href: '/admin/dashboard', label: '总览', icon: LayoutDashboard },
   { href: '/admin/chat-ops', label: '对话运营', shortLabel: '对话', icon: MessageSquare },
   { href: '/admin/chat-eval', label: '评测导出', shortLabel: '评测', icon: ClipboardList },
+  { href: '/admin/accuracy-eval', label: '偏差样本', shortLabel: '偏差', icon: ClipboardList },
   { href: '/admin/product-funnel', label: '产品漏斗', shortLabel: '漏斗', icon: BarChart3 },
   { href: '/admin/email-ops', label: '邮件投递', shortLabel: '邮件', icon: Mail },
   { href: '/admin/feedback', label: '用户反馈', shortLabel: '反馈', icon: MessageSquareWarning },

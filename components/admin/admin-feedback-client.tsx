@@ -259,7 +259,10 @@ export default function AdminFeedbackClient({
           </li>
           <li>
             <strong className="text-[color:var(--ink-1)]">准确度</strong>：
-            「偏差较大」{insights.accuracyBadCount} 次；校准回写已修正为只记评分、不再误伤全部节点模板。
+            「偏差较大」{insights.accuracyBadCount} 次；校准回写已修正为只记评分、不再误伤全部节点模板。{' '}
+            <a href="/admin/accuracy-eval" className="font-semibold text-[color:var(--brand)] hover:underline">
+              打开偏差样本评测 →
+            </a>
           </li>
           <li>
             <strong className="text-[color:var(--ink-1)]">时辰</strong>：
