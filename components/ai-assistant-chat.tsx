@@ -53,6 +53,7 @@ import { teacherFromTopicKey, type TeacherTopicChip } from '@/lib/teachers';
 import { abortControllerRef, fetchJsonWithTimeout, isAbortLikeError } from '@/lib/utils';
 import { buildFoundationChatStarters } from '@/lib/life-foundation/chat-starters';
 import type { LifeFoundationSnapshot } from '@/lib/life-foundation/types';
+import { GuestSaveStrip } from '@/components/conversion/guest-save-strip';
 
 type ChatContextReport = ChatReportContext;
 
@@ -132,6 +133,8 @@ export default function AIAssistantChat({
   /** Opening empty: keep composer minimal until user expands tools. */
   const [showOpeningTools, setShowOpeningTools] = useState(false);
   const [foundationSnap, setFoundationSnap] = useState<LifeFoundationSnapshot | null>(null);
+  /** Guest conversion: show email bind after value (assistant reply) when not logged in */
+  const [isGuestSession, setIsGuestSession] = useState(true);
   const openingShownKeyRef = useRef('');
   /** Prevents double-inject of client-only first_mes for the same teacher/report key. */
   const openingInjectedKeyRef = useRef('');
@@ -224,6 +227,25 @@ export default function AIAssistantChat({
       cancelled = true;
     };
   }, [reportId]);
+
+  // Guest detection for email bind strip (registered users have email in session)
+  useEffect(() => {
+    let cancelled = false;
+    void fetch('/api/auth/session', { cache: 'no-store' })
+      .then((r) => r.json().catch(() => ({})))
+      .then((data: { authenticated?: boolean; user?: { email?: string | null } }) => {
+        if (cancelled) return;
+        const email = data?.user?.email;
+        const loggedIn = Boolean(data?.authenticated && email);
+        setIsGuestSession(!loggedIn);
+      })
+      .catch(() => {
+        if (!cancelled) setIsGuestSession(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const foundationStarters = buildFoundationChatStarters(foundationSnap, {
     hasReport: Boolean(context?.report || reportId || foundationSnap?.hasReport),
@@ -843,6 +865,16 @@ export default function AIAssistantChat({
         setError(data.error || t('反馈提交失败', 'Failed to submit feedback'));
         return;
       }
+      void trackClientEvent({
+        eventName: 'chat_feedback',
+        page: '/chat',
+        meta: {
+          messageId,
+          rating,
+          reportId: reportId || context?.report?.id || null,
+          teacher: resolvedOpeningTeacherId || urlTeacher || null,
+        },
+      });
     } catch (feedbackError) {
       if (!mountedRef.current || isSilentChatAbort(feedbackError)) {
         return;
@@ -1314,6 +1346,32 @@ export default function AIAssistantChat({
               onStarter={handleOpeningStarter}
               onChip={handleOpeningChip}
             />
+          ) : null}
+
+          {/* Guest → register after first real assistant value */}
+          {isGuestSession &&
+          !loadingHistory &&
+          !isTyping &&
+          messages.some((m) => m.role === 'assistant' && !isSyntheticOpeningMessageId(m.id)) ? (
+            <div className="mt-2 px-0.5">
+              <GuestSaveStrip
+                page="/chat"
+                nextPath={
+                  reportId || context?.report?.id
+                    ? `/result/${reportId || context?.report?.id}`
+                    : '/profile'
+                }
+                source="chat_after_value"
+                reportId={reportId || context?.report?.id || undefined}
+                title={t('绑定邮箱，保存这次对话与报告', 'Bind email to save this chat & report')}
+                description={t(
+                  '游客也能先聊。验证码绑定后可跨设备回看报告与对话，避免换机丢失。',
+                  'Guests can chat first. One code binds your account so reports & chat restore across devices.',
+                )}
+                ctaLabel={t('验证码绑定', 'Bind with code')}
+                emphasize
+              />
+            </div>
           ) : null}
 
           {isTyping && (

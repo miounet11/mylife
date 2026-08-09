@@ -120,10 +120,13 @@ export default function LoginForm({
         domain === 'gmail.com' ||
         domain === 'googlemail.com' ||
         domain.endsWith('.gmail.com');
-      const gmailHint =
-        isGmail && copy.gmailDeliverabilityHint
-          ? ` ${copy.gmailDeliverabilityHint}`
+      const apiGmailHint =
+        typeof data.gmailHint === 'string' && data.gmailHint.trim()
+          ? ` ${data.gmailHint.trim()}`
           : '';
+      const gmailHint =
+        apiGmailHint ||
+        (isGmail && copy.gmailDeliverabilityHint ? ` ${copy.gmailDeliverabilityHint}` : '');
       setMessage(`${data.message || copy.codeSentDefault}${devHint}${gmailHint}`);
       try {
         localStorage.setItem('life-kline:lead-email', normalized);

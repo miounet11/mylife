@@ -89,8 +89,8 @@ async function resolveLocaleForEmail(email: string, options?: EmailLocaleOptions
 }
 
 export function isEmailDeliveryConfigured() {
-  // Resend alone is enough for transactional (login codes)
-  if (process.env.RESEND_API_KEY?.trim()) {
+  // HTTP ESP alone is enough for transactional (login codes) — critical for Gmail
+  if (process.env.RESEND_API_KEY?.trim() || process.env.BREVO_API_KEY?.trim()) {
     return true;
   }
   const { from, authUser, password, host, hostIp, disableAuth } = getEmailConfig();

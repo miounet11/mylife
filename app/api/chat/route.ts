@@ -406,17 +406,22 @@ async function generateAIResponse(
   const materialSummary = options?.materialSummary || buildMaterialSummary(options?.materials || []);
   const userContent = buildUserContentWithMaterials(question, materialSummary, options?.materials || []);
 
-  // X-Tavern-style memory budget: structured layers under char budget (not full report dump)
+  // Stream path: tighter budget → smaller system → faster first token (TTFT target p50 <3s)
+  const streamMode = Boolean(options?.streamMode && options?.onDelta);
+  const defaultBudget = streamMode ? 5_500 : 10_000;
   const memory = allocateFromChatExperience({
     context: options?.context,
     contextSummary,
     materialSummary,
     intentSummaryHint,
     history: userHistory,
-    budgetChars: Number(process.env.CHAT_MEMORY_BUDGET_CHARS || 10_000) || 10_000,
+    budgetChars:
+      Number(process.env.CHAT_MEMORY_BUDGET_CHARS || defaultBudget) || defaultBudget,
   });
   const budgetedContext = memory.systemContext || contextSummary;
-  const budgetedHistory = memory.history.length ? memory.history : userHistory.slice(-8);
+  const budgetedHistory = memory.history.length
+    ? memory.history
+    : userHistory.slice(streamMode ? -6 : -8);
 
   // v2 chat.main spec：把 contextSummary / intentPrompt / materialSummary / 多模态边界拼成结构化 system。
   // 多模态分支按需触发 —— 没有对应附件就不污染 prompt。
@@ -460,16 +465,21 @@ async function generateAIResponse(
   }
 
   
-  // 老师人设 + 地理/实践 + 引擎 EFC（对标 GPTs × Project 上下文）
+  // 老师人设 + 引擎 EFC（stream 路径收紧：少 geo/practice 行、少重复合同）
   {
     const teacherBits = {
       teacher: options?.teacherId,
       intent: options?.intent,
-      city: options?.city,
-      practiceLines: extractPracticeLinesFromChatContext(options?.context),
-      geoLines: extractGeoLinesFromChatContext(options?.context, options?.city),
-      profileLines: options?.profileLines || [],
-      // 优先 structured engineFactBlock，否则从 summary 截取 EFC 段
+      city: streamMode ? null : options?.city,
+      practiceLines: streamMode
+        ? []
+        : extractPracticeLinesFromChatContext(options?.context),
+      geoLines: streamMode
+        ? []
+        : extractGeoLinesFromChatContext(options?.context, options?.city),
+      profileLines: streamMode
+        ? (options?.profileLines || []).slice(0, 4)
+        : options?.profileLines || [],
       engineFactBlock: extractEngineFactBlockFromChatContext(options?.context),
       reportHint: options?.context?.report
         ? `日主${options.context.report.dayMaster} · 用神${(options.context.report.yongShen || []).join('、') || '—'} · 大运${options.context.report.currentDaYun}`
@@ -479,30 +489,32 @@ async function generateAIResponse(
     systemContent = withTeacher.systemContent;
   }
 
-  // Top-product: force 结论/依据/三时窗/验证点 for event loop
+  // Structure contract always (product law); skill/truth anchor only when not stream
+  // (stream already has EFC in teacher block — avoid triple-duplicate of dayMaster/yongShen)
   systemContent = appendAnswerStructureContract(systemContent);
 
-  // Experience Kernel: skill + truth anchor contracts
-  try {
-    const skill = resolveExperienceSkill({
-      teacherId: options?.teacherId,
-      intent: options?.intent,
-    });
-    systemContent = `${systemContent}\n\n${formatSkillSystemAddon(skill)}`;
-    const anchor = buildTruthAnchor(
-      options?.context?.report
-        ? {
-            id: options.context.report.id,
-            dayMaster: options.context.report.dayMaster,
-            yongShen: options.context.report.yongShen,
-            currentDaYun: options.context.report.currentDaYun,
-          }
-        : null,
-      options?.context?.report?.id,
-    );
-    systemContent = `${systemContent}\n\n${formatTruthAnchorContract(anchor)}`;
-  } catch {
-    // never block chat on kernel helpers
+  if (!streamMode) {
+    try {
+      const skill = resolveExperienceSkill({
+        teacherId: options?.teacherId,
+        intent: options?.intent,
+      });
+      systemContent = `${systemContent}\n\n${formatSkillSystemAddon(skill)}`;
+      const anchor = buildTruthAnchor(
+        options?.context?.report
+          ? {
+              id: options.context.report.id,
+              dayMaster: options.context.report.dayMaster,
+              yongShen: options.context.report.yongShen,
+              currentDaYun: options.context.report.currentDaYun,
+            }
+          : null,
+        options?.context?.report?.id,
+      );
+      systemContent = `${systemContent}\n\n${formatTruthAnchorContract(anchor)}`;
+    } catch {
+      // never block chat on kernel helpers
+    }
   }
 
 const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: ChatCompletionContent }> = [
@@ -528,15 +540,15 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
 
     let content = '';
     if (options?.streamMode && options?.onDelta) {
-      // Experience Kernel: stream tokens for TTFT; repair runs after full text if needed
+      // Stream: lower max tokens + minimal reasoning → faster first token
       for await (const delta of streamOpenAiCompatibleChatCompletion(
         openai,
         {
           model,
           messages: baseMessages,
-          temperature: 0.7,
-          maxTokens: 1200,
-          reasoningEffort: 'low',
+          temperature: 0.65,
+          maxTokens: 900,
+          reasoningEffort: 'minimal',
         },
         {
           signal: controller.signal,
@@ -1301,13 +1313,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const context = buildChatPayload(
-      userId,
-      requestedReportId,
-      requestedEventId,
-      requestedIntent,
-      requestedTeacherId || requestedIntent || null,
-    );
+    const wantsStream = request.headers.get('x-chat-stream') === '1';
+    const preferHint = requestedTeacherId || requestedIntent || null;
+
+    // Hot cache: skip full rebuild when same user+report+intent within TTL
+    let context = (() => {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { getCachedChatContext } = require('@/lib/chat-report-cache') as typeof import('@/lib/chat-report-cache');
+        const rid = requestedReportId || null;
+        if (rid) {
+          const hit = getCachedChatContext(userId, rid, preferHint);
+          if (hit) return hit;
+        }
+      } catch {
+        // ignore
+      }
+      return null as ReturnType<typeof buildChatPayload> | null;
+    })();
+
+    if (!context) {
+      context = buildChatPayload(
+        userId,
+        requestedReportId,
+        requestedEventId,
+        requestedIntent,
+        preferHint,
+      );
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { setCachedChatContext } = require('@/lib/chat-report-cache') as typeof import('@/lib/chat-report-cache');
+        setCachedChatContext(userId, context, preferHint);
+      } catch {
+        // ignore
+      }
+    }
+
     const scopeReportId = context.report?.id || requestedReportId;
     const scopeEventId = context.focusedEvent?.id || requestedEventId;
     const previousRows = getScopedChatRows(userId, scopeReportId, scopeEventId, requestedIntent, 60);
@@ -1320,6 +1361,8 @@ export async function POST(request: NextRequest) {
         : '',
       tacitSummary ? `用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
     ].filter(Boolean).join('\n');
+
+    // Stream TTFT path: skip heavy foundation bundle (often 50–200ms+); keep light supplements only
     let profileLinesForTeacher: string[] = [];
     try {
       const fortuneIdForProfile = scopeReportId || null;
@@ -1334,27 +1377,27 @@ export async function POST(request: NextRequest) {
       const snap = snapshotFromSupplementList(
         Array.from(merged.entries()).map(([domain, fields]) => ({ domain, fields })),
       );
-      profileLinesForTeacher = buildProfileContextLines(snap);
+      profileLinesForTeacher = buildProfileContextLines(snap).slice(0, wantsStream ? 4 : 12);
 
-      // 注入人生数据底座摘要（含星座/太岁/体貌完整度）
-      try {
-        const { buildFoundationPromptBundle } = await import('@/lib/life-foundation/prompt-context');
-        const bundle = buildFoundationPromptBundle(userId, fortuneIdForProfile);
-        if (bundle?.lines?.length) {
-          const existing = new Set(profileLinesForTeacher);
-          for (const line of bundle.lines) {
-            if (!existing.has(line)) profileLinesForTeacher.push(line);
+      if (!wantsStream) {
+        try {
+          const { buildFoundationPromptBundle } = await import('@/lib/life-foundation/prompt-context');
+          const bundle = buildFoundationPromptBundle(userId, fortuneIdForProfile);
+          if (bundle?.lines?.length) {
+            const existing = new Set(profileLinesForTeacher);
+            for (const line of bundle.lines) {
+              if (!existing.has(line)) profileLinesForTeacher.push(line);
+            }
+            profileLinesForTeacher = profileLinesForTeacher.slice(0, 16);
           }
-          profileLinesForTeacher = profileLinesForTeacher.slice(0, 16);
+        } catch (fe) {
+          console.warn('[chat] foundation lines load failed', fe);
         }
-      } catch (fe) {
-        console.warn('[chat] foundation lines load failed', fe);
       }
     } catch (e) {
       console.warn('[chat] profile lines load failed', e);
     }
 
-    const wantsStream = request.headers.get('x-chat-stream') === '1';
     const genOpts = {
       intent: requestedIntent,
       context,

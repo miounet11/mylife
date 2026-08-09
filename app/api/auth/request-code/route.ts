@@ -87,6 +87,14 @@ export async function POST(request: Request) {
       reportId: reportId || null,
     });
 
+    const emailDomain = email.split('@')[1] || '';
+    const isGmail =
+      emailDomain === 'gmail.com' ||
+      emailDomain === 'googlemail.com' ||
+      emailDomain.endsWith('.gmail.com');
+    const httpEsp =
+      Boolean(process.env.RESEND_API_KEY?.trim()) || Boolean(process.env.BREVO_API_KEY?.trim());
+
     trackServerEvent({
       userId: currentUserId || undefined,
       sessionId: currentUserId || clientKey,
@@ -94,12 +102,14 @@ export async function POST(request: Request) {
       page: typeof body.page === 'string' ? body.page : '/login',
       userAgent: request.headers.get('user-agent'),
       meta: {
-        emailDomain: email.split('@')[1] || '',
+        emailDomain,
         emailSent,
         emailError: emailError || null,
         source,
         reportId: reportId || null,
         locale,
+        isGmail,
+        httpEsp,
       },
     });
 
@@ -149,7 +159,24 @@ export async function POST(request: Request) {
       expiresAt: issued.expiresAt,
       emailSent,
       locale,
+      isGmail,
+      httpEsp,
     };
+
+    if (isGmail && emailSent) {
+      payload.gmailHint =
+        locale === 'en'
+          ? httpEsp
+            ? 'Gmail: check Inbox and Spam/Promotions within 1–2 minutes.'
+            : 'Gmail often filters our self-hosted SMTP. Check Spam/Promotions, or use QQ / work email for a more reliable login.'
+          : locale === 'zh-Hant'
+            ? httpEsp
+              ? 'Gmail：請同時查看收件匣與垃圾郵件/促銷分類。'
+              : 'Gmail 對自建 SMTP 過濾較嚴。請查垃圾郵件/促銷；若 2 分鐘仍未收到，建議改用 QQ 或企業郵。'
+            : httpEsp
+              ? 'Gmail：请同时查看收件箱与垃圾邮件/促销分类。'
+              : 'Gmail 对自建 SMTP 过滤较严。请查垃圾邮件/促销；若 2 分钟仍未收到，建议改用 QQ 或企业邮。';
+    }
 
     // Dev convenience only.
     if (process.env.NODE_ENV === 'development') {

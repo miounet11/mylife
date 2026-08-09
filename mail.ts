@@ -5,6 +5,7 @@
  */
 import nodemailer from 'nodemailer'
 import { isResendConfigured, sendViaResend } from '@/lib/mail-resend'
+import { isBrevoConfigured, sendViaBrevo } from '@/lib/mail-brevo'
 
 interface SendMailOptions {
   to: string | string[]
@@ -127,12 +128,16 @@ function getTransportOptions(config = getMailRuntimeConfig()) {
   };
 }
 
-function preferResendFirst(): boolean {
-  if (!isResendConfigured()) return false;
+function preferHttpEspFirst(): boolean {
   const mode = readString('MAIL_PROVIDER').toLowerCase();
   if (mode === 'smtp') return false;
-  // auto | resend | empty → Resend first when key present
-  return mode === 'resend' || mode === 'auto' || !mode;
+  // auto | resend | brevo | empty → try HTTP ESPs when keys present
+  return (
+    mode === 'resend' ||
+    mode === 'brevo' ||
+    mode === 'auto' ||
+    !mode
+  );
 }
 
 function getMailConfigError(config = getMailRuntimeConfig()) {
@@ -255,35 +260,65 @@ export async function sendMailV2(options: SendMailV2Options) {
       .trim()
   }
 
-  // ── Resend first (when key present) ─────────────────────────────────────
-  if (preferResendFirst()) {
-    const resend = await sendViaResend({
-      to: mailTo,
-      subject: options.subject,
-      html: options.subtype === 'html' ? options.content : undefined,
-      text: textContent || (options.subtype !== 'html' ? options.content : undefined),
-      fromName: mailFromName,
-      tags: [
-        { name: 'app', value: 'life-kline' },
-        { name: 'gmail', value: isGmail ? '1' : '0' },
-      ],
-    })
-    console.log('[mail] resend', {
-      success: resend.success,
-      messageId: resend.messageId,
-      to: mailTo,
-      error: resend.message,
-    })
-    if (resend.success) {
-      return {
-        success: true,
+  // ── HTTP ESP first (Resend → Brevo) for Gmail-class inbox rates ────────
+  if (preferHttpEspFirst()) {
+    const html = options.subtype === 'html' ? options.content : undefined
+    const text = textContent || (options.subtype !== 'html' ? options.content : undefined)
+    const mode = readString('MAIL_PROVIDER').toLowerCase()
+
+    if ((mode === 'resend' || mode === 'auto' || !mode) && isResendConfigured()) {
+      const resend = await sendViaResend({
+        to: mailTo,
+        subject: options.subject,
+        html,
+        text,
+        fromName: mailFromName,
+        tags: [
+          { name: 'app', value: 'life-kline' },
+          { name: 'gmail', value: isGmail ? '1' : '0' },
+        ],
+      })
+      console.log('[mail] resend', {
+        success: resend.success,
         messageId: resend.messageId,
-        provider: 'resend',
-        accepted: [mailTo],
+        to: mailTo,
+        error: resend.message,
+      })
+      if (resend.success) {
+        return {
+          success: true,
+          messageId: resend.messageId,
+          provider: 'resend',
+          accepted: [mailTo],
+        }
       }
+      console.warn('[mail] resend failed, trying next', resend.message)
     }
-    // fall through to SMTP
-    console.warn('[mail] resend failed, falling back to SMTP', resend.message)
+
+    if ((mode === 'brevo' || mode === 'auto' || !mode) && isBrevoConfigured()) {
+      const brevo = await sendViaBrevo({
+        to: mailTo,
+        subject: options.subject,
+        html,
+        text,
+        fromName: mailFromName,
+      })
+      console.log('[mail] brevo', {
+        success: brevo.success,
+        messageId: brevo.messageId,
+        to: mailTo,
+        error: brevo.message,
+      })
+      if (brevo.success) {
+        return {
+          success: true,
+          messageId: brevo.messageId,
+          provider: 'brevo',
+          accepted: [mailTo],
+        }
+      }
+      console.warn('[mail] brevo failed, falling back to SMTP', brevo.message)
+    }
   }
 
   const config = getMailRuntimeConfig()

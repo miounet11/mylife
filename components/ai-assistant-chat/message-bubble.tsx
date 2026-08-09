@@ -349,7 +349,7 @@ export function MessageBubble({
           </span>
           <div className="flex flex-wrap items-center gap-1.5">
             {time ? <span>{time}</span> : null}
-            {!isOpening && onFeedback ? (
+            {!isOpening && onFeedback && feedback ? (
               <>
                 <button
                   type="button"
@@ -440,6 +440,43 @@ export function MessageBubble({
             </button>
           </div>
         </div>
+        {/* Prominent post-answer sampling — not buried in toolbar */}
+        {!isOpening && onFeedback && !feedback ? (
+          <div
+            className="mt-2 flex flex-wrap items-center gap-2 rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-2.5 py-2"
+            data-feedback-prompt="1"
+          >
+            <span className="text-[11px] font-medium text-[color:var(--ink-3)]">
+              {t('本回答有用吗？', 'Was this answer helpful?')}
+            </span>
+            <button
+              type="button"
+              onClick={() => onFeedback(message.id, 'helpful')}
+              disabled={isActing}
+              className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[color:var(--ink-1)] ring-1 ring-[color:var(--hairline)] disabled:opacity-60"
+            >
+              <ThumbsUp className="h-3 w-3" />
+              {t('有用', 'Helpful')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onFeedback(message.id, 'not_helpful')}
+              disabled={isActing}
+              className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[color:var(--ink-1)] ring-1 ring-[color:var(--hairline)] disabled:opacity-60"
+            >
+              <ThumbsDown className="h-3 w-3" />
+              {t('无帮助', 'Not helpful')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onFeedback(message.id, 'empty')}
+              disabled={isActing}
+              className="inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-[color:var(--ink-3)] ring-1 ring-[color:var(--hairline)] disabled:opacity-60"
+            >
+              {t('太空', 'Vague')}
+            </button>
+          </div>
+        ) : null}
         {!isOpening && feedback ? (
           <div className="mt-1.5 text-[11px] text-[#8a8d91]">
             {t('已记录反馈：', 'Feedback saved: ')}
