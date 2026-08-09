@@ -14,12 +14,17 @@ export default async function AdminFeedbackPage() {
   const counts = countSiteFeedbackByStatus();
 
   return (
-    <div className="min-h-screen bg-[color:var(--bg)]">
+    <div className="page-shell min-h-screen bg-[color:var(--bg-sunken)]">
       <AdminHeader />
-      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+      <main className="page-frame py-8 pb-16">
         <div className="mb-5">
-          <h1 className="text-xl font-black tracking-tight text-[color:var(--ink-1)]">用户反馈 / 报错</h1>
-          <p className="mt-1 text-sm text-[color:var(--ink-3)]">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand)]">
+            Feedback
+          </div>
+          <h1 className="mt-1 text-2xl font-black tracking-tight text-[color:var(--ink-1)] md:text-3xl">
+            用户反馈 / 报错
+          </h1>
+          <p className="mt-1 text-[13px] text-[color:var(--ink-3)]">
             匿名留言与报错入口汇总。用户看不到运营邮箱；新提交会尝试邮件通知运营。
           </p>
         </div>

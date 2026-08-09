@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { requireAdminUser } from '@/lib/auth';
 import { getProductFunnelSnapshot } from '@/lib/product-analytics-dashboard';
-import { AppPage } from '@/components/layout/app-page';
+import { AdminFooter, AdminHeader } from '@/components/admin-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,21 +9,22 @@ export default async function AdminProductFunnelPage() {
   const snap = getProductFunnelSnapshot();
 
   return (
-    <AppPage header={{ ctaHref: '/admin/dashboard', ctaLabel: '运营看板' }}>
+    <div className="page-shell min-h-screen bg-[color:var(--bg-sunken)]">
+      <AdminHeader />
+      <main className="page-frame py-8 pb-16">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#6d28d9]">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand)]">
             Product Analytics
           </div>
-          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">双轨产品漏斗</h1>
-          <p className="mt-1 text-[12px] text-[#64748b]">
+          <h1 className="mt-1 text-2xl font-black text-[color:var(--ink-1)] md:text-3xl">
+            双轨产品漏斗
+          </h1>
+          <p className="mt-1 text-[13px] text-[color:var(--ink-3)]">
             大众决策闭环 × 专业开业交付 · 数据来自 analytics_events · 生成于{' '}
             {snap.generatedAt.slice(0, 19).replace('T', ' ')}
           </p>
         </div>
-        <Link href="/admin/dashboard" className="text-[12px] font-semibold text-[#6d28d9] hover:underline">
-          ← 运营看板
-        </Link>
       </div>
 
       <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -78,7 +78,9 @@ export default async function AdminProductFunnelPage() {
           </li>
         </ul>
       </section>
-    </AppPage>
+      </main>
+      <AdminFooter />
+    </div>
   );
 }
 

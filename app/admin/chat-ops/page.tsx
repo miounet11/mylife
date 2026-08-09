@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { requireAdminUser } from '@/lib/auth';
 import { getChatOpsSnapshot } from '@/lib/chat-ops-snapshot';
-import { AppPage } from '@/components/layout/app-page';
+import { AdminFooter, AdminHeader } from '@/components/admin-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,21 +33,23 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
     windowHours === 168 ? '7d' : windowHours === 72 ? '72h' : '24h';
 
   return (
-    <AppPage header={{ ctaHref: '/admin/dashboard', ctaLabel: '运营看板' }}>
+    <div className="page-shell min-h-screen bg-[color:var(--bg-sunken)]">
+      <AdminHeader />
+      <main className="page-frame py-8 pb-16">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#6d28d9]">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand)]">
             Chat Ops
           </div>
-          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">
+          <h1 className="mt-1 text-2xl font-black text-[color:var(--ink-1)] md:text-3xl">
             对话运营 · {windowLabel}
           </h1>
-          <p className="mt-1 text-[12px] text-[#64748b]">
+          <p className="mt-1 text-[13px] text-[color:var(--ink-3)]">
             顾问开场 · 结构合规 · 用户反馈 · EFC 校验 · 自 {snap.since}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[#6d28d9]">
-          <div className="flex overflow-hidden rounded-[8px] border border-[#e2e8f0] bg-white">
+        <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[color:var(--brand)]">
+          <div className="flex overflow-hidden rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
             {WINDOW_OPTIONS.map((opt) => {
               const active = windowHours === opt.hours;
               return (
@@ -56,8 +58,8 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
                   href={`/admin/chat-ops?hours=${opt.hours}`}
                   className={`px-2.5 py-1.5 no-underline hover:no-underline ${
                     active
-                      ? 'bg-[#6d28d9] text-white'
-                      : 'text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+                      ? 'bg-[color:var(--brand)] text-white'
+                      : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]'
                   }`}
                 >
                   {opt.label}
@@ -70,9 +72,6 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
           </Link>
           <Link href="/admin/product-funnel" className="hover:underline">
             双轨漏斗
-          </Link>
-          <Link href="/admin/dashboard" className="hover:underline">
-            ← 看板
           </Link>
         </div>
       </div>
@@ -261,13 +260,15 @@ export default async function AdminChatOpsPage({ searchParams }: PageProps) {
         </Card>
       </div>
 
-      <p className="mt-6 text-[11px] leading-5 text-[#94a3b8]">
+      <p className="mt-6 text-[11px] leading-5 text-[color:var(--ink-4)]">
         目标：开场→starter 转化与「有用」占比上升；结构丰富率上升、thin 与 EFC 告警趋近 0。
         raw page_viewed 常含爬虫/外链预抓；看 engaged PV 与 opening_shown 更可靠。
         注意：2026-07-15 后曾漏打 chat_page_viewed（messenger 改版），已恢复；此前 PV 勿与开场对比。
-        数据来自 analytics_events。时段：24h / 72h / 7d。
+        数据来自 analytics_events + data/chat-ledgers/quality。时段：24h / 72h / 7d。
       </p>
-    </AppPage>
+      </main>
+      <AdminFooter />
+    </div>
   );
 }
 

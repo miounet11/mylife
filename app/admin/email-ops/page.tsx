@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { requireAdminUser } from '@/lib/auth';
 import { getEmailOpsSnapshot } from '@/lib/email/timing-email-stats';
-import { AppPage } from '@/components/layout/app-page';
+import { AdminFooter, AdminHeader } from '@/components/admin-shell';
 
 export const dynamic = 'force-dynamic';
 
@@ -63,25 +63,27 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
   const predictionDueLast = snap.predictionDueLastRun;
 
   return (
-    <AppPage header={{ ctaHref: '/admin/dashboard', ctaLabel: '运营看板' }}>
+    <div className="page-shell min-h-screen bg-[color:var(--bg-sunken)]">
+      <AdminHeader />
+      <main className="page-frame py-8 pb-16">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
-          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[#6d28d9]">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand)]">
             Email Delivery Ops
           </div>
-          <h1 className="mt-1 text-[20px] font-bold text-[#0f172a]">
+          <h1 className="mt-1 text-2xl font-black text-[color:var(--ink-1)] md:text-3xl">
             邮件投递统计 · {windowLabel}
           </h1>
-          <p className="mt-1 max-w-2xl text-[12px] leading-[1.65] text-[#64748b]">
-            基于 <code className="rounded bg-[#f1f5f9] px-1">timing_email_log</code> 的投递计数
+          <p className="mt-1 max-w-2xl text-[13px] leading-[1.65] text-[color:var(--ink-3)]">
+            基于 <code className="rounded bg-[color:var(--bg-sunken)] px-1">timing_email_log</code> 的投递计数
             （sent / error / reserved）。无 open-pixel，本页不展示打开率。
             {snap.note ? (
               <span className="ml-1 text-[#b45309]">· note: {snap.note}</span>
             ) : null}
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[#6d28d9]">
-          <div className="flex overflow-hidden rounded-[8px] border border-[#e2e8f0] bg-white">
+        <div className="flex flex-wrap items-center gap-3 text-[12px] font-semibold text-[color:var(--brand)]">
+          <div className="flex overflow-hidden rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)]">
             {DAY_OPTIONS.map((opt) => {
               const active = days === opt.days;
               return (
@@ -90,8 +92,8 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
                   href={`/admin/email-ops?days=${opt.days}`}
                   className={`px-2.5 py-1.5 no-underline hover:no-underline ${
                     active
-                      ? 'bg-[#6d28d9] text-white'
-                      : 'text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+                      ? 'bg-[color:var(--brand)] text-white'
+                      : 'text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)] hover:text-[color:var(--ink-1)]'
                   }`}
                 >
                   {opt.label}
@@ -99,9 +101,6 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
               );
             })}
           </div>
-          <Link href="/admin/dashboard" className="hover:underline">
-            ← 运营看板
-          </Link>
         </div>
       </div>
 
@@ -420,6 +419,8 @@ export default async function AdminEmailOpsPage({ searchParams }: PageProps) {
           </div>
         </ul>
       </section>
-    </AppPage>
+      </main>
+      <AdminFooter />
+    </div>
   );
 }
