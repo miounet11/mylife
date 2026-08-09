@@ -1,9 +1,12 @@
 /**
  * Destiny-centered content matrix — Life K-Line equivalent of LDPlayer entity pages.
  *
- * LDPlayer wins SEO with: entity hubs (app/*) × guides × FAQ × lists × multi-locale.
- * We map that to: life entities (dimension / question / city / industry / day-master /
- * life-stage / tool) × article templates × locales × refresh cadence.
+ * Constitution: docs/ldplayer-ops-and-google-alignment.md
+ *
+ * Learn from LDPlayer: real entity hub → satellite content for concrete jobs →
+ * real freshness → internal links → CTA. NOT cartesian long-tail URL farms.
+ *
+ * Full matrix is a catalog; production must use buildPeopleFirstQueue / people-first mode.
  */
 
 import { DIMENSIONS } from '@/lib/dimensions/config';
@@ -45,7 +48,9 @@ export type DestinyMatrixSlot = {
   contentType: ManagedContentType;
   locale: ContentOsLocale;
   market: string;
+  /** User job / concrete decision task (LDPlayer: "how to install", "how to pick style") */
   topic: string;
+  /** Unique angle — must not be swappable by replacing entity name alone */
   angle: string;
   keywords: string[];
   audience: string;
@@ -59,6 +64,8 @@ export type DestinyMatrixSlot = {
     label: string;
   };
   searchIntents: string[];
+  /** Parent hub path for internal linking */
+  hubHref?: string;
 };
 
 export const CONTENT_OS_LOCALES: Array<{
@@ -82,6 +89,11 @@ const LIFE_QUESTIONS: Array<{
   slug: string;
   name: string;
   topic: string;
+  /** Unique angle — NOT a shared template sentence */
+  uniqueAngle: string;
+  uniqueAngleEn: string;
+  caseAngle: string;
+  caseAngleEn: string;
   keywords: string[];
   cta: string;
   intents: string[];
@@ -90,6 +102,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'should-i-change-job',
     name: '该不该换工作',
     topic: '换工作时机与风险窗口如何判断',
+    uniqueAngle: '用事业十神与大运交接判断「换岗是窗口还是逃避」，并设计 90 天可回访验证',
+    uniqueAngleEn: 'Separate promotion window vs escape urge using career stars and dayun handoff; design a 90-day revisit',
+    caseAngle: '跳槽焦虑下如何拆「环境压力 vs 结构不适配」两个变量',
+    caseAngleEn: 'Under job-change anxiety, separate environment pressure from structure mismatch',
     keywords: ['换工作', '跳槽', '职业窗口', '事业运'],
     cta: '/dimensions/career-industry',
     intents: ['现在适合跳槽吗', '换工作看八字还是现实', '跳槽年份怎么选'],
@@ -98,6 +114,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'when-to-marry',
     name: '什么时候适合谈婚论嫁',
     topic: '婚恋推进窗口与关系节奏',
+    uniqueAngle: '关系推进看夫妻宫与流年互动窗口，而不是「今年吉不吉」一句话',
+    uniqueAngleEn: 'Relationship pacing via spouse palace and yearly interaction windows—not a single lucky-year label',
+    caseAngle: '想结婚但对方犹豫：如何判断该推进还是给空间',
+    caseAngleEn: 'Want to marry while partner hesitates: push forward or give space',
     keywords: ['结婚', '婚恋', '谈婚论嫁', '关系节奏'],
     cta: '/dimensions/marriage',
     intents: ['今年适合结婚吗', '感情推进还是观望', '合婚怎么看'],
@@ -106,6 +126,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'invest-or-hold',
     name: '今年宜进还是宜守',
     topic: '财富节奏与风险控制窗口',
+    uniqueAngle: '财星与比劫节奏决定「加仓验证」还是「现金流防守」，禁止收益承诺',
+    uniqueAngleEn: 'Wealth-star vs peer competition sets verify-size vs cash-flow defense—never return promises',
+    caseAngle: '想加杠杆时如何用时位层做止损式决策',
+    caseAngleEn: 'When tempted to leverage, use timing layer for stop-loss style decisions',
     keywords: ['投资', '破财', '守成', '现金流'],
     cta: '/dimensions/investment',
     intents: ['今年适合投资吗', '破财年怎么守', '财富节奏怎么看'],
@@ -114,6 +138,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'move-city',
     name: '要不要换城市发展',
     topic: '迁移择城与环境层压力测试',
+    uniqueAngle: '迁城是环境层重排：用神发挥方式对照城市成本与行业密度，先小步验证',
+    uniqueAngleEn: 'Relocation is environment reset: match useful-god play-style to cost and industry density; pilot first',
+    caseAngle: '一线回流 vs 海外：如何写清可支付边界与 90 天试住',
+    caseAngleEn: 'Tier-1 return vs overseas: write payability bounds and a 90-day trial stay',
     keywords: ['迁移', '换城市', '定居', '城市运'],
     cta: '/movement',
     intents: ['换城市看风水还是机会', '海外发展适合吗', '迁城时机'],
@@ -122,6 +150,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'study-major',
     name: '升学与专业方向',
     topic: '升学方向、考试窗口与专业匹配',
+    uniqueAngle: '专业选择对齐印星/食伤发挥，而不是只听「热门专业」叙事',
+    uniqueAngleEn: 'Major choice aligns with resource vs expression play-style—not hot-major hype alone',
+    caseAngle: '家庭期望与个人兴趣冲突时，如何设 30 天信息收集动作',
+    caseAngleEn: 'Family expectation vs interest: design a 30-day information-gathering action',
     keywords: ['升学', '高考', '专业选择', '学业'],
     cta: '/dimensions/study-career',
     intents: ['专业怎么选', '考试年份运势', '升学焦虑'],
@@ -130,6 +162,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'start-business',
     name: '创业还是打工',
     topic: '创业窗口、合伙风险与现金流',
+    uniqueAngle: '创业看比劫/财官组合与现金流跑道，先验证再加码',
+    uniqueAngleEn: 'Founding depends on peer/wealth/officer mix and cash runway—validate before scaling',
+    caseAngle: '有合伙邀约时如何判断角色分工是否匹配结构',
+    caseAngleEn: 'When offered partnership, check role split against structure fit',
     keywords: ['创业', '合伙', '事业', '风险'],
     cta: '/dimensions/career-industry',
     intents: ['适合创业吗', '合伙合不合', '创业年份'],
@@ -138,6 +174,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'name-change',
     name: '改名有没有用',
     topic: '起名改名与用神补充边界',
+    uniqueAngle: '改名只能补用神与表达边界，不能替代结构与时位判断',
+    uniqueAngleEn: 'Name change can support useful-god expression—it cannot replace structure or timing',
+    caseAngle: '想靠改名转运：如何识别不现实预期并改走可验证路径',
+    caseAngleEn: 'Hoping a name change flips fate: spot unrealistic expectations and switch to verifiable paths',
     keywords: ['改名', '起名', '五行', '用神'],
     cta: '/tools/naming',
     intents: ['改名看什么', '姓名五行', '起名用神'],
@@ -146,6 +186,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'read-my-report',
     name: '怎么读懂命理报告',
     topic: '普通人如何读结构、阶段与动作',
+    uniqueAngle: '报告阅读顺序：先结构摘要 → 阶段窗口 → 一条可验证动作，拒绝吉凶标签跳读',
+    uniqueAngleEn: 'Report reading order: structure summary → stage window → one verifiable action; no luck-label skimming',
+    caseAngle: '看完报告更焦虑：如何把结论改写成 7 天实验',
+    caseAngleEn: 'More anxious after reading a report: rewrite conclusions as a 7-day experiment',
     keywords: ['报告', '解读', '命盘', '人生K线'],
     cta: '/docs/read-first-report',
     intents: ['报告怎么看', '五行强弱', '用神是什么'],
@@ -154,6 +198,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'true-solar-time',
     name: '真太阳时为什么重要',
     topic: '出生时间精度与排盘误差',
+    uniqueAngle: '真太阳时影响时柱边界：不确定时降级判断并标注可信度',
+    uniqueAngleEn: 'True solar time hits hour-pillar boundaries: degrade confidence when birth time is uncertain',
+    caseAngle: '只记得大概时辰：如何做区间排盘与结论降级',
+    caseAngleEn: 'Only approximate birth hour: interval charting and conclusion downgrade',
     keywords: ['真太阳时', '排盘', '时柱', '出生时间'],
     cta: '/docs/solar-time',
     intents: ['真太阳时怎么算', '时辰不准怎么办', '排盘误差'],
@@ -162,6 +210,10 @@ const LIFE_QUESTIONS: Array<{
     slug: 'benmingnian',
     name: '本命年要注意什么',
     topic: '本命年、太岁与节奏管理（非恐吓）',
+    uniqueAngle: '本命年是节奏管理题：收敛高风险敞口、加强回访，而不是禁忌清单恐吓',
+    uniqueAngleEn: 'Benmingnian is pacing management: cut risk exposure and strengthen revisits—not taboo scare lists',
+    caseAngle: '本命年想创业/结婚：如何用风险分层而不是一刀切禁止',
+    caseAngleEn: 'Want to found/marry in benmingnian: risk tiers instead of blanket bans',
     keywords: ['本命年', '太岁', '流年', '风险'],
     cta: '/dimensions/fortune-rhythm',
     intents: ['本命年忌讳', '太岁是什么', '本命年适合做什么'],
@@ -313,9 +365,7 @@ function buildLifeQuestionSlots(locale: ContentOsLocale, market: string, weight:
         template: 'how-to' as const,
         contentType: 'knowledge' as const,
         topic: localizeTopic(q.topic, locale),
-        angle: isEnglish(locale)
-          ? 'Step-by-step decision checklist with timing windows'
-          : '分步判断清单 + 时间窗口 + 风险边界',
+        angle: isEnglish(locale) ? q.uniqueAngleEn : q.uniqueAngle,
         pathFamily: 'knowledge' as const,
         priority: weight + 25,
         refreshDays: 60,
@@ -326,9 +376,7 @@ function buildLifeQuestionSlots(locale: ContentOsLocale, market: string, weight:
         template: 'case-study' as const,
         contentType: 'case' as const,
         topic: localizeTopic(`${q.name}：真实决策压力如何拆解`, locale),
-        angle: isEnglish(locale)
-          ? 'Case narrative: pressure stack → variables → action window'
-          : '案例叙事：压力叠加 → 变量拆解 → 动作窗口',
+        angle: isEnglish(locale) ? q.caseAngleEn : q.caseAngle,
         pathFamily: 'cases' as const,
         priority: weight + 18,
         refreshDays: 75,
@@ -595,14 +643,24 @@ function buildFaqSlots(locale: ContentOsLocale, market: string, weight: number):
   }));
 }
 
-/** Full matrix across all locales (large). Prefer buildContentOsMatrix({ locales }) for batches. */
+/**
+ * Full catalog matrix (can be large). For production generation use
+ * buildPeopleFirstCatalog / scheduler people-first mode instead.
+ */
 export function buildContentOsMatrix(options?: {
   locales?: ContentOsLocale[];
   year?: number;
   includeSeasonal?: boolean;
+  /** Include day-master / life-stage (doorway-risk). Default false. */
+  includeDoorwayRiskKinds?: boolean;
+  /** Include tool comparison templates. Default false. */
+  includeComparisons?: boolean;
 }): DestinyMatrixSlot[] {
   const year = options?.year || new Date().getFullYear();
-  const includeSeasonal = options?.includeSeasonal !== false;
+  // Default OFF — seasonal farms are anti-Google scaled content
+  const includeSeasonal = options?.includeSeasonal === true;
+  const includeDoorway = options?.includeDoorwayRiskKinds === true;
+  const includeComparisons = options?.includeComparisons === true;
   const localeFilter = options?.locales
     ? new Set(options.locales)
     : null;
@@ -617,18 +675,66 @@ export function buildContentOsMatrix(options?: {
       ...buildLifeQuestionSlots(locale, market, weight),
       ...buildCitySlots(locale, market, weight),
       ...buildIndustrySlots(locale, market, weight),
-      ...buildDayMasterSlots(locale, market, weight),
-      ...buildLifeStageSlots(locale, market, weight),
-      ...buildToolSlots(locale, market, weight),
+      ...buildToolSlots(locale, market, weight).filter(
+        (s) => includeComparisons || s.template !== 'comparison',
+      ),
       ...buildMethodologySlots(locale, market, weight),
       ...buildFaqSlots(locale, market, weight),
     );
+    if (includeDoorway) {
+      slots.push(
+        ...buildDayMasterSlots(locale, market, weight),
+        ...buildLifeStageSlots(locale, market, weight),
+      );
+    }
     if (includeSeasonal) {
-      slots.push(...buildSeasonalSlots(locale, market, weight, year));
+      // Only current month in catalog helpers that need it — full year only if explicitly requested
+      const all = buildSeasonalSlots(locale, market, weight, year);
+      const month = new Date().getMonth() + 1;
+      slots.push(...all.filter((s) => s.entitySlug.endsWith(`-m${String(month).padStart(2, '0')}`)));
     }
   }
 
-  return slots.sort((a, b) => b.priority - a.priority || a.key.localeCompare(b.key));
+  return slots
+    .map((s) => ({
+      ...s,
+      hubHref:
+        s.hubHref ||
+        `/topics/${
+          s.entityKind === 'life-question'
+            ? `q-${s.entitySlug}`
+            : s.entityKind === 'dimension'
+              ? `dimension-${s.entitySlug}`
+              : s.entityKind === 'tool'
+                ? `tool-${s.entitySlug}`
+                : s.entityKind === 'city'
+                  ? `city-${s.entitySlug}`
+                  : s.entityKind === 'industry'
+                    ? `industry-${s.entitySlug}`
+                    : s.entityKind === 'day-master'
+                      ? `day-master-${s.entitySlug}`
+                      : `${s.entityKind}-${s.entitySlug}`
+        }`,
+    }))
+    .sort((a, b) => b.priority - a.priority || a.key.localeCompare(b.key));
+}
+
+/**
+ * People-first production catalog: primary hubs + satellites only.
+ * Matches LDPlayer: entity hub depth + problem-solving satellites.
+ */
+export function buildPeopleFirstCatalog(options?: {
+  locales?: ContentOsLocale[];
+  year?: number;
+}): DestinyMatrixSlot[] {
+  const locales = options?.locales?.length ? options.locales : (['zh-CN'] as ContentOsLocale[]);
+  return buildContentOsMatrix({
+    locales,
+    year: options?.year,
+    includeSeasonal: true, // current month only (filtered inside)
+    includeDoorwayRiskKinds: false,
+    includeComparisons: false,
+  });
 }
 
 export function summarizeContentOsMatrix(slots: DestinyMatrixSlot[]) {

@@ -6,7 +6,7 @@ import {
   resolveContentOsTextEndpoint,
   runContentOsCycle,
   summarizeContentOsMatrix,
-  buildContentOsMatrix,
+  buildPeopleFirstCatalog,
   CONTENT_OS_LOCALES,
 } from '@/lib/content-os';
 import { getContentGenerationCronToken, getSystemHealthTokens } from '@/lib/env';
@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
     ? (localesParam.split(',').map((s) => s.trim()).filter(Boolean) as never)
     : undefined;
 
-  const matrix = buildContentOsMatrix({ locales, includeSeasonal: true });
+  const matrix = buildPeopleFirstCatalog({ locales });
   const plan = buildContentOsRunPlan({
     locales,
     limit: Number(request.nextUrl.searchParams.get('limit') || 8),
@@ -56,6 +56,12 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     ok: true,
+    constitution: {
+      doc: 'docs/ldplayer-ops-and-google-alignment.md',
+      northStar: 'indexable search clicks → open chat / free chart',
+      notNorthStar: 'published URL count',
+      mode: process.env.CONTENT_OS_MODE || 'people-first',
+    },
     endpoint: {
       baseUrl: endpoint.baseUrl,
       model: endpoint.model,
@@ -70,9 +76,13 @@ export async function GET(request: NextRequest) {
       queue: plan.queue.map((s) => ({
         key: s.key,
         topic: s.topic,
+        angle: s.angle,
         locale: s.locale,
         priority: s.priority,
         template: s.template,
+        entityKind: s.entityKind,
+        entitySlug: s.entitySlug,
+        hubHref: s.hubHref,
       })),
       reasons: plan.reasons,
     },

@@ -4,6 +4,7 @@
 
 export {
   buildContentOsMatrix,
+  buildPeopleFirstCatalog,
   summarizeContentOsMatrix,
   listDestinyEntityHubs,
   getDestinyEntityHub,
@@ -14,6 +15,18 @@ export {
   type ContentOsLocale,
   type ContentTemplateKind,
 } from '@/lib/content-os/matrix';
+
+export {
+  resolveContentOsMode,
+  resolveProductionLocales,
+  gateSlotForProduction,
+  canExpandLocale,
+  peopleFirstPriorityBoost,
+  textSimilarity,
+  PRODUCTION_CONSTITUTION_SUMMARY,
+  type ContentOsMode,
+  type ProductionGateResult,
+} from '@/lib/content-os/production-policy';
 
 export {
   resolveContentOsTextEndpoint,

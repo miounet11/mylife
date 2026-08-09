@@ -3,7 +3,11 @@
 > 对标：雷电模拟器 [ldmnq.com](https://www.ldmnq.com/) 内容与 SEO 体系  
 > 中心：人生命运（结构 · 时位 · 环境 · 动作 · 风险）  
 > 引擎：自建 SpaceXAI 网关 `https://ttqq.inping.com` · 文本 `auto` · 配图 `z-image-turbo`  
-> 状态：2026-08 落地骨架 + 更新闭环
+> 状态：2026-08 落地骨架 + 更新闭环  
+>
+> **生产宪法（必读）**：[`docs/ldplayer-ops-and-google-alignment.md`](./ldplayer-ops-and-google-alignment.md)  
+> 学雷电的是「实体中枢 → 卫星问题 → 真实更新 → 转化」，**不是**批量刷长尾 URL。  
+> 北极星：**可收录搜索点击 → 开聊/排盘**，不是 published 数量。
 
 ---
 

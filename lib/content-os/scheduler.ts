@@ -10,6 +10,7 @@ import {
 } from '@/lib/content-store';
 import {
   buildContentOsMatrix,
+  buildPeopleFirstCatalog,
   summarizeContentOsMatrix,
   type ContentOsLocale,
   type DestinyMatrixSlot,
@@ -21,6 +22,14 @@ import {
 } from '@/lib/content-os/generator';
 import { repairContentOsArticle, type RepairedArticle } from '@/lib/content-os/repair';
 import { scoreContentOsDimensions } from '@/lib/content-os/quality-dimensions';
+import {
+  canExpandLocale,
+  gateSlotForProduction,
+  peopleFirstPriorityBoost,
+  resolveContentOsMode,
+  resolveProductionLocales,
+  PRODUCTION_CONSTITUTION_SUMMARY,
+} from '@/lib/content-os/production-policy';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -83,10 +92,17 @@ export function buildCoverageMap(params?: {
   locales?: ContentOsLocale[];
   entries?: ManagedContentEntry[];
 }): ContentOsCoverageRow[] {
-  const slots = buildContentOsMatrix({
-    locales: params?.locales,
-    includeSeasonal: true,
-  });
+  const mode = resolveContentOsMode();
+  const locales = resolveProductionLocales(params?.locales);
+  const slots =
+    mode === 'people-first'
+      ? buildPeopleFirstCatalog({ locales })
+      : buildContentOsMatrix({
+          locales,
+          includeSeasonal: true,
+          includeDoorwayRiskKinds: true,
+          includeComparisons: true,
+        });
   const entries = params?.entries || listManagedContentEntries();
   const byMatrix = new Map<string, ManagedContentEntry>();
   for (const entry of entries) {
@@ -137,42 +153,96 @@ export function buildContentOsRunPlan(params?: {
   prefer?: Array<'missing' | 'stale' | 'draft'>;
   minPriority?: number;
 }): ContentOsRunPlan {
-  const limit = Math.max(1, Math.min(params?.limit || 8, 40));
+  const limit = Math.max(1, Math.min(params?.limit || 8, 20));
   const prefer = params?.prefer || ['missing', 'stale'];
   const minPriority = params?.minPriority ?? 0;
-  const matrix = buildContentOsMatrix({
-    locales: params?.locales,
-    includeSeasonal: true,
-  });
-  const coverage = buildCoverageMap({ locales: params?.locales });
+  const mode = resolveContentOsMode();
+  const locales = resolveProductionLocales(params?.locales);
+  const entries = listManagedContentEntries();
+
+  // People-first catalog (default): finite hubs + satellites, not 990-slot farm
+  const matrix =
+    mode === 'people-first'
+      ? buildPeopleFirstCatalog({ locales })
+      : buildContentOsMatrix({
+          locales,
+          includeSeasonal: true,
+          includeDoorwayRiskKinds: true,
+          includeComparisons: true,
+        });
+
+  const coverage = buildCoverageMap({ locales, entries });
   const coverageByKey = new Map(coverage.map((row) => [row.key, row]));
+  const published = entries.filter((e) => e.status === 'published' || e.status === 'draft');
 
   const reasons: string[] = [];
   const queue: DestinyMatrixSlot[] = [];
+  const skipped: string[] = [];
+
+  const rankSlot = (slot: DestinyMatrixSlot) =>
+    slot.priority + peopleFirstPriorityBoost(slot);
+
+  const tryEnqueue = (slot: DestinyMatrixSlot, reason: string) => {
+    if (queue.length >= limit) return;
+    if (queue.some((item) => item.key === slot.key)) return;
+
+    if (mode === 'people-first' && !canExpandLocale({ slot, published })) {
+      skipped.push(`locale-wait:${slot.key}`);
+      return;
+    }
+
+    const gate = gateSlotForProduction(slot, published, { mode });
+    if (!gate.allow) {
+      skipped.push(`gate:${slot.key}:${gate.reasons[0] || 'blocked'}`);
+      return;
+    }
+
+    queue.push(slot);
+    reasons.push(`${reason}: ${slot.topic} [${slot.entityKind}/${slot.entitySlug}]`);
+  };
 
   const pick = (status: ContentOsCoverageRow['status'], reason: string) => {
     const candidates = matrix
       .filter((slot) => slot.priority >= minPriority)
       .filter((slot) => coverageByKey.get(slot.key)?.status === status)
-      .sort((a, b) => b.priority - a.priority);
+      .sort((a, b) => rankSlot(b) - rankSlot(a));
 
     for (const slot of candidates) {
       if (queue.length >= limit) break;
-      if (queue.some((item) => item.key === slot.key)) continue;
-      queue.push(slot);
-      reasons.push(`${reason}: ${slot.key}`);
+      tryEnqueue(slot, reason);
     }
   };
 
   for (const status of prefer) {
     if (queue.length >= limit) break;
-    pick(status, status === 'missing' ? '补齐缺口' : status === 'stale' ? '刷新过期' : '推进草稿');
+    // People-first labels: satellite problem fill, not "刷缺口"
+    const label =
+      status === 'missing'
+        ? mode === 'people-first'
+          ? '实体卫星补问'
+          : '补齐缺口'
+        : status === 'stale'
+          ? '真实刷新'
+          : '推进草稿';
+    pick(status, label);
   }
 
-  // If still empty (local stub with no locale match), take top priority pillars.
+  // Cold start: top life-question + dimension how-tos only
   if (queue.length === 0) {
-    queue.push(...matrix.filter((s) => s.priority >= minPriority).slice(0, limit));
-    reasons.push('冷启动：按优先级生成支柱内容');
+    const cold = matrix
+      .filter(
+        (s) =>
+          s.priority >= minPriority &&
+          (s.entityKind === 'life-question' ||
+            s.entityKind === 'dimension' ||
+            s.entityKind === 'methodology' ||
+            (s.entityKind === 'tool' && s.template === 'how-to')),
+      )
+      .sort((a, b) => rankSlot(b) - rankSlot(a));
+    for (const slot of cold) {
+      if (queue.length >= limit) break;
+      tryEnqueue(slot, '冷启动：高意图任务型卫星');
+    }
   }
 
   const counts = {
@@ -182,12 +252,18 @@ export function buildContentOsRunPlan(params?: {
     stale: coverage.filter((r) => r.status === 'stale').length,
   };
 
+  if (skipped.length) {
+    reasons.push(
+      `policy skipped ${skipped.length} (near-dup/locale/doorway); mode=${mode}; ${PRODUCTION_CONSTITUTION_SUMMARY.northStar}`,
+    );
+  }
+
   return {
     generatedAt: new Date().toISOString(),
     matrixSummary: summarizeContentOsMatrix(matrix),
     coverage: counts,
     queue: queue.slice(0, limit),
-    reasons: reasons.slice(0, limit),
+    reasons: reasons.slice(0, limit + 3),
   };
 }
 

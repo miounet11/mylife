@@ -28,7 +28,8 @@ const TOKEN =
   process.env.CONTENT_SCHEDULER_CRON_TOKEN ||
   '';
 const LIMIT = Math.max(1, Math.min(12, Number(process.env.CONTENT_OS_BATCH_LIMIT || 4)));
-const LOCALES = (process.env.CONTENT_OS_LOCALES || 'zh-CN,zh-TW,en-US')
+// People-first default: primary locale first (expand only after hubs exist)
+const LOCALES = (process.env.CONTENT_OS_LOCALES || 'zh-CN')
   .split(',')
   .map((s) => s.trim())
   .filter(Boolean);
@@ -149,7 +150,15 @@ async function tick() {
   }
 }
 
-log('start', { INTERVAL_MS, LIMIT, LOCALES, USE_CLI, ROOT });
+log('start', {
+  INTERVAL_MS,
+  LIMIT,
+  LOCALES,
+  USE_CLI,
+  ROOT,
+  mode: process.env.CONTENT_OS_MODE || 'people-first',
+  northStar: 'indexable clicks → chart/chat (not URL count)',
+});
 setTimeout(() => {
   tick();
   setInterval(tick, INTERVAL_MS);

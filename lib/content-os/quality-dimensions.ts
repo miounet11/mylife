@@ -383,11 +383,20 @@ export function scoreContentOsDimensions(
 
   const anti = dims.find((d) => d.key === 'antiSpam')!;
   const locale = dims.find((d) => d.key === 'localePurity')!;
+  // People-first publish bar (Google + LDPlayer): higher than "looks long enough"
+  const depth = dims.find((d) => d.key === 'depth')!;
+  const decision = dims.find((d) => d.key === 'decisionUtility')!;
+  const faq = dims.find((d) => d.key === 'faqCoverage')!;
   const publishReady =
-    overall >= 82 &&
-    anti.score >= 70 &&
-    locale.score >= 70 &&
-    dims.find((d) => d.key === 'depth')!.score >= 65;
+    overall >= 86 &&
+    anti.score >= 75 &&
+    locale.score >= 80 &&
+    depth.score >= 72 &&
+    decision.score >= 70 &&
+    faq.score >= 55 &&
+    Boolean(article.llmUsed) &&
+    // Title must look like a user job, not "Best {tag} 2026"
+    !/best\s+.+\s+202\d|top\s+\d+|终极指南|最全合集/i.test(article.title || '');
 
   return {
     overall,

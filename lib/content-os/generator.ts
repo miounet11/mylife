@@ -102,36 +102,41 @@ Hard rules:
 function userPrompt(slot: DestinyMatrixSlot) {
   return JSON.stringify(
     {
-      task: 'generate_destiny_seo_article',
+      task: 'generate_people_first_satellite_article',
+      constitution:
+        'Entity hub + satellite problem content (LDPlayer model). NOT template doorway pages. Google people-first.',
       entity: {
         kind: slot.entityKind,
         slug: slot.entitySlug,
         name: slot.entityName,
+        hubHref: slot.hubHref,
       },
+      userJob: slot.topic,
+      uniqueAngle: slot.angle,
       template: slot.template,
       contentType: slot.contentType,
-      topic: slot.topic,
-      angle: slot.angle,
-      keywords: slot.keywords,
+      keywords: (slot.keywords || []).slice(0, 8),
       audience: slot.audience,
       locale: slot.locale,
       market: slot.market,
       searchIntentsSeed: slot.searchIntents,
       productCta: slot.relatedCta,
+      titleStyle:
+        'Task/decision title like LDPlayer news ("how to pick style", "install guide") — NOT "Best X 2026" or swappable tag spam',
       schema: {
-        title: 'string, SEO-strong native title',
+        title: 'native task/decision title (unique; entity name natural)',
         slug: 'kebab-case english slug preferred',
-        excerpt: '80-160 chars summary',
-        seoTitle: '≤ 60 chars for SERP',
+        excerpt: '100-160 chars summary of the decision job',
+        seoTitle: '≤ 60 chars, natural SERP',
         seoDescription: '120-160 chars',
-        answerSummary: '40+ chars (or 25+ EN words) standalone answer',
-        tags: 'string[4-8]',
-        entityKeywords: 'string[5-12]',
-        searchIntents: 'string[3-8] real user queries in target language',
+        answerSummary: 'standalone quotable answer 70+',
+        tags: 'string[3-8] max 8',
+        entityKeywords: 'string[5-10]',
+        searchIntents: 'string[3-6] real queries in target language',
         sections: [
           {
             title: 'section title',
-            paragraphs: ['2-4 rich paragraphs'],
+            paragraphs: ['2-4 rich paragraphs with structure/timing/environment/action'],
           },
         ],
         coverImagePrompt: 'english prompt for editorial cover illustration, clean linear style',

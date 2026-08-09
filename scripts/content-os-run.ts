@@ -26,7 +26,7 @@ function parseArgs(argv: string[]) {
     withImage: argv.includes('--with-image'),
     noPublish: argv.includes('--no-publish'),
     limit: Number(get('--limit', '4')) || 4,
-    locales: get('--locales', 'zh-CN,en-US')
+    locales: get('--locales', 'zh-CN')
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean) as ContentOsLocale[],
