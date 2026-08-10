@@ -72,7 +72,7 @@ export function buildPagePackJsonLdGraph(pack: PageSeoGeoPack): Array<Record<str
     about: pack.entityKeywords.slice(0, 12).map((name) => ({ '@type': 'Thing', name })),
     speakable: {
       '@type': 'SpeakableSpecification',
-      cssSelector: ['[data-page-seo-answer]', 'h1'],
+      cssSelector: ['[data-page-answer]', 'h1'],
     },
   });
   return graph;
@@ -113,7 +113,7 @@ export function PageSeoGeoSection({
     >
       <div
         className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5"
-        data-page-seo-answer
+        data-page-answer
       >
         <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--brand-strong)]">
           直接回答
