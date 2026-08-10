@@ -195,11 +195,14 @@ CONTENT_OS_MAX_NEAR_DUP=0.72   # 与已发布标题/摘要相似度上限
 | 升级前 | ~800 | case-library + encyclopedia 占大头 |
 | wave1–3 | ~380–450 | case-library 清零 |
 | wave4 | ~180 | EN 百科 + 短中文百科 + fallback 下架 |
-| wave5 | ~90 | 模板百科/关键词文、伪 locale、content-os 重复、seed  stub |
-| wave5b | **~40–50** | seed soft-404（&lt;750 字）再清一轮 |
-| 保留原则 | content-os 达标文 + 够深 seed/agent + 方法论长文 | engine 批量源归零 |
+| wave5 | ~90 | 模板百科/关键词文、伪 locale、content-os 重复、seed stub |
+| wave5b–d | **~36** | soft-404 seed 再清；品牌方法论 seed 回挂；EN 壳/批量下架 |
+| 保留原则 | content-os 达标文 + 够深 seed/agent + 方法论锚点 | **engine 批量源 = 0** |
 
-**Sitemap（wave5 后）**：约 **&lt;900** URL（astro evergreen ~270；knowledge/cases 随 published 收缩）。
+**Sitemap（wave5 后）**：约 **~810** URL（astro evergreen ~270；knowledge/cases 随 published 收缩）。  
+
+**品牌 seed 回挂**（`needsThicken=true`，后续 LLM 加厚）：  
+`world-yi-v1-manifesto`、`world-yi-methodology`、`true-solar-time-guide`、`how-to-read-bazi-report` 等。
 
 ---
 
