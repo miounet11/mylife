@@ -134,11 +134,12 @@ SITEMAP_INCLUDE_ASTRO_CALENDAR=1
 
 | 指标 | 目标 |
 |------|------|
-| Sitemap URL 数 | < 2000（优先 < 1200） |
+| Sitemap URL 数 | < 1200（2026-08 已 ~900） |
+| CMS published | 优先 < 100 高质量页，再靠 people-first 日增 |
 | GSC「已编入索引」 | 稳步上升，软 404 下降 |
 | 非品牌点击 | 知识/主题/工具词周环比 + |
 | 核心页 | `/analyze` `/knowledge/*` `/topics/*` 有展示 |
-| Content OS | 日产 8–16 且 publish 通过质量门 |
+| Content OS | 日产 3–10 且仅 `publishReady` 入库 |
 
 ---
 
