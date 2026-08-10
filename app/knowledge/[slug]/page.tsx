@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import ContentActionRail from '@/components/content/content-action-rail';
 import JourneyStrip from '@/components/content/journey-strip';
 import JsonLd from '@/components/seo/json-ld';
@@ -19,7 +19,7 @@ import {
 } from '@/lib/content-article-view';
 import { resolveContentCrosslinks } from '@/lib/content-crosslinks';
 import { getEncyclopediaWorldYiLens } from '@/lib/encyclopedia-world-yi-lens';
-import { getKnowledgeArticleBySlug } from '@/lib/content-store';
+import { getCaseStudyBySlug, getKnowledgeArticleBySlug } from '@/lib/content-store';
 import { CONTENT_BY_SLUG } from '@/lib/content-seeds';
 import { ContentLocaleBadge } from '@/components/content/content-locale-filter';
 import { ContentArticleBody } from '@/components/content/content-article-body';
@@ -105,7 +105,14 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
   const uiLocale = await getRequestLocale(sp.lang);
   // Prefer DB/content-store; fall back to local enriched seeds (SEO pillars / dimension guides)
   const article = getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug) || null;
-  if (!article || (article.type && article.type !== 'knowledge')) notFound();
+  if (!article || (article.type && article.type !== 'knowledge')) {
+    // Content OS life-question satellites may publish as case — send crawlers to canonical path
+    const asCase = getCaseStudyBySlug(slug) || CONTENT_BY_SLUG.get(slug);
+    if (asCase && (!asCase.type || asCase.type === 'case')) {
+      permanentRedirect(`/cases/${slug}`);
+    }
+    notFound();
+  }
 
   const lens = getEncyclopediaWorldYiLens({ slug, source });
   const sections = normalizeSections(article.sections as never);

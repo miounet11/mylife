@@ -575,6 +575,8 @@ export function articleToManagedInput(
       coverImagePrompt: article.coverImagePrompt,
       autoPublished: status === 'published',
       publishedAt: status === 'published' ? new Date().toISOString() : undefined,
+      // Prod isPublicKnowledgeEntry requires publicationReady for non-seed sources
+      publicationReady: status === 'published',
       // Thin / non-ready drafts stay indexable=false for safety if ever exposed
       robotsNoIndex: status !== 'published',
       geoOptimization: {

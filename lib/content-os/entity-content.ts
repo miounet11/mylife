@@ -22,13 +22,18 @@ export type EntityContentCard = {
   score?: number;
 };
 
-function entryHref(entry: ManagedContentEntry) {
+/** Canonical public path for a managed CMS entry (knowledge / cases / insights). */
+export function publicHrefForManagedEntry(entry: ManagedContentEntry) {
   if (entry.contentType === 'case') return `/cases/${entry.slug}`;
   if (entry.contentType === 'insight') {
     const subtype = entry.subtype || 'topic';
     return `/insights/${subtype}/${entry.slug}`;
   }
   return `/knowledge/${entry.slug}`;
+}
+
+function entryHref(entry: ManagedContentEntry) {
+  return publicHrefForManagedEntry(entry);
 }
 
 function isContentOsPublished(entry: ManagedContentEntry) {

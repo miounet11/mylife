@@ -69,6 +69,7 @@ export {
 } from '@/lib/content-os/repair';
 
 export {
+  publicHrefForManagedEntry,
   listPublishedContentOsEntries,
   listContentForEntity,
   buildHotlist,

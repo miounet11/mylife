@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, permanentRedirect } from 'next/navigation';
 import ContentActionRail from '@/components/content/content-action-rail';
 import JourneyStrip from '@/components/content/journey-strip';
 import JsonLd from '@/components/seo/json-ld';
@@ -16,7 +16,7 @@ import {
   normalizeSections,
 } from '@/lib/content-article-view';
 import { resolveContentCrosslinks } from '@/lib/content-crosslinks';
-import { getCaseStudyBySlug } from '@/lib/content-store';
+import { getCaseStudyBySlug, getKnowledgeArticleBySlug } from '@/lib/content-store';
 import { CONTENT_BY_SLUG } from '@/lib/content-seeds';
 import { ContentLocaleBadge } from '@/components/content/content-locale-filter';
 import { ContentArticleBody } from '@/components/content/content-article-body';
@@ -100,7 +100,13 @@ export default async function CaseStudyPage({ params, searchParams }: PageProps)
   const uiLocale = await getRequestLocale(sp.lang);
   const copy = caseArticleCopy(uiLocale);
   const article = getCaseStudyBySlug(slug) || CONTENT_BY_SLUG.get(slug) || null;
-  if (!article || (article.type && article.type !== 'case')) notFound();
+  if (!article || (article.type && article.type !== 'case')) {
+    const asKnowledge = getKnowledgeArticleBySlug(slug) || CONTENT_BY_SLUG.get(slug);
+    if (asKnowledge && (!asKnowledge.type || asKnowledge.type === 'knowledge')) {
+      permanentRedirect(`/knowledge/${slug}`);
+    }
+    notFound();
+  }
 
   const sections = normalizeSections(article.sections as never);
   const trackKey = articleTrackKey(article as never);
