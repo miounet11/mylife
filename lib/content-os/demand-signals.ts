@@ -156,8 +156,20 @@ const CATEGORY_DEFAULT_BIND: Record<string, EntityBind> = {
   },
 };
 
+/** Other-system noise: do not hang these on Bazi destiny hubs (doorway / off-topic). */
+const OFF_TOPIC_NOISE =
+  /塔罗|塔羅|六爻|梅花|奇门|奇門|紫微|斗数|斗數|万物类象|類象|摔破杯子|大牌|牌阵|牌陣/;
+
 function bindEntity(title: string, body: string, category?: string): EntityBind | null {
   const text = `${title}\n${body}`;
+
+  // Skip pure other-system questions unless they also hit a clear name/career keyword
+  if (OFF_TOPIC_NOISE.test(text)) {
+    const allowedDespiteNoise =
+      /起名|改名|跳槽|换工作|结婚|合婚|迁城|搬家|真太阳时|本命年|太岁/.test(text);
+    if (!allowedDespiteNoise) return null;
+  }
+
   let best: EntityBind | null = null;
   let bestScore = 0;
   for (const bind of ENTITY_BINDS) {
@@ -166,7 +178,7 @@ function bindEntity(title: string, body: string, category?: string): EntityBind 
       if (!k || k.length < 2) continue;
       if (text.includes(k)) {
         // Longer keyword matches weigh more (anti false-positive)
-        score += Math.min(4, k.length);
+        score += Math.min(5, Math.max(2, k.length));
       }
     }
     if (score > bestScore) {
@@ -174,12 +186,11 @@ function bindEntity(title: string, body: string, category?: string): EntityBind 
       best = bind;
     }
   }
-  // Require a real keyword hit — do not force-bind by weak category alone
-  // (category default only when title is short/generic and category is a clear hub)
-  if (best && bestScore >= 2) return best;
+  // Require meaningful keyword weight
+  if (best && bestScore >= 3) return best;
 
   const cat = `${category || ''}`.trim();
-  if (cat && CATEGORY_DEFAULT_BIND[cat] && title.length <= 18) {
+  if (cat && CATEGORY_DEFAULT_BIND[cat] && title.length <= 18 && !OFF_TOPIC_NOISE.test(title)) {
     return CATEGORY_DEFAULT_BIND[cat];
   }
   return null;
