@@ -204,6 +204,13 @@ CONTENT_OS_MAX_NEAR_DUP=0.72   # 与已发布标题/摘要相似度上限
 **品牌 seed 回挂**（`needsThicken=true`，后续 LLM 加厚）：  
 `world-yi-v1-manifesto`、`world-yi-methodology`、`true-solar-time-guide`、`how-to-read-bazi-report` 等。
 
+```bash
+# 加厚短 seed / needsThicken
+npx tsx scripts/content-seed-thicken.ts --needs-thicken --limit 6
+# 指定 slug
+npx tsx scripts/content-seed-thicken.ts --slugs world-yi-v1-manifesto,true-solar-time-guide
+```
+
 ---
 
 ## 8. 参考
