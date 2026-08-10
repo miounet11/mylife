@@ -6,9 +6,13 @@
  *   npx tsx scripts/content-history-audit.ts --report
  *   npx tsx scripts/content-history-audit.ts --demote-thin --limit 100
  *   npx tsx scripts/content-history-audit.ts --protect-sources content-os,seed
+ *   npx tsx scripts/content-history-audit.ts --restore --limit 50
+ *   npx tsx scripts/content-history-audit.ts --restore --source-includes engine-llm:encyclopedia-2 --limit 20
  *
  * --demote-thin: set status=draft for high-risk thin/template published rows
  *                (does NOT delete; reversible). Prefer report-only first.
+ * --restore: re-publish drafts previously demoted by this family of tools
+ *            (meta.demotedBy starts with content-history-audit).
  */
 
 import {
@@ -51,10 +55,15 @@ function parseArgs(argv: string[]) {
     .filter(Boolean);
   return {
     demoteThin: argv.includes('--demote-thin'),
+    restore: argv.includes('--restore'),
     limit: Number(get('--limit', '500')) || 500,
     protect,
     minChars: Number(get('--min-chars', '900')) || 900,
     minSections: Number(get('--min-sections', '4')) || 4,
+    sourceIncludes: get('--source-includes', '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean),
   };
 }
 
@@ -134,6 +143,40 @@ function classify(entry: ManagedContentEntry, args: ReturnType<typeof parseArgs>
 
 async function main() {
   const args = parseArgs(process.argv.slice(2));
+
+  if (args.restore) {
+    const drafts = listManagedContentEntries().filter((e) => {
+      if (e.status !== 'draft') return false;
+      const by = String((e.meta as { demotedBy?: string } | undefined)?.demotedBy || '');
+      if (!by.startsWith('content-history-audit')) return false;
+      if (args.sourceIncludes.length === 0) return true;
+      const src = String(e.source || '');
+      return args.sourceIncludes.some((p) => src.includes(p));
+    });
+    const pool = drafts.slice(0, args.limit);
+    let restored = 0;
+    for (const entry of pool) {
+      const meta = { ...(entry.meta || {}) } as Record<string, unknown>;
+      const previous = meta.previousStatus === 'published' ? 'published' : 'published';
+      delete meta.demotedBy;
+      delete meta.demotedAt;
+      delete meta.demoteRisk;
+      delete meta.demoteReasons;
+      delete meta.previousStatus;
+      delete meta.demoteScore;
+      meta.restoredBy = 'content-history-audit';
+      meta.restoredAt = new Date().toISOString();
+      saveManagedContentEntry(
+        { ...entry, status: previous as 'published', meta },
+        'content-history-audit-restore',
+      );
+      restored += 1;
+      console.log('restored', entry.slug, entry.source);
+    }
+    console.log(JSON.stringify({ phase: 'restore-done', candidates: drafts.length, restored }, null, 2));
+    return;
+  }
+
   const entries = listManagedContentEntries().filter((e) => e.status === 'published');
   const rows = entries.map((e) => classify(e, args));
 

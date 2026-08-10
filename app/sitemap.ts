@@ -257,13 +257,13 @@ export default function sitemap(): MetadataRoute.Sitemap {
         })),
       )
     : [];
-  // Always keep a short day hub strip (today ±3) for freshness signals
-  const astroDayHubRoutes = rollingIsoDates(3, 3).map((date) => ({
+  // Short day hub strip for freshness (today ±1; not a multi-week calendar farm)
+  const astroDayHubRoutes = rollingIsoDates(1, 1).map((date) => ({
     path: `/astro/day/${date}`,
     priority: 0.72,
     changeFrequency: 'daily' as const,
   }));
-  const astroDayCompareRoutes = rollingIsoDates(1, 1).map((date) => ({
+  const astroDayCompareRoutes = rollingIsoDates(0, 0).map((date) => ({
     path: `/astro/day/${date}/compare`,
     priority: 0.74,
     changeFrequency: 'daily' as const,
@@ -296,8 +296,19 @@ export default function sitemap(): MetadataRoute.Sitemap {
         })),
       )
     : [];
+  /**
+   * Second-stage crawl-budget cut (2026-08 recovery):
+   * Even without day calendars, sign×week/month + pair grid + zone weeks were ~1.5k
+   * thin combinatorial URLs. Default = evergreen hubs + current period only.
+   * Set SITEMAP_INCLUDE_ASTRO_COMBOS=1 to restore week/month/pair expansion.
+   */
+  const includeAstroCombos = ['1', 'true', 'yes', 'on'].includes(
+    `${process.env.SITEMAP_INCLUDE_ASTRO_COMBOS || ''}`.trim().toLowerCase(),
+  );
   const ymNow = currentYearMonth();
-  const ymList = [shiftYearMonth(ymNow, -1), ymNow, shiftYearMonth(ymNow, 1)];
+  const ymList = includeAstroCombos
+    ? [shiftYearMonth(ymNow, -1), ymNow, shiftYearMonth(ymNow, 1)]
+    : [ymNow];
   const astroSignMonthRoutes = ASTRO_SIGNS.flatMap((s) =>
     ymList.map((ym) => ({
       path: `/astro/signs/${s.key}/month/${ym}`,
@@ -306,7 +317,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     })),
   );
   const weekNow = currentIsoWeekId();
-  const weekList = [shiftIsoWeek(weekNow, -1), weekNow, shiftIsoWeek(weekNow, 1)];
+  const weekList = includeAstroCombos
+    ? [shiftIsoWeek(weekNow, -1), weekNow, shiftIsoWeek(weekNow, 1)]
+    : [weekNow];
   const astroSignWeekRoutes = ASTRO_SIGNS.flatMap((s) =>
     weekList.map((weekId) => ({
       path: `/astro/signs/${s.key}/week/${weekId}`,
@@ -314,95 +327,112 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: 'weekly' as const,
     })),
   );
-  const astroPairRoutes = allPairKeyCombos().map(({ a, b }) => ({
-    path: `/astro/pair/${a}/${b}`,
-    priority: 0.64,
-    changeFrequency: 'monthly' as const,
-  }));
+  // Pair grid is highly combinatorial; default only hub + a few evergreen pairs
+  const pairCombos = allPairKeyCombos().filter(({ a, b }) => a !== b);
+  const astroPairRoutes = (includeAstroCombos ? pairCombos : pairCombos.slice(0, 6)).map(
+    ({ a, b }) => ({
+      path: `/astro/pair/${a}/${b}`,
+      priority: 0.64,
+      changeFrequency: 'monthly' as const,
+    }),
+  );
   const pairDayWindow = includeAstroCalendar ? rollingIsoDates(2, 2) : [];
   const astroPairDayRoutes = includeAstroCalendar
-    ? allPairKeyCombos()
-        .filter(({ a, b }) => a !== b)
-        .slice(0, 12)
-        .flatMap(({ a, b }) =>
-          pairDayWindow.map((date) => ({
-            path: `/astro/pair/${a}/${b}/day/${date}`,
-            priority: 0.62,
-            changeFrequency: 'daily' as const,
-          })),
-        )
+    ? pairCombos.slice(0, 12).flatMap(({ a, b }) =>
+        pairDayWindow.map((date) => ({
+          path: `/astro/pair/${a}/${b}/day/${date}`,
+          priority: 0.62,
+          changeFrequency: 'daily' as const,
+        })),
+      )
     : [];
   const astroWeekHubRoutes = weekList.map((weekId) => ({
     path: `/astro/week/${weekId}`,
     priority: 0.8,
     changeFrequency: 'weekly' as const,
   }));
-  const astroZoneWeekRoutes = ASTRO_ZONES_48.filter((z) => z.phase === 4).flatMap((z) =>
-    weekList.map((weekId) => ({
-      path: `/astro/zones/${z.id}/week/${weekId}`,
-      priority: 0.66,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroShengxiaoWeekRoutes = SHENGXIAO_CATALOG.flatMap((s) =>
-    weekList.map((weekId) => ({
-      path: `/astro/shengxiao/${s.slug}/week/${weekId}`,
-      priority: 0.68,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroElementWeekRoutes = ELEMENT_CATALOG.flatMap((e) =>
-    weekList.map((weekId) => ({
-      path: `/astro/elements/${e.slug}/week/${weekId}`,
-      priority: 0.7,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroModalityWeekRoutes = MODALITY_CATALOG.flatMap((m) =>
-    weekList.map((weekId) => ({
-      path: `/astro/modality/${m.slug}/week/${weekId}`,
-      priority: 0.68,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroPairWeekRoutes = allPairKeyCombos()
-    .filter(({ a, b }) => a !== b)
-    .slice(0, 24)
-    .flatMap(({ a, b }) =>
-      weekList.map((weekId) => ({
-        path: `/astro/pair/${a}/${b}/week/${weekId}`,
-        priority: 0.62,
-        changeFrequency: 'weekly' as const,
-      })),
-    );
-  const astroRisingWeekRoutes = RISING_PROFILES.flatMap((r) =>
-    weekList.map((weekId) => ({
-      path: `/astro/rising/${r.key}/week/${weekId}`,
-      priority: 0.68,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroElementMonthRoutes = ELEMENT_CATALOG.flatMap((e) =>
-    ymList.map((ym) => ({
-      path: `/astro/elements/${e.slug}/month/${ym}`,
-      priority: 0.68,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroModalityMonthRoutes = MODALITY_CATALOG.flatMap((m) =>
-    ymList.map((ym) => ({
-      path: `/astro/modality/${m.slug}/month/${ym}`,
-      priority: 0.66,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
-  const astroShengxiaoMonthRoutes = SHENGXIAO_CATALOG.flatMap((s) =>
-    ymList.map((ym) => ({
-      path: `/astro/shengxiao/${s.slug}/month/${ym}`,
-      priority: 0.66,
-      changeFrequency: 'weekly' as const,
-    })),
-  );
+  // Zone / shengxiao / element / modality / rising × week|month: combos only when enabled
+  const astroZoneWeekRoutes = includeAstroCombos
+    ? ASTRO_ZONES_48.filter((z) => z.phase === 4).flatMap((z) =>
+        weekList.map((weekId) => ({
+          path: `/astro/zones/${z.id}/week/${weekId}`,
+          priority: 0.66,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroShengxiaoWeekRoutes = includeAstroCombos
+    ? SHENGXIAO_CATALOG.flatMap((s) =>
+        weekList.map((weekId) => ({
+          path: `/astro/shengxiao/${s.slug}/week/${weekId}`,
+          priority: 0.68,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroElementWeekRoutes = includeAstroCombos
+    ? ELEMENT_CATALOG.flatMap((e) =>
+        weekList.map((weekId) => ({
+          path: `/astro/elements/${e.slug}/week/${weekId}`,
+          priority: 0.7,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroModalityWeekRoutes = includeAstroCombos
+    ? MODALITY_CATALOG.flatMap((m) =>
+        weekList.map((weekId) => ({
+          path: `/astro/modality/${m.slug}/week/${weekId}`,
+          priority: 0.68,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroPairWeekRoutes = includeAstroCombos
+    ? pairCombos.slice(0, 24).flatMap(({ a, b }) =>
+        weekList.map((weekId) => ({
+          path: `/astro/pair/${a}/${b}/week/${weekId}`,
+          priority: 0.62,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroRisingWeekRoutes = includeAstroCombos
+    ? RISING_PROFILES.flatMap((r) =>
+        weekList.map((weekId) => ({
+          path: `/astro/rising/${r.key}/week/${weekId}`,
+          priority: 0.68,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroElementMonthRoutes = includeAstroCombos
+    ? ELEMENT_CATALOG.flatMap((e) =>
+        ymList.map((ym) => ({
+          path: `/astro/elements/${e.slug}/month/${ym}`,
+          priority: 0.68,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroModalityMonthRoutes = includeAstroCombos
+    ? MODALITY_CATALOG.flatMap((m) =>
+        ymList.map((ym) => ({
+          path: `/astro/modality/${m.slug}/month/${ym}`,
+          priority: 0.66,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
+  const astroShengxiaoMonthRoutes = includeAstroCombos
+    ? SHENGXIAO_CATALOG.flatMap((s) =>
+        ymList.map((ym) => ({
+          path: `/astro/shengxiao/${s.slug}/month/${ym}`,
+          priority: 0.66,
+          changeFrequency: 'weekly' as const,
+        })),
+      )
+    : [];
   const astroExtraHubs = [
     { path: '/astro/elements', priority: 0.86, changeFrequency: 'weekly' as const },
     { path: '/astro/modality', priority: 0.84, changeFrequency: 'weekly' as const },

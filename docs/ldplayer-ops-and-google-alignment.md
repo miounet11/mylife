@@ -178,9 +178,24 @@ CONTENT_OS_MAX_NEAR_DUP=0.72   # 与已发布标题/摘要相似度上限
 2. **下架薄页/模板页**（降为 draft，可恢复）：  
    `npx tsx scripts/content-history-audit.ts --demote-thin --limit 200`  
    默认保护 `content-os,seed` 等来源。  
-3. **保留并加厚**：高意图实体卫星、有独特角度的知识/案例。  
-4. **Sitemap 保持精简**（~2k 级），GSC 重提 + 核心 hub 请求编入索引。  
-5. **新内容只走 v3 pipeline**；旧 `engine-llm:case-library` 大批量不再扩量。
+3. **批量引擎库**（case-library / encyclopedia 模板）：按 wave 降 draft，**禁止再扩量**。  
+4. **可逆恢复**：  
+   `npx tsx scripts/content-history-audit.ts --restore --limit 50`  
+   或 `--source-includes engine-llm:encyclopedia-2`。  
+5. **保留并加厚**：高意图实体卫星、有独特角度的知识/案例。  
+6. **Sitemap 保持精简**（目标 &lt;1200；默认关闭 astro calendar + combos）：  
+   - `SITEMAP_INCLUDE_ASTRO_CALENDAR=1` 才开日运农场  
+   - `SITEMAP_INCLUDE_ASTRO_COMBOS=1` 才开 week/month/pair 展开  
+7. **新内容只走 v3 people-first pipeline**。  
+
+### 2026-08 回收快照（生产）
+
+| 阶段 | published 约 | 说明 |
+|------|-------------:|------|
+| 升级前 | ~800 | case-library + encyclopedia 占大头 |
+| wave1–3 | ~380–450 | case-library 清零 |
+| wave4 | **~180** | EN 百科 + 短中文百科 + fallback 下架 |
+| 保留 | seed + content-os + 少量长文引擎 | 保护源 + 质量门新文 |
 
 ---
 
