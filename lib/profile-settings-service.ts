@@ -518,11 +518,33 @@ export function updateProfileFortune(
 
     fortuneUpdates.klineData = rebuilt.truthInput.kline;
     fortuneUpdates.dayun = rebuilt.truthInput.dayun;
+    // Keep pillars in sync with birth fields — previously only kline/dayun updated, so
+    // profile settings could show a new clock time with stale 四柱 (user-reported mismatch).
+    if (Array.isArray(rebuilt.truthInput?.pillars) && rebuilt.truthInput.pillars.length >= 4) {
+      const prevBazi =
+        fortune.bazi && typeof fortune.bazi === 'object' ? (fortune.bazi as Record<string, unknown>) : {};
+      fortuneUpdates.bazi = {
+        ...prevBazi,
+        dayMaster:
+          rebuilt.reportRaw?.dayMaster ||
+          rebuilt.truthInput.pillars[2]?.celestialStem ||
+          (prevBazi as { dayMaster?: string }).dayMaster,
+        pillars: rebuilt.truthInput.pillars,
+      };
+    }
     fortuneUpdates.analysis = {
       ...(fortune.analysis || {}),
       dayMaster: rebuilt.reportRaw?.dayMaster,
       birthAccuracy: nextBirthAccuracy,
       profileRecalcAt: new Date().toISOString(),
+      chartFingerprint: Array.isArray(rebuilt.truthInput?.pillars)
+        ? rebuilt.truthInput.pillars
+            .slice(0, 4)
+            .map((p: { celestialStem?: string; earthlyBranch?: string }) =>
+              `${p?.celestialStem || ''}${p?.earthlyBranch || ''}`,
+            )
+            .join(' ')
+        : undefined,
     };
 
     const jobRecord = {

@@ -91,6 +91,8 @@ export default function AnalyzeWorkspace({
   const [birthPlace, setBirthPlace] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [timeUnknown, setTimeUnknown] = useState(false);
+  /** 晚子时(23:00–23:59)是否按次日日柱（sect1）。默认不换日（sect2），与主流排盘一致。 */
+  const [lateZiNextDay, setLateZiNextDay] = useState(false);
   const [intent, setIntent] = useState<IntentKey>(() => normalizeAnalyzeIntent(urlIntent || 'career'));
   const [relation, setRelation] = useState<RelationKey>('self');
   const [name, setName] = useState('');
@@ -241,9 +243,10 @@ export default function AnalyzeWorkspace({
     });
 
     const resolvedPlace = birthPlace.trim() || copy.defaultPlace;
+    const clockTime = timeUnknown ? '12:00' : birthTime;
     const payload = {
       birthDate,
-      birthTime: timeUnknown ? '12:00' : birthTime,
+      birthTime: clockTime,
       birthPlace: resolvedPlace,
       gender,
       intent,
@@ -255,6 +258,11 @@ export default function AnalyzeWorkspace({
       relation,
       relationLabel,
       locale,
+      // Engine options: keep clock time identity aligned with what user typed
+      longitude: resolvedLon?.longitude,
+      useSolarTime: !timeUnknown && Boolean(resolvedLon?.longitude),
+      useSeparateZiHour: !timeUnknown && lateZiNextDay,
+      timezone: 8,
     };
 
     saveRememberedBirthForm({
@@ -490,6 +498,25 @@ export default function AnalyzeWorkspace({
                     />
                     {copy.timeUnknown}
                   </label>
+                  {!timeUnknown ? (
+                    <label className="mt-1.5 flex items-start gap-2 text-[12px] leading-snug text-[color:var(--ink-3)]">
+                      <input
+                        type="checkbox"
+                        checked={lateZiNextDay}
+                        onChange={(e) => {
+                          setLateZiNextDay(e.target.checked);
+                          setShowAdvanced(true);
+                        }}
+                        className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-[color:var(--hairline-strong)]"
+                      />
+                      <span>
+                        晚子时换日
+                        <span className="mt-0.5 block text-[11px] text-[color:var(--ink-5)]">
+                          勾选后，当日 23:00–23:59 按次日日柱排盘（早子时仍属次日）。默认不换日。
+                        </span>
+                      </span>
+                    </label>
+                  ) : null}
                 </label>
 
                 <div className="space-y-2">

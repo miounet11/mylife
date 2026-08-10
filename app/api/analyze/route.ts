@@ -480,13 +480,17 @@ async function executeAnalyze(
     relationLabel: data.relationLabel ?? null,
   });
 
+  // Persist the same clock time the engine locked — never let form/display drift from chartFingerprint.
+  const lockedClockDate = calculationIdentity.clockBirthDate || data.birthDate;
+  const lockedClockTime = calculationIdentity.clockBirthTime || data.birthTime;
+
   createFortuneWithUser(
     userId,
     {
       name: data.name,
       gender: (data.gender as 'male' | 'female') || 'male',
-      birthDate: data.birthDate,
-      birthTime: data.birthTime,
+      birthDate: lockedClockDate,
+      birthTime: lockedClockTime,
       birthPlace: data.birthPlace || '北京',
       timezone,
     },
@@ -494,8 +498,8 @@ async function executeAnalyze(
       id: reportId,
       userId,
       name: data.name,
-      birthDate: data.birthDate,
-      birthTime: data.birthTime,
+      birthDate: lockedClockDate,
+      birthTime: lockedClockTime,
       birthPlace: data.birthPlace || '北京',
       timezone,
       gender: (data.gender as 'male' | 'female') || 'male',
