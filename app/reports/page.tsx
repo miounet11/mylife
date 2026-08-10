@@ -125,8 +125,8 @@ export default function ReportsPage() {
         ) : null}
 
         <section className="rounded-[12px] border border-dashed border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-4 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-          <strong className="text-[color:var(--ink-2)]">内容如何持续生成：</strong>
-          用户完成主测算（默认公开摘要页）或工具运行后，系统对结果做质量门槛 + 隐私脱敏，合格内容自动进入本页、相关工具页的「公开内容流」与 sitemap，形成可被搜索引擎收录的案例库存。
+          <strong className="text-[color:var(--ink-2)]">这些案例从哪来：</strong>
+          用户完成主测算或工具运行后，在质量与隐私脱敏达标时，可自愿公开摘要；公开内容会出现在本页与相关工具页，供后来者对照学习（均已脱敏）。
         </section>
 
         <PageSeoGeoSection pathOrSlug="/reports" />

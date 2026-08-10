@@ -4,14 +4,14 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import { AppPage } from '@/components/layout/app-page';
 import { FocusHero } from '@/components/layout/focus-hero';
 import { StickyAnalyzeBar } from '@/components/conversion/sticky-analyze-bar';
-import { listDestinyEntityHubs, CONTENT_OS_LOCALES } from '@/lib/content-os';
-import { buildPageMetadata, buildItemListJsonLd, absoluteUrl } from '@/lib/seo';
+import { listDestinyEntityHubs } from '@/lib/content-os';
+import { buildPageMetadata, buildItemListJsonLd } from '@/lib/seo';
 import JsonLd from '@/components/seo/json-ld';
 
 export const metadata: Metadata = buildPageMetadata({
   title: '人生命运主题库｜十维度·城市·行业·日主·决策问题',
   description:
-    '对标全域 SEO 内容体系：以人生命运为中心的主题实体库。覆盖十维度研判、人生决策问题、城市迁移、行业节奏、日主发挥方式与工具指南，支持多语言多市场扩展。',
+    '以人生命运为中心的主题库：十维度研判、人生决策问题、城市迁移、行业节奏、日主发挥方式与工具指南。用结构·时位·环境帮助你把问题拆清楚。',
   path: '/topics',
   keywords: [
     '人生命运',
@@ -68,9 +68,9 @@ export default function TopicsHubPage() {
       <AnalyticsPageView page="/topics" />
       <JsonLd data={listLd} />
       <FocusHero
-        eyebrow="Content OS · Destiny Matrix"
+        eyebrow="主题库"
         title="人生命运主题库"
-        description="像顶级内容站用「实体页」吃流量一样：我们用命运实体（问题、维度、城市、行业、日主、工具）做全域覆盖，再叠多语言市场与持续更新机制。"
+        description="围绕真实人生问题组织主题：换工作、迁城、创业、婚恋、十维度与工具指南。每页先把问题说清楚，再连到可验证的下一步。"
         actions={
           <>
             <Link
@@ -97,22 +97,13 @@ export default function TopicsHubPage() {
 
       <section className="mx-auto max-w-6xl px-4 pb-4">
         <div className="rounded-2xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 text-sm text-[color:var(--ink-3)]">
-          <p className="font-medium text-[color:var(--ink-1)]">为什么做主题库（对标雷电模拟器）</p>
+          <p className="font-medium text-[color:var(--ink-1)]">怎么用这套主题库</p>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li>实体页 × 攻略 × FAQ × 榜单 × 多语言 — 工业级覆盖，而不是零散文章</li>
-            <li>以人生命运为中心：每个实体可索引、可内链、可转化到工具</li>
-            <li>多市场：简体 / 繁体 / 英文内容 locale 分层，而非伪机翻壳</li>
+            <li>先选你真正在纠结的决策主题，而不是先找吉凶标签</li>
+            <li>用结构 · 时位 · 环境 三层把条件拆开，再决定要不要行动</li>
+            <li>读完后去排盘或十维度验证，并给自己一个 30 天回访点</li>
           </ul>
-          <p className="mt-3 font-medium text-[color:var(--ink-1)]">已规划内容市场</p>
-          <p className="mt-1">
-            {CONTENT_OS_LOCALES.map((l) => `${l.locale}（${l.market}）`).join(' · ')}
-          </p>
-          <p className="mt-2 text-[color:var(--ink-4)]">
-            实体数 {hubs.length} · 内容由 Content OS 矩阵持续补齐与刷新 ·{' '}
-            <Link href={absoluteUrl('/topics')} className="underline">
-              规范入口
-            </Link>
-          </p>
+          <p className="mt-2 text-[color:var(--ink-4)]">当前主题 {hubs.length} 个</p>
         </div>
       </section>
 

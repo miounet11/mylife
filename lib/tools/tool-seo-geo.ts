@@ -180,7 +180,7 @@ const PACKS: Record<string, ToolSeoGeoPack> = {
       },
       {
         question: '照片存在哪里？',
-        answer: '关联用户媒体库（本机 uploads + 可选 R2），默认私有；授权后才可生成脱敏线图用于 SEO 文章。',
+        answer: '关联用户媒体库，默认私有；仅在你授权后才可生成脱敏线图用于教学说明，原图不公开。',
       },
     ],
     related: [
@@ -219,7 +219,7 @@ const PACKS: Record<string, ToolSeoGeoPack> = {
       },
       {
         question: '图能用来发文章吗？',
-        answer: '仅在你勾选授权后，系统才可生成脱敏线图用于 SEO/教学，原图不公开。',
+        answer: '仅在你勾选授权后，系统才可生成脱敏线图用于教学说明，原图不公开。',
       },
     ],
     related: [

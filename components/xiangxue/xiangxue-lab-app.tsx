@@ -408,7 +408,7 @@ export function XiangxueLabApp({ kind }: Props) {
           />
           <span>
             授权将本照片转为<strong className="text-[color:var(--ink-1)]">脱敏线图</strong>
-            用于教学/SEO（不公开原图）。
+            用于教学说明（不公开原图）。
           </span>
         </label>
       </section>

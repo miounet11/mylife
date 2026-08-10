@@ -87,13 +87,14 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     trackKey: articleTrackKey(article as never),
     type: 'insight',
     keywords: [
-      'GEO',
       '城市观察',
-      'city lens',
+      'city environment',
       '海外华人',
       'overseas Chinese',
       type,
-      ...((article as { keywords?: string[] }).keywords || []),
+      ...((article as { keywords?: string[] }).keywords || []).filter(
+        (k) => !/\bSEO\b|\bGEO\b/i.test(k),
+      ),
     ],
     publishedTime: dates.publishedTime,
     modifiedTime: dates.modifiedTime,
@@ -173,10 +174,10 @@ export default async function InsightArticlePage({
 
   const eyebrow = isEnEntity
     ? type === 'city'
-      ? 'City lens · GEO'
+      ? 'City environment'
       : 'Insight'
     : type === 'city'
-      ? '城市观察 · GEO'
+      ? '城市观察'
       : '系统洞察';
 
   return (
@@ -193,7 +194,7 @@ export default async function InsightArticlePage({
           title: article.title,
           description: summary || article.title,
           path: `/insights/${type}/${slug}`,
-          keywords: ['GEO', type, trackKey, isEnEntity ? 'overseas Chinese' : '海外华人', 'Life K-Line'],
+          keywords: [type, trackKey, isEnEntity ? 'overseas Chinese' : '海外华人', 'Life K-Line', '城市观察'],
           datePublished: articleDatesFrom(article).publishedTime,
           dateModified: articleDatesFrom(article).modifiedTime,
           inLanguage: isEnEntity ? 'en' : 'zh-CN',
@@ -298,8 +299,8 @@ export default async function InsightArticlePage({
           title={isEnEntity ? 'After the city lens' : '城市观察之后'}
           description={
             isEnEntity
-              ? 'Connect GEO environment reads to living environment, fortune rhythm, and a full report.'
-              : '把 GEO 环境层判断接到居家环境、运势节奏与完整报告。'
+              ? 'Connect environment-layer reads to living environment, fortune rhythm, and a full report.'
+              : '把环境层判断接到居家环境、运势节奏与完整报告。'
           }
           source={`insight:${type}:${slug}`}
           page={`/insights/${type}/${slug}`}

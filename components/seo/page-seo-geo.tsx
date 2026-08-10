@@ -10,12 +10,11 @@ import {
 } from '@/lib/seo';
 import {
   getPageSeoGeoPack,
-  isPagePackGeoReady,
   type PageSeoGeoPack,
 } from '@/lib/page-seo-geo-packs';
 import type { Metadata } from 'next';
 
-/** Metadata helper: prefer pack title/description/keywords + GEO other fields. */
+/** Metadata helper: pack title/description/keywords (no public SEO/GEO labels). */
 export function metadataFromPagePack(
   pathOrSlug: string,
   overrides?: Partial<{ title: string; description: string; path: string; locale: string }>,
@@ -29,23 +28,16 @@ export function metadataFromPagePack(
       locale: overrides?.locale,
     });
   }
-  const base = buildPageMetadata({
+  return buildPageMetadata({
     title: overrides?.title || pack.title,
     description: (overrides?.description || pack.description).slice(0, 160),
     path: overrides?.path || pack.path,
     locale: overrides?.locale,
-    keywords: pack.keywords,
+    // Prefer natural topic keywords; strip ops jargon if any slipped into packs
+    keywords: (pack.keywords || []).filter(
+      (k) => !/\bSEO\b|\bGEO\b|sitemap|crawl|收录|转化|流量/i.test(k),
+    ),
   });
-  const other: Record<string, string> = {
-    ...((base.other as Record<string, string> | undefined) || {}),
-    'ai-answer-summary': pack.answerSummary.slice(0, 400),
-    'search-intent': pack.searchIntents.join(' | '),
-    'entity-keywords': pack.entityKeywords.join(', '),
-    'geo-ready': isPagePackGeoReady(pack) ? '1' : '0',
-  };
-  if (pack.geoRegion) other['geo.region'] = pack.geoRegion;
-  if (pack.geoPlaceName) other['geo.placename'] = pack.geoPlaceName;
-  return { ...base, other };
 }
 
 export function buildPagePackJsonLdGraph(pack: PageSeoGeoPack): Array<Record<string, unknown>> {
@@ -98,8 +90,8 @@ export function PageJsonLd({ pack }: { pack: PageSeoGeoPack }) {
 }
 
 /**
- * Visible SEO/GEO body block for hub pages.
- * Place near bottom of public pages so crawlers and users get substance.
+ * Visible explainer block for hub pages (people-facing copy only).
+ * No SEO/GEO ops labels in the UI.
  */
 export function PageSeoGeoSection({
   pathOrSlug,
@@ -112,21 +104,19 @@ export function PageSeoGeoSection({
 }) {
   const pack = packProp || (pathOrSlug ? getPageSeoGeoPack(pathOrSlug) : null);
   if (!pack) return null;
-  const geoOk = isPagePackGeoReady(pack);
 
   return (
     <section
       className="space-y-5 border-t border-[color:var(--hairline)] pt-8"
       aria-label={`${pack.name} 说明与常见问题`}
-      data-page-seo={pack.slug}
-      data-geo-ready={geoOk ? '1' : '0'}
+      data-page-explainer={pack.slug}
     >
       <div
         className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5"
         data-page-seo-answer
       >
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-          直接回答 · SEO / GEO
+        <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--brand-strong)]">
+          直接回答
         </p>
         <h2 className="mt-1 text-[17px] font-bold tracking-tight text-[color:var(--ink-1)] md:text-[19px]">
           {pack.name}是什么？

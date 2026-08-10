@@ -10,7 +10,6 @@ import {
   getDestinyEntityHub,
   listDestinyEntityHubs,
   listContentForEntity,
-  slotsForEntity,
   type DestinyEntityKind,
 } from '@/lib/content-os';
 import { buildPageMetadata, absoluteUrl } from '@/lib/seo';
@@ -90,12 +89,6 @@ export default async function TopicEntityPage({ params }: PageProps) {
     );
   if (!hub) notFound();
 
-  const relatedSlots = slotsForEntity(parsed.kind, parsed.entitySlug, [
-    'zh-CN',
-    'zh-TW',
-    'en-US',
-  ]).slice(0, 12);
-
   const publishedArticles = listContentForEntity({
     entityKind: parsed.kind,
     entitySlug: parsed.entitySlug,
@@ -154,8 +147,7 @@ export default async function TopicEntityPage({ params }: PageProps) {
       <section className="mx-auto max-w-3xl px-4 py-6 space-y-4 text-[15px] leading-relaxed text-[color:var(--ink-2)]">
         <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">这个主题解决什么</h2>
         <p>
-          「{hub.name}」是人生K线内容体系中的<strong>命运实体页</strong>
-          （对标成熟站点的 App/游戏实体 SEO 页）。我们不堆吉凶标签，而是把问题拆成：
+          「{hub.name}」帮助你把一件真实的人生问题拆开：不先贴吉凶标签，而是看结构是否匹配、时位是否允许、环境有没有硬约束。
         </p>
         <ol className="list-decimal space-y-1 pl-5">
           <li>
@@ -177,7 +169,7 @@ export default async function TopicEntityPage({ params }: PageProps) {
 
         <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">建议路径</h2>
         <ol className="list-decimal space-y-1 pl-5">
-          <li>阅读本主题相关知识/案例（Content OS 持续补齐）</li>
+          <li>先读本主题下的相关知识与案例</li>
           <li>
             <Link href="/analyze" className="underline">
               生成人生K线
@@ -193,19 +185,13 @@ export default async function TopicEntityPage({ params }: PageProps) {
           </li>
           <li>需要深聊时进入请老师 / 对话</li>
         </ol>
-
-        <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">多语言覆盖计划</h2>
-        <p>
-          同一实体会按市场扩展：zh-CN / zh-TW / zh-HK / zh-SG / zh-MY / zh-US / en-US / en-GB /
-          en-SG。英文与繁体为原生改写标准，不是整站机翻。
-        </p>
       </section>
 
       {publishedArticles.length > 0 && (
         <section className="mx-auto max-w-6xl px-4 py-6">
-          <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">已发布相关内容</h2>
+          <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">相关阅读</h2>
           <p className="mt-1 text-sm text-[color:var(--ink-4)]">
-            LLM 自动生成并经多维质量修复后发布（对标实体页深度内容）。
+            围绕本主题的深度文章与案例，便于继续拆解你的具体处境。
           </p>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2">
             {publishedArticles.map((item) => (
@@ -214,44 +200,9 @@ export default async function TopicEntityPage({ params }: PageProps) {
                   href={item.href}
                   className="block rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 hover:border-[color:var(--brand)]"
                 >
-                  <div className="text-xs text-[color:var(--ink-4)]">
-                    {item.contentType}
-                    {item.locale ? ` · ${item.locale}` : ''}
-                  </div>
                   <div className="mt-1 font-medium text-[color:var(--ink-1)]">{item.title}</div>
                   <p className="mt-1 line-clamp-2 text-sm text-[color:var(--ink-3)]">{item.excerpt}</p>
                 </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {relatedSlots.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 py-6">
-          <h2 className="text-lg font-semibold text-[color:var(--ink-1)]">规划中的内容矩阵</h2>
-          <p className="mt-1 text-sm text-[color:var(--ink-4)]">
-            由 Content OS 按优先级生成；下列为该实体在多语言下的主题槽位。
-          </p>
-          <ul className="mt-4 space-y-2">
-            {relatedSlots.map((slot) => (
-              <li
-                key={slot.key}
-                className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-3 text-sm"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full bg-[color:var(--paper-2,#f5f5f4)] px-2 py-0.5 text-xs text-[color:var(--ink-3)]">
-                    {slot.locale}
-                  </span>
-                  <span className="rounded-full bg-[color:var(--paper-2,#f5f5f4)] px-2 py-0.5 text-xs text-[color:var(--ink-3)]">
-                    {slot.template}
-                  </span>
-                  <span className="rounded-full bg-[color:var(--paper-2,#f5f5f4)] px-2 py-0.5 text-xs text-[color:var(--ink-4)]">
-                    {slot.contentType}
-                  </span>
-                </div>
-                <p className="mt-1 font-medium text-[color:var(--ink-1)]">{slot.topic}</p>
-                <p className="mt-0.5 text-[color:var(--ink-3)]">{slot.angle}</p>
               </li>
             ))}
           </ul>

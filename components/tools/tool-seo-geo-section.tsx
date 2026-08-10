@@ -4,13 +4,11 @@ import { absoluteUrl } from '@/lib/seo';
 import {
   buildToolJsonLdGraph,
   type ToolSeoGeoPack,
-  toolPackToGeoMeta,
 } from '@/lib/tools/tool-seo-geo';
-import { isGeoReadySoft } from '@/lib/content-geo';
 
 /**
- * SEO body content + GEO answer box + FAQ + HowTo + share.
- * Place below the interactive tool so crawlers and users both get substance.
+ * Tool explainer: direct answer + FAQ + HowTo + share.
+ * People-facing only — no SEO/GEO ops labels in the UI.
  */
 export function ToolSeoGeoSection({
   pack,
@@ -19,20 +17,17 @@ export function ToolSeoGeoSection({
   pack: ToolSeoGeoPack;
   compact?: boolean;
 }) {
-  const geo = toolPackToGeoMeta(pack);
-  const geoOk = isGeoReadySoft(geo);
   const shareUrl = absoluteUrl(pack.path);
 
   return (
     <section
       className="space-y-5 border-t border-[color:var(--hairline)] pt-8"
       aria-label={`${pack.name} 说明与分享`}
-      data-tool-seo={pack.slug}
-      data-geo-ready={geoOk ? '1' : '0'}
+      data-tool-explainer={pack.slug}
     >
       <div className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
-        <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-          直接回答 · GEO
+        <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--brand-strong)]">
+          直接回答
         </p>
         <h2 className="mt-1 text-[17px] font-bold tracking-tight text-[color:var(--ink-1)] md:text-[19px]">
           {pack.name}是什么？

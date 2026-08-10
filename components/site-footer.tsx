@@ -77,7 +77,7 @@ export default function SiteFooter() {
               })}
             </nav>
 
-            {/* LDPlayer-style dense SEO strip: destiny entities + tools */}
+            {/* Popular destiny topics + tools (people-facing labels only) */}
             <div className="mt-6 max-w-xl text-[12px] leading-[1.7] text-[color:var(--ink-4)]">
               <span className="font-medium text-[color:var(--ink-3)]">热门关注：</span>
               {[

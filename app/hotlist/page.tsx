@@ -14,7 +14,7 @@ export const revalidate = 0;
 export const metadata: Metadata = buildPageMetadata({
   title: '热门命运主题与更新榜｜人生K线',
   description:
-    '对标成熟内容站热榜：高意图人生决策主题、最新发布的结构判断文章、工具入口一览。持续更新，服务搜索与站内发现。',
+    '高意图人生决策主题与最新结构判断文章一览：换工作、迁城、创业等真实问题，方便站内发现与继续阅读。',
   path: '/hotlist',
   keywords: ['热门', '命运主题', '八字', '人生K线', '排行', '更新'],
   multiLanguage: true,
@@ -32,9 +32,9 @@ export default function HotlistPage() {
       <AnalyticsPageView page="/hotlist" />
       <JsonLd data={listLd} />
       <FocusHero
-        eyebrow="Hotlist · Content OS"
+        eyebrow="热门"
         title="热门命运主题与更新榜"
-        description="对标雷电模拟器「热门榜 / 应用榜」：把高意图实体与最新可索引内容放在同一张榜单，方便搜索与站内跳转。"
+        description="把高意图人生问题与最新深度文章放在同一张榜单，方便你快速找到正在纠结的决策主题。"
         actions={
           <>
             <Link

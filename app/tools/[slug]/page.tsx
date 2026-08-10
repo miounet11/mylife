@@ -8,11 +8,9 @@ import { notFound } from 'next/navigation';
 import { AppPage } from '@/components/layout/app-page';
 import { ToolJsonLd, ToolSeoGeoSection } from '@/components/tools/tool-seo-geo-section';
 import {
-  assertToolGeoReady,
   buildToolPageMetadata,
   getToolSeoGeoPack,
 } from '@/lib/tools/tool-seo-geo';
-import { createPublicContentMetadata } from '@/lib/public-content-seo';
 
 export async function generateMetadata({
   params,
@@ -46,7 +44,7 @@ export default async function ToolDetailPage({
           </h1>
           <p className="text-[13px] leading-relaxed text-[color:var(--ink-4)]">
             {pack?.answerSummary ||
-              '本路径为工具详情。若生产环境有完整交互运行器，将在此挂载；SEO/GEO 与分享层始终可用。'}
+              '本路径为工具详情。可先阅读说明与常见问题，需要完整命盘时进入排盘。'}
           </p>
           <div className="flex flex-wrap gap-3 text-[13px]">
             <Link href="/tools" className="underline-offset-2 hover:underline">
@@ -55,11 +53,6 @@ export default async function ToolDetailPage({
             <Link href="/analyze" className="underline-offset-2 hover:underline">
               完整报告
             </Link>
-            {pack ? (
-              <span className="text-[11px] text-[color:var(--ink-5)]">
-                GEO {assertToolGeoReady(slug) ? '就绪' : '待补'}
-              </span>
-            ) : null}
           </div>
         </header>
 

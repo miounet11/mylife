@@ -1,6 +1,6 @@
 /**
- * Visible GEO lead for article/detail pages.
- * Ensures crawlers and AI engines see a direct answer even when body is long.
+ * Direct-answer lead for article/detail pages (people-facing copy only).
+ * Internal SEO/GEO labels must never appear in the UI.
  */
 export default function ArticleGeoLead({
   answerSummary,
@@ -21,12 +21,11 @@ export default function ArticleGeoLead({
   return (
     <aside
       className="rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5"
-      data-article-geo-lead="1"
-      data-geo-ready="1"
+      data-article-answer-lead="1"
       aria-label="直接回答"
     >
-      <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-        直接回答 · GEO
+      <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--brand-strong)]">
+        直接回答
       </p>
       <h2 className="mt-1 text-[16px] font-bold tracking-tight text-[color:var(--ink-1)]">{title}</h2>
       <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--ink-3)] md:text-[14px]">{summary}</p>
