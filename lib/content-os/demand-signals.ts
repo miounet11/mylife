@@ -137,8 +137,8 @@ const ENTITY_BINDS: EntityBind[] = [
   },
 ];
 
+/** Only clear content hubs — never force-bind 塔罗/六爻 noise into Bazi entities. */
 const CATEGORY_DEFAULT_BIND: Record<string, EntityBind> = {
-  bazi: ENTITY_BINDS.find((e) => e.entitySlug === 'read-my-report')!,
   xingming: ENTITY_BINDS.find((e) => e.entitySlug === 'name-change')!,
   zeri: {
     entityKind: 'tool',
@@ -147,7 +147,6 @@ const CATEGORY_DEFAULT_BIND: Record<string, EntityBind> = {
     ctaHref: '/almanac',
     keywords: ['择日'],
   },
-  fengshui: ENTITY_BINDS.find((e) => e.entitySlug === 'move-city')!,
   xingzuo: {
     entityKind: 'tool',
     entitySlug: 'astro',
@@ -155,22 +154,34 @@ const CATEGORY_DEFAULT_BIND: Record<string, EntityBind> = {
     ctaHref: '/astro',
     keywords: ['星座'],
   },
-  fenghua: ENTITY_BINDS.find((e) => e.entitySlug === 'benmingnian')!,
 };
 
 function bindEntity(title: string, body: string, category?: string): EntityBind | null {
-  const text = `${title} ${body}`.toLowerCase();
+  const text = `${title}\n${body}`;
   let best: EntityBind | null = null;
-  let bestHits = 0;
+  let bestScore = 0;
   for (const bind of ENTITY_BINDS) {
-    const hits = bind.keywords.filter((k) => text.includes(k.toLowerCase())).length;
-    if (hits > bestHits) {
-      bestHits = hits;
+    let score = 0;
+    for (const k of bind.keywords) {
+      if (!k || k.length < 2) continue;
+      if (text.includes(k)) {
+        // Longer keyword matches weigh more (anti false-positive)
+        score += Math.min(4, k.length);
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
       best = bind;
     }
   }
-  if (best && bestHits > 0) return best;
-  if (category && CATEGORY_DEFAULT_BIND[category]) return CATEGORY_DEFAULT_BIND[category];
+  // Require a real keyword hit — do not force-bind by weak category alone
+  // (category default only when title is short/generic and category is a clear hub)
+  if (best && bestScore >= 2) return best;
+
+  const cat = `${category || ''}`.trim();
+  if (cat && CATEGORY_DEFAULT_BIND[cat] && title.length <= 18) {
+    return CATEGORY_DEFAULT_BIND[cat];
+  }
   return null;
 }
 
