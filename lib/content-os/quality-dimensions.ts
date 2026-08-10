@@ -251,26 +251,38 @@ export function scoreContentOsDimensions(
     });
   }
 
-  // 6. Product bridge
+  // 6. Product bridge + entity hub link (LDPlayer: useful then CTA)
   {
-    let score = 20;
+    let score = 15;
     const reasons: string[] = [];
     const fixHints: string[] = [];
     const href = article.relatedCta?.href || '';
+    const hub =
+      article.hubHref ||
+      `/topics/${
+        article.entityKind === 'life-question'
+          ? `q-${article.entitySlug}`
+          : `${article.entityKind}-${article.entitySlug}`
+      }`;
     if (href && (text.includes(href) || text.includes('排盘') || text.includes('十维度') || /analyze|dimension|chart|Life K-Line|人生K线/i.test(text))) {
-      score += 40;
+      score += 30;
     } else {
       reasons.push('缺产品路径桥接');
       fixHints.push(`自然写入路径 ${href || '/analyze'} 与回访`);
     }
-    if (/回访|revisit|邮箱|email|会员|membership/i.test(text)) score += 25;
+    if (text.includes(hub) || text.includes('/topics/')) score += 20;
+    else {
+      reasons.push('缺实体中枢内链');
+      fixHints.push(`正文自然提到主题中枢 ${hub}`);
+    }
+    if (/回访|revisit|邮箱|email|会员|membership/i.test(text)) score += 20;
     else fixHints.push('提到预测回访/邮箱保存闭环');
     if (/免费|free/i.test(text)) score += 15;
     dims.push({
       key: 'productBridge',
       label: '产品转化桥',
       score: Math.min(100, score),
-      weight: 1.0,
+      weight: 1.15,
       reasons,
       fixHints,
     });
@@ -387,16 +399,18 @@ export function scoreContentOsDimensions(
   const depth = dims.find((d) => d.key === 'depth')!;
   const decision = dims.find((d) => d.key === 'decisionUtility')!;
   const faq = dims.find((d) => d.key === 'faqCoverage')!;
+  const bridge = dims.find((d) => d.key === 'productBridge')!;
   const publishReady =
-    overall >= 86 &&
-    anti.score >= 75 &&
+    overall >= 88 &&
+    anti.score >= 80 &&
     locale.score >= 80 &&
-    depth.score >= 72 &&
-    decision.score >= 70 &&
-    faq.score >= 55 &&
+    depth.score >= 75 &&
+    decision.score >= 72 &&
+    faq.score >= 60 &&
+    bridge.score >= 55 &&
     Boolean(article.llmUsed) &&
     // Title must look like a user job, not "Best {tag} 2026"
-    !/best\s+.+\s+202\d|top\s+\d+|终极指南|最全合集/i.test(article.title || '');
+    !/best\s+.+\s+202\d|top\s+\d+|终极指南|最全合集|完整指南合集/i.test(article.title || '');
 
   return {
     overall,

@@ -132,13 +132,19 @@ CONTENT_GENERATION_CRON_TOKEN=...
 
 | 模块 | 作用 |
 |------|------|
-| `lib/content-os/matrix.ts` | 命运实体矩阵 |
+| `lib/content-os/pipeline.ts` | **v3 主流水线** generate→score→repair→unique→publish |
+| `lib/content-os/production-policy.ts` | 生产红线 / 近重 / locale 扩展 |
+| `lib/content-os/demand-signals.ts` | 社区真实提问 → 实体卫星 |
+| `lib/content-os/matrix.ts` | 实体目录 + people-first catalog |
 | `lib/content-os/client.ts` | ttqq chat + image |
-| `lib/content-os/generator.ts` | 槽位 → 文章 |
-| `lib/content-os/scheduler.ts` | 覆盖率、计划、持久化 |
-| `app/topics/*` | 实体 SEO 枢纽 |
+| `lib/content-os/generator.ts` | 槽位 → 初稿 |
+| `lib/content-os/quality-dimensions.ts` | 十维质量 |
+| `lib/content-os/repair.ts` | LLM 修复 / 全量重写 |
+| `lib/content-os/scheduler.ts` | 计划 + 持久化 + 自动发布 |
+| `app/topics/*` | 实体中枢 |
+| `app/hotlist` | 发现枢纽 |
 | `app/api/admin/content-os` | GET 状态 / POST 跑一轮 |
-| `scripts/content-os-run.ts` | CLI |
+| `scripts/content-os-run.ts` | CLI v3 |
 | `lib/content-generation.ts` | 既有 Socratic 生成器（content-ops 用） |
 
 ### CLI

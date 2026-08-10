@@ -82,3 +82,11 @@ export {
   summarizeDemandSignals,
   type DemandSignal,
 } from '@/lib/content-os/demand-signals';
+
+export {
+  runSlotPipeline,
+  runPipelineBatch,
+  PIPELINE_VERSION,
+  type PipelineArticle,
+  type PipelineRunItem,
+} from '@/lib/content-os/pipeline';

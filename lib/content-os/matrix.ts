@@ -66,6 +66,10 @@ export type DestinyMatrixSlot = {
   searchIntents: string[];
   /** Parent hub path for internal linking */
   hubHref?: string;
+  /** Optional community demand provenance (people-first) */
+  sourceDemandId?: string;
+  sourceCommunityHref?: string;
+  sourceDemandTitle?: string;
 };
 
 export const CONTENT_OS_LOCALES: Array<{

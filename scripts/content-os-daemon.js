@@ -1,11 +1,15 @@
 #!/usr/bin/env node
 /**
- * Content OS daemon — fill destiny matrix gaps on a cadence.
+ * Content OS daemon v3 — people-first automatic production.
  *
- * Prefer CLI (tsx) over HTTP: avoids Next route maxDuration + keeps long LLM batches stable.
- * Fallback to POST /api/admin/content-os if CLI fails.
+ * Pipeline (CLI): demand/catalog queue → generate → multi-dimension score →
+ * LLM repair → uniqueness recheck → auto-publish if publishReady.
  *
- * Gated by CONTENT_OS_ENABLED=1.
+ * Constitution: docs/ldplayer-ops-and-google-alignment.md
+ * North star: indexable clicks → chart/chat (NOT URL count)
+ *
+ * Prefer CLI (tsx) over HTTP (avoids Next maxDuration).
+ * Gated by CONTENT_OS_ENABLED=1. Mode default: people-first.
  */
 
 const { spawn } = require('node:child_process');
@@ -27,7 +31,8 @@ const TOKEN =
   process.env.CONTENT_GENERATION_CRON_TOKEN ||
   process.env.CONTENT_SCHEDULER_CRON_TOKEN ||
   '';
-const LIMIT = Math.max(1, Math.min(12, Number(process.env.CONTENT_OS_BATCH_LIMIT || 4)));
+// Keep batches small: quality + repair cost > volume
+const LIMIT = Math.max(1, Math.min(6, Number(process.env.CONTENT_OS_BATCH_LIMIT || 3)));
 // People-first default: primary locale first (expand only after hubs exist)
 const LOCALES = (process.env.CONTENT_OS_LOCALES || 'zh-CN')
   .split(',')

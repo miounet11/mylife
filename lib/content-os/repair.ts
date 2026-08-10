@@ -92,74 +92,92 @@ export async function repairContentOsArticle(
   let multi = scoreContentOsDimensions(current, slot);
   let rounds = 0;
 
-  while (rounds < maxRounds && !multi.publishReady) {
+  const needFullRewrite = !current.llmUsed;
+
+  while (rounds < maxRounds && (!multi.publishReady || needFullRewrite && rounds === 0)) {
     rounds += 1;
     const english = isEnglish(slot.locale);
     const traditional = slot.locale === 'zh-TW' || slot.locale === 'zh-HK';
     const brief = buildRepairBrief(multi);
+    const hubHref =
+      slot.hubHref ||
+      `/topics/${slot.entityKind === 'life-question' ? `q-${slot.entitySlug}` : `${slot.entityKind}-${slot.entitySlug}`}`;
 
     try {
       const { data, model } = await contentOsChatJson<RepairPayload>({
-        maxTokens: 4000,
+        maxTokens: 4200,
         temperature: 0.35,
         messages: [
           {
             role: 'system',
             content: english
-              ? `You are a chief editor repairing Life K-Line public articles for Google-quality publication.
-Rules: native English only; structure→timing→environment→action→risk; no fear marketing; no SEO jargon; dense paragraphs; FAQ; product path to free chart / dimensions / revisit.
-Return ONLY JSON with full rewritten fields.`
+              ? `You are chief editor for Life K-Line. People-first Google quality (not doorway pages).
+LDPlayer model: entity hub satellite solving one real job; unique angle; structure→timing→environment→action→risk.
+Native English only. Dense FAQ. Link hub + product CTA. No SEO jargon / fear marketing.
+Return ONLY full JSON rewrite.`
               : traditional
-                ? `你是人生K線主編，負責把稿件修到可自動發布水準。
-規則：使用繁體中文（台灣/香港語感）；結構→時位→環境→動作→風險；禁止恐嚇與 SEO 黑話；段落信息密度高；含 FAQ 與產品路徑。
-只返回完整 JSON。`
-                : `你是人生K线主编，负责把稿件修到可自动发布水准。
-规则：简体中文；结构→时位→环境→动作→风险；禁止恐吓与 SEO 黑话；段落信息密度高；含 FAQ 与产品路径（免费排盘/十维度/回访）。
-只返回完整 JSON。`,
+                ? `你是人生K線主編。People-first 可收錄標準（禁止 doorway 換皮）。
+雷電模式：實體中樞下的衛星文，解決一個真實任務；獨特角度；結構→時位→環境→動作→風險。
+繁體中文。含 FAQ、中樞與產品內鏈。禁止 SEO 黑話/恐嚇。
+只返回完整 JSON 重寫。`
+                : `你是人生K线主编。People-first 可收录标准（禁止 doorway 换皮）。
+雷电模式：实体中枢下的卫星文，解决一个真实任务；独特角度；结构→时位→环境→动作→风险。
+简体中文。含 FAQ、中枢与产品内链。禁止 SEO 黑话/恐吓。
+只返回完整 JSON 重写。`,
           },
           {
             role: 'user',
             content: JSON.stringify(
               {
-                task: 'repair_destiny_article',
+                task: current.llmUsed ? 'repair_satellite_article' : 'full_rewrite_from_job',
+                mode: needFullRewrite || !current.llmUsed ? 'full_rewrite' : 'repair',
                 locale: slot.locale,
                 market: slot.market,
+                userJob: slot.topic,
+                uniqueAngle: slot.angle,
                 entity: {
                   kind: slot.entityKind,
                   slug: slot.entitySlug,
                   name: slot.entityName,
+                  hubHref,
                 },
                 productCta: slot.relatedCta,
+                sourceDemandTitle: slot.sourceDemandTitle,
                 qualityBrief: brief,
-                currentArticle: {
-                  title: current.title,
-                  excerpt: current.excerpt,
-                  seoTitle: current.seoTitle,
-                  seoDescription: current.seoDescription,
-                  answerSummary: current.answerSummary,
-                  tags: current.tags,
-                  entityKeywords: current.entityKeywords,
-                  searchIntents: current.searchIntents,
-                  sections: current.sections,
-                },
+                currentArticle: current.llmUsed
+                  ? {
+                      title: current.title,
+                      excerpt: current.excerpt,
+                      seoTitle: current.seoTitle,
+                      seoDescription: current.seoDescription,
+                      answerSummary: current.answerSummary,
+                      tags: current.tags,
+                      entityKeywords: current.entityKeywords,
+                      searchIntents: current.searchIntents,
+                      sections: current.sections,
+                    }
+                  : null,
                 outputSchema: {
-                  title: 'string',
-                  excerpt: 'string 90+',
+                  title: 'string task/decision style',
+                  excerpt: 'string 100+',
                   seoTitle: 'string',
                   seoDescription: 'string 120+',
-                  answerSummary: 'string 60+',
-                  tags: 'string[]',
-                  entityKeywords: 'string[]',
-                  searchIntents: 'string[]',
+                  answerSummary: 'string 70+',
+                  tags: 'string[≤8]',
+                  entityKeywords: 'string[5-10]',
+                  searchIntents: 'string[3-6]',
                   sections: [{ title: 'string', paragraphs: ['string 90+ each'] }],
                 },
                 hardRequirements: [
                   english ? 'ZERO Chinese characters in title/body' : 'primary language matches locale',
-                  'min 7 sections, min 12 paragraphs',
+                  'min 8 sections, min 14 paragraphs',
                   'include FAQ section with 2+ Q&A',
                   'include explicit weekly actions + 30/90 day revisit',
-                  'mention entity name ≥ 3 times',
+                  `mention entity name「${slot.entityName}」≥ 3 times`,
+                  `mention hub path ${hubHref} and CTA ${slot.relatedCta.href} naturally in body`,
                   'no SEO/转化/内容库 jargon',
+                  'title is a real user job, not Best/Top/终极合集',
+                  'uniqueAngle must remain non-swappable if entity name changes',
                 ],
               },
               null,
@@ -170,6 +188,7 @@ Return ONLY JSON with full rewritten fields.`
       });
       current = mergeArticle(current, data, model);
       multi = scoreContentOsDimensions(current, slot);
+      if (current.llmUsed && multi.publishReady) break;
     } catch {
       // keep current; break to avoid infinite empty loops
       break;

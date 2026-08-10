@@ -17,11 +17,15 @@ import {
 } from '@/lib/content-os/matrix';
 import {
   articleToManagedInput,
-  generateBatchFromSlots,
   type ContentOsGeneratedArticle,
 } from '@/lib/content-os/generator';
-import { repairContentOsArticle, type RepairedArticle } from '@/lib/content-os/repair';
+import type { RepairedArticle } from '@/lib/content-os/repair';
 import { scoreContentOsDimensions } from '@/lib/content-os/quality-dimensions';
+import {
+  runPipelineBatch,
+  PIPELINE_VERSION,
+  type PipelineArticle,
+} from '@/lib/content-os/pipeline';
 import {
   canExpandLocale,
   gateSlotForProduction,
@@ -321,7 +325,7 @@ async function ensureDirs() {
 }
 
 export async function persistContentOsArticles(
-  articles: Array<ContentOsGeneratedArticle | RepairedArticle>,
+  articles: Array<ContentOsGeneratedArticle | RepairedArticle | PipelineArticle>,
   options?: { autoPublish?: boolean },
 ) {
   await ensureDirs();
@@ -338,14 +342,26 @@ export async function persistContentOsArticles(
   const autoPublish = options?.autoPublish !== false;
 
   for (const article of articles) {
-    const repaired = article as RepairedArticle;
+    const repaired = article as PipelineArticle;
+    // Skip pre-gate blocked items entirely (save LLM cost already done only as shell)
+    if (repaired.gateBlocked?.length && !repaired.llmUsed) {
+      continue;
+    }
     const multi = repaired.multiQuality || scoreContentOsDimensions(article);
-    const shouldPublish = autoPublish && (repaired.publishedReady || multi.publishReady);
+    const shouldPublish =
+      autoPublish &&
+      Boolean(repaired.publishedReady) &&
+      Boolean(repaired.llmUsed) &&
+      repaired.uniquenessOk !== false &&
+      multi.publishReady;
 
     const input = articleToManagedInput(article, {
       status: shouldPublish ? 'published' : 'draft',
       multiQuality: multi,
       repairRounds: repaired.repairRounds ?? 0,
+      pipelineVersion: repaired.pipelineVersion || PIPELINE_VERSION,
+      uniquenessOk: repaired.uniquenessOk,
+      uniquenessScore: repaired.uniquenessScore,
     });
 
     // Prefer updating same matrixKey slug; else unique suffix
@@ -447,31 +463,14 @@ export async function runContentOsCycle(params?: {
     };
   }
 
-  const rawArticles = await generateBatchFromSlots(plan.queue, {
+  // v3 pipeline: generate → score → repair → uniqueness → publish decision
+  const pipelineItems = await runPipelineBatch(plan.queue, {
     withImage: params?.withImage,
     concurrency: params?.concurrency || 1,
+    repairRounds: params?.repairRounds ?? 2,
   });
 
-  // Multi-pass repair: score dimensions → LLM rewrite weak spots → re-score
-  const repaired: RepairedArticle[] = [];
-  for (let i = 0; i < rawArticles.length; i += 1) {
-    const article = rawArticles[i];
-    const slot = plan.queue[i];
-    if (!slot) {
-      const multi = scoreContentOsDimensions(article);
-      repaired.push({
-        ...article,
-        multiQuality: multi,
-        repairRounds: 0,
-        publishedReady: multi.publishReady,
-      });
-      continue;
-    }
-    const fixed = await repairContentOsArticle(article, slot, {
-      maxRounds: params?.repairRounds ?? 2,
-    });
-    repaired.push(fixed);
-  }
+  const repaired = pipelineItems.map((item) => item.article);
 
   const { savedIds, publishedIds, draftDir } = await persistContentOsArticles(repaired, {
     autoPublish: params?.autoPublish !== false,
@@ -486,9 +485,9 @@ export async function runContentOsCycle(params?: {
     qualitySummary: repaired.map((a) => ({
       slug: a.slug,
       overall: a.multiQuality?.overall ?? a.quality.score,
-      publishReady: Boolean(a.publishedReady || a.multiQuality?.publishReady),
+      publishReady: Boolean(a.publishedReady),
       repairRounds: a.repairRounds ?? 0,
-      status: a.publishedReady || a.multiQuality?.publishReady ? 'published' : 'draft',
+      status: a.publishedReady ? 'published' : 'draft',
     })),
   };
 }

@@ -341,6 +341,16 @@ export function buildSatelliteSlotsFromDemand(params: {
       'knowledge',
     );
 
+    const hubHref = `/topics/${
+      signal.entityKind === 'life-question'
+        ? `q-${signal.entitySlug}`
+        : signal.entityKind === 'dimension'
+          ? `dimension-${signal.entitySlug}`
+          : signal.entityKind === 'tool'
+            ? `tool-${signal.entitySlug}`
+            : `${signal.entityKind}-${signal.entitySlug}`
+    }`;
+
     out.push({
       key: `demand__${signal.id}__${locale}`,
       entityKind: signal.entityKind,
@@ -366,18 +376,12 @@ export function buildSatelliteSlotsFromDemand(params: {
         `${signal.entityName}怎么看`,
         ...(signal.keywords || []).slice(0, 2).map((k) => `${k}怎么办`),
       ].slice(0, 5),
-      hubHref: `/topics/${
-        signal.entityKind === 'life-question'
-          ? `q-${signal.entitySlug}`
-          : signal.entityKind === 'dimension'
-            ? `dimension-${signal.entitySlug}`
-            : signal.entityKind === 'tool'
-              ? `tool-${signal.entitySlug}`
-              : `${signal.entityKind}-${signal.entitySlug}`
-      }`,
+      hubHref,
+      sourceDemandId: signal.id,
+      sourceCommunityHref: signal.href,
+      sourceDemandTitle: signal.title,
     });
 
-    // stash source meta on object for generator via keywords trail (optional)
     void slugBase;
   }
 

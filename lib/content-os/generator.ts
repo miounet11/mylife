@@ -25,6 +25,10 @@ export type ContentOsGeneratedArticle = GeneratedManagedContentDraft & {
   answerSummary: string;
   entityKeywords: string[];
   relatedCta: DestinyMatrixSlot['relatedCta'];
+  hubHref?: string;
+  sourceDemandId?: string;
+  sourceCommunityHref?: string;
+  sourceDemandTitle?: string;
   coverImagePrompt?: string;
   coverImageB64?: string;
   quality: ReturnType<typeof assessGeneratedManagedContentDraftQuality>;
@@ -121,8 +125,22 @@ function userPrompt(slot: DestinyMatrixSlot) {
       market: slot.market,
       searchIntentsSeed: slot.searchIntents,
       productCta: slot.relatedCta,
+      hubHref: slot.hubHref,
+      sourceCommunityHref: slot.sourceCommunityHref,
+      sourceDemandTitle: slot.sourceDemandTitle,
       titleStyle:
         'Task/decision title like LDPlayer news ("how to pick style", "install guide") — NOT "Best X 2026" or swappable tag spam',
+      internalLinksRequired: [
+        slot.hubHref || `/topics/${slot.entityKind}-${slot.entitySlug}`,
+        slot.relatedCta.href,
+        '/analyze',
+      ].filter(Boolean),
+      evidenceRequired: [
+        'structure layer (why this decision shape)',
+        'timing window (30/90 days or stage)',
+        'environment constraint (city/job/family/cash)',
+        'one falsifiable action + revisit',
+      ],
       schema: {
         title: 'native task/decision title (unique; entity name natural)',
         slug: 'kebab-case english slug preferred',
@@ -339,6 +357,10 @@ function fallbackDraft(slot: DestinyMatrixSlot): Omit<ContentOsGeneratedArticle,
     answerSummary: padPublicMeta(slot.angle, slot, 'answer'),
     entityKeywords: slot.keywords,
     relatedCta: slot.relatedCta,
+    hubHref: slot.hubHref,
+    sourceDemandId: slot.sourceDemandId,
+    sourceCommunityHref: slot.sourceCommunityHref,
+    sourceDemandTitle: slot.sourceDemandTitle,
     coverImagePrompt: `Editorial cover for Life K-Line destiny topic "${slot.entityName}", clean linear illustration, paper texture, no text, professional, calm, ${slot.entityKind}`,
   };
 }
@@ -402,34 +424,41 @@ export async function generateFromMatrixSlot(
     (sum, s) => sum + s.paragraphs.join('').length,
     0,
   );
-  const useLlmSections = sections.length >= 5 && llmBodyChars >= 800;
+  // People-first: only mark llmUsed when body is truly model-written and deep enough
+  const useLlmSections = llmUsed && sections.length >= 5 && llmBodyChars >= 900;
+  const effectiveLlmUsed = useLlmSections;
 
   const draft: ContentOsGeneratedArticle = {
     ...base,
-    title,
+    title: useLlmSections ? title : base.title,
     slug: sanitizeContentSlug(
-      payload?.slug || `${slot.entityKind}-${slot.entitySlug}-${slot.locale}`,
+      (useLlmSections && payload?.slug) ||
+        `${slot.entityKind}-${slot.entitySlug}-${slot.locale}`,
       slot.contentType,
     ),
     excerpt: excerpt.slice(0, 220),
-    seoTitle: `${payload?.seoTitle || title}`.trim().slice(0, 80),
+    seoTitle: `${(useLlmSections && payload?.seoTitle) || title}`.trim().slice(0, 80),
     seoDescription: seoDescription.slice(0, 200),
     tags: Array.isArray(payload?.tags) && payload!.tags!.length
-      ? payload!.tags!.map(String).slice(0, 10)
-      : base.tags,
+      ? payload!.tags!.map(String).slice(0, 8)
+      : base.tags.slice(0, 8),
     sections: useLlmSections ? enrichSectionsDepth(sections, slot) : enrichSectionsDepth(base.sections, slot),
     answerSummary: answerSummary.slice(0, 280),
     entityKeywords:
       Array.isArray(payload?.entityKeywords) && payload!.entityKeywords!.length
-        ? payload!.entityKeywords!.map(String).slice(0, 16)
+        ? payload!.entityKeywords!.map(String).slice(0, 10)
         : base.entityKeywords,
     searchIntents:
       Array.isArray(payload?.searchIntents) && payload!.searchIntents!.length
-        ? payload!.searchIntents!.map(String).slice(0, 10)
+        ? payload!.searchIntents!.map(String).slice(0, 6)
         : base.searchIntents,
     coverImagePrompt: `${payload?.coverImagePrompt || base.coverImagePrompt || ''}`.trim(),
-    llmUsed,
-    model,
+    hubHref: slot.hubHref,
+    sourceDemandId: slot.sourceDemandId,
+    sourceCommunityHref: slot.sourceCommunityHref,
+    sourceDemandTitle: slot.sourceDemandTitle,
+    llmUsed: effectiveLlmUsed,
+    model: effectiveLlmUsed ? model : 'fallback',
     quality: { ready: false, score: 0, averageParagraphLength: 0, reasons: [] },
     generatedAt: new Date().toISOString(),
   };
@@ -481,9 +510,24 @@ export function articleToManagedInput(
     status?: 'draft' | 'published';
     multiQuality?: unknown;
     repairRounds?: number;
+    pipelineVersion?: string;
+    uniquenessOk?: boolean;
+    uniquenessScore?: number;
   },
 ) {
   const status = options?.status || article.status || 'draft';
+  const hubHref =
+    article.hubHref ||
+    `/topics/${
+      article.entityKind === 'life-question'
+        ? `q-${article.entitySlug}`
+        : article.entityKind === 'dimension'
+          ? `dimension-${article.entitySlug}`
+          : article.entityKind === 'tool'
+            ? `tool-${article.entitySlug}`
+            : `${article.entityKind}-${article.entitySlug}`
+    }`;
+
   return {
     contentType: article.contentType as ManagedContentType,
     subtype: article.subtype,
@@ -493,7 +537,7 @@ export function articleToManagedInput(
     excerpt: article.excerpt,
     category: article.category,
     readTime: article.readTime,
-    tags: article.tags,
+    tags: (article.tags || []).slice(0, 8),
     featured: article.featured,
     seoTitle: article.seoTitle,
     seoDescription: article.seoDescription,
@@ -504,31 +548,44 @@ export function articleToManagedInput(
     market: article.market,
     geoReady: true,
     meta: {
+      pipelineVersion: options?.pipelineVersion || 'content-os-v3',
+      constitution: 'ldplayer-ops-and-google-alignment',
+      peopleFirst: true,
       matrixKey: article.matrixKey,
       entityKind: article.entityKind,
       entitySlug: article.entitySlug,
       pathFamily: article.pathFamily,
+      hubHref,
       relatedCta: article.relatedCta,
+      internalLinks: [hubHref, article.relatedCta?.href, '/analyze'].filter(Boolean),
+      sourceDemandId: article.sourceDemandId,
+      sourceCommunityHref: article.sourceCommunityHref,
+      sourceDemandTitle: article.sourceDemandTitle,
       searchIntents: article.searchIntents,
-      entityKeywords: article.entityKeywords,
+      entityKeywords: (article.entityKeywords || []).slice(0, 10),
       answerSummary: article.answerSummary,
       quality: article.quality,
       multiQuality: options?.multiQuality,
+      uniquenessOk: options?.uniquenessOk,
+      uniquenessScore: options?.uniquenessScore,
       repairRounds: options?.repairRounds ?? 0,
       model: article.model,
+      llmUsed: article.llmUsed,
       generatedAt: article.generatedAt,
       coverImagePrompt: article.coverImagePrompt,
       autoPublished: status === 'published',
       publishedAt: status === 'published' ? new Date().toISOString() : undefined,
+      // Thin / non-ready drafts stay indexable=false for safety if ever exposed
+      robotsNoIndex: status !== 'published',
       geoOptimization: {
-        geoReady: true,
+        geoReady: status === 'published',
         answerSummary: article.answerSummary,
         directAnswer: article.answerSummary,
         searchIntents: article.searchIntents,
-        entityKeywords: article.entityKeywords,
+        entityKeywords: (article.entityKeywords || []).slice(0, 10),
         audienceQuestions: article.searchIntents,
         audience: article.market,
-        version: 'content-os-v2',
+        version: 'content-os-v3',
         canonicalTopic: article.title,
       },
     },
