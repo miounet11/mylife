@@ -83,9 +83,11 @@ export async function GET(request: NextRequest) {
         entityKind: s.entityKind,
         entitySlug: s.entitySlug,
         hubHref: s.hubHref,
+        fromDemand: s.key.startsWith('demand__'),
       })),
       reasons: plan.reasons,
     },
+    demand: plan.demand,
     lastRun,
   });
 }

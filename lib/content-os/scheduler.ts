@@ -30,6 +30,13 @@ import {
   resolveProductionLocales,
   PRODUCTION_CONSTITUTION_SUMMARY,
 } from '@/lib/content-os/production-policy';
+import {
+  buildSatelliteSlotsFromDemand,
+  collectDemandSignals,
+  demandBoostForSlot,
+  summarizeDemandSignals,
+  type DemandSignal,
+} from '@/lib/content-os/demand-signals';
 import { writeFile, mkdir, readFile } from 'node:fs/promises';
 import path from 'node:path';
 
@@ -56,6 +63,7 @@ export type ContentOsRunPlan = {
   };
   queue: DestinyMatrixSlot[];
   reasons: string[];
+  demand?: ReturnType<typeof summarizeDemandSignals>;
 };
 
 export type ContentOsRunResult = {
@@ -152,6 +160,8 @@ export function buildContentOsRunPlan(params?: {
   limit?: number;
   prefer?: Array<'missing' | 'stale' | 'draft'>;
   minPriority?: number;
+  /** Prefer community-demand satellites first (LDPlayer: real user jobs). Default true in people-first. */
+  useDemandSignals?: boolean;
 }): ContentOsRunPlan {
   const limit = Math.max(1, Math.min(params?.limit || 8, 20));
   const prefer = params?.prefer || ['missing', 'stale'];
@@ -159,6 +169,13 @@ export function buildContentOsRunPlan(params?: {
   const mode = resolveContentOsMode();
   const locales = resolveProductionLocales(params?.locales);
   const entries = listManagedContentEntries();
+  const useDemand = params?.useDemandSignals !== false && mode === 'people-first';
+
+  // Real demand from forum (production); empty on local stub
+  const demandSignals: DemandSignal[] = useDemand
+    ? collectDemandSignals({ lookbackDays: 14, limit: 40 })
+    : [];
+  const demandSummary = summarizeDemandSignals(demandSignals);
 
   // People-first catalog (default): finite hubs + satellites, not 990-slot farm
   const matrix =
@@ -171,6 +188,16 @@ export function buildContentOsRunPlan(params?: {
           includeComparisons: true,
         });
 
+  // Demand-driven one-off satellites (topic = real user question title)
+  const demandSlots =
+    useDemand && locales[0]
+      ? buildSatelliteSlotsFromDemand({
+          signals: demandSignals,
+          locale: locales[0],
+          limit: Math.min(8, limit),
+        })
+      : [];
+
   const coverage = buildCoverageMap({ locales, entries });
   const coverageByKey = new Map(coverage.map((row) => [row.key, row]));
   const published = entries.filter((e) => e.status === 'published' || e.status === 'draft');
@@ -179,8 +206,10 @@ export function buildContentOsRunPlan(params?: {
   const queue: DestinyMatrixSlot[] = [];
   const skipped: string[] = [];
 
-  const rankSlot = (slot: DestinyMatrixSlot) =>
-    slot.priority + peopleFirstPriorityBoost(slot);
+  const rankSlot = (slot: DestinyMatrixSlot) => {
+    const demand = demandBoostForSlot(slot, demandSignals);
+    return slot.priority + peopleFirstPriorityBoost(slot) + demand.boost;
+  };
 
   const tryEnqueue = (slot: DestinyMatrixSlot, reason: string) => {
     if (queue.length >= limit) return;
@@ -198,8 +227,22 @@ export function buildContentOsRunPlan(params?: {
     }
 
     queue.push(slot);
-    reasons.push(`${reason}: ${slot.topic} [${slot.entityKind}/${slot.entitySlug}]`);
+    const demand = demandBoostForSlot(slot, demandSignals);
+    const demandNote =
+      demand.matched[0] ? ` ← 社区热度「${demand.matched[0].title.slice(0, 24)}」` : '';
+    reasons.push(
+      `${reason}: ${slot.topic} [${slot.entityKind}/${slot.entitySlug}]${demandNote}`,
+    );
   };
+
+  // 1) Demand satellites first — real user jobs (LDPlayer news-style tasks)
+  if (demandSlots.length) {
+    const rankedDemand = [...demandSlots].sort((a, b) => rankSlot(b) - rankSlot(a));
+    for (const slot of rankedDemand) {
+      if (queue.length >= limit) break;
+      tryEnqueue(slot, '社区真实提问卫星');
+    }
+  }
 
   const pick = (status: ContentOsCoverageRow['status'], reason: string) => {
     const candidates = matrix
@@ -215,7 +258,6 @@ export function buildContentOsRunPlan(params?: {
 
   for (const status of prefer) {
     if (queue.length >= limit) break;
-    // People-first labels: satellite problem fill, not "刷缺口"
     const label =
       status === 'missing'
         ? mode === 'people-first'
@@ -257,13 +299,19 @@ export function buildContentOsRunPlan(params?: {
       `policy skipped ${skipped.length} (near-dup/locale/doorway); mode=${mode}; ${PRODUCTION_CONSTITUTION_SUMMARY.northStar}`,
     );
   }
+  if (demandSignals.length) {
+    reasons.push(
+      `demand signals: ${demandSummary.total} forum jobs → ${demandSlots.length} candidate satellites`,
+    );
+  }
 
   return {
     generatedAt: new Date().toISOString(),
     matrixSummary: summarizeContentOsMatrix(matrix),
     coverage: counts,
     queue: queue.slice(0, limit),
-    reasons: reasons.slice(0, limit + 3),
+    reasons: reasons.slice(0, limit + 5),
+    demand: demandSummary,
   };
 }
 

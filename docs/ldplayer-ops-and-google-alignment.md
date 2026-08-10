@@ -127,8 +127,9 @@ Google 要的也是这个方向：People-first、可验证、独特价值、可�
 | 模块 | 职责 |
 |------|------|
 | `lib/content-os/production-policy.ts` | 红线、相似度、是否允许生产 |
+| `lib/content-os/demand-signals.ts` | **社区真实提问 → 实体卫星**（非关键词农场） |
 | `lib/content-os/matrix.ts` | 实体与卫星槽定义 |
-| `lib/content-os/scheduler.ts` | **people-first 队列** 调度 |
+| `lib/content-os/scheduler.ts` | **people-first 队列** 调度（需求优先） |
 | `lib/content-os/quality-dimensions.ts` | 含独特性/反 doorway |
 | `lib/content-os/generator.ts` / `repair.ts` | 任务型文案，禁换皮 |
 | `app/topics/*` | 实体中枢 |

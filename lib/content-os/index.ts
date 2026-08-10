@@ -74,3 +74,11 @@ export {
   buildHotlist,
   type EntityContentCard,
 } from '@/lib/content-os/entity-content';
+
+export {
+  collectDemandSignals,
+  buildSatelliteSlotsFromDemand,
+  demandBoostForSlot,
+  summarizeDemandSignals,
+  type DemandSignal,
+} from '@/lib/content-os/demand-signals';
