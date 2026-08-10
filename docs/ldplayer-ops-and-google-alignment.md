@@ -156,7 +156,35 @@ CONTENT_OS_MAX_NEAR_DUP=0.72   # 与已发布标题/摘要相似度上限
 
 ---
 
-## 7. 参考
+## 7. 日常产量与执行（生产默认）
+
+| 配置 | 值 | 含义 |
+|------|-----|------|
+| `CONTENT_OS_MODE` | `people-first` | 非矩阵农场 |
+| `CONTENT_OS_LOCALES` | `zh-CN` | 先主语言 |
+| `CONTENT_OS_BATCH_LIMIT` | `3` | 每轮最多 3 条尝试 |
+| `CONTENT_OS_INTERVAL_MS` | `14400000`（4h） | 约 6 轮/天 |
+| `CONTENT_OS_AUTO_PUBLISH` | `1` | 仅 `publishReady` 才发 |
+| `CONTENT_OS_REPAIR_ROUNDS` | `2` | 多维修复 |
+
+**理论尝试上限**：6 × 3 ≈ **18 篇/天（尝试）**  
+**实际净新增发布（估算）**：**约 3–10 篇/天**（过质量门 + 近重 + LLM 成功；需求淡季更少）  
+
+宁缺毋滥。点击与收录不涨时：**降 batch，不升 batch**。
+
+### 历史内容修复顺序
+
+1. **审计**（只报告）：`npx tsx scripts/content-history-audit.ts`  
+2. **下架薄页/模板页**（降为 draft，可恢复）：  
+   `npx tsx scripts/content-history-audit.ts --demote-thin --limit 200`  
+   默认保护 `content-os,seed` 等来源。  
+3. **保留并加厚**：高意图实体卫星、有独特角度的知识/案例。  
+4. **Sitemap 保持精简**（~2k 级），GSC 重提 + 核心 hub 请求编入索引。  
+5. **新内容只走 v3 pipeline**；旧 `engine-llm:case-library` 大批量不再扩量。
+
+---
+
+## 8. 参考
 
 - 雷电实体：`https://www.ldmnq.com/app/20/`  
 - 雷电资讯：`https://www.ldmnq.com/news/`  

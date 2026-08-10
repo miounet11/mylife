@@ -272,7 +272,9 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     watch: false,
     restart_delay: 5000,
   },
-
+  // Content OS v3 — people-first (entity hub → demand satellite → quality gate)
+  // Constitution: docs/ldplayer-ops-and-google-alignment.md
+  // North star: indexable clicks → chart/chat (NOT URL count)
   {
     name: 'life-kline-content-os',
     script: 'scripts/content-os-daemon.js',
@@ -282,15 +284,22 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     env: {
       NODE_ENV: 'production',
       CONTENT_OS_ENABLED: '1',
-      CONTENT_OS_CRON_TOKEN: process.env.CONTENT_GENERATION_CRON_TOKEN || 'life-kline-content-generation-local-2026',
-      CONTENT_GENERATION_CRON_TOKEN: process.env.CONTENT_GENERATION_CRON_TOKEN || 'life-kline-content-generation-local-2026',
-      CONTENT_OS_RUN_URL: 'http://127.0.0.1:3000/api/admin/content-os',
-      CONTENT_OS_INTERVAL_MS: '14400000',
+      CONTENT_OS_MODE: 'people-first',
+      CONTENT_OS_CRON_TOKEN: cronEnv.CONTENT_GENERATION_CRON_TOKEN,
+      CONTENT_GENERATION_CRON_TOKEN: cronEnv.CONTENT_GENERATION_CRON_TOKEN,
+      CONTENT_OS_RUN_URL: `http://${INTERNAL_API_HOST}/api/admin/content-os`,
+      CONTENT_OS_INTERVAL_MS: '14400000', // 4h · ~6 ticks/day
       CONTENT_OS_REQUEST_TIMEOUT_MS: '900000',
       CONTENT_OS_STARTUP_DELAY_MS: '45000',
-      CONTENT_OS_BATCH_LIMIT: '4',
-      CONTENT_OS_LOCALES: 'zh-CN,zh-TW,en-US',
+      CONTENT_OS_BATCH_LIMIT: '3',
+      CONTENT_OS_LOCALES: 'zh-CN', // expand locales only after hubs mature
+      CONTENT_OS_AUTO_PUBLISH: '1',
+      CONTENT_OS_REPAIR_ROUNDS: '2',
+      CONTENT_OS_MAX_NEAR_DUP: '0.72',
       CONTENT_OS_WITH_IMAGE: '0',
+      CONTENT_OS_USE_CLI: '1',
+      API_BASE_URL: process.env.API_BASE_URL || 'https://ttqq.inping.com/v1',
+      CONTENT_GENERATION_MODEL: process.env.CONTENT_GENERATION_MODEL || 'auto',
     },
     error_file: '/root/.pm2/logs/life-kline-content-os-error.log',
     out_file: '/root/.pm2/logs/life-kline-content-os-out.log',
@@ -302,7 +311,6 @@ const backgroundWorkers = enableBackgroundWorkers ? [
     watch: false,
     restart_delay: 5000,
   },
-
   {
     name: 'life-kline-scheduler',
     script: 'scripts/content-scheduler-daemon.js',
