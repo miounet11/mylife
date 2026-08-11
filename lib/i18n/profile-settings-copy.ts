@@ -165,6 +165,35 @@ export function profileSettingsPanelCopy(locale: SiteLocale) {
         'zh-Hant': `當前四柱摘要：${summary}`,
         en: `Current pillars: ${summary}`,
       }),
+    chartLockedTime: (clock: string) =>
+      pick(locale, {
+        'zh-CN': `排盘锁定钟表时间：${clock}`,
+        'zh-Hant': `排盤鎖定鐘錶時間：${clock}`,
+        en: `Chart locked clock time: ${clock}`,
+      }),
+    chartEffectiveTime: (time: string) =>
+      pick(locale, {
+        'zh-CN': `有效排盘时间（含真太阳时等修正）：${time}`,
+        'zh-Hant': `有效排盤時間（含真太陽時等修正）：${time}`,
+        en: `Effective chart time: ${time}`,
+      }),
+    chartTimeMismatch: pick(locale, {
+      'zh-CN':
+        '注意：资料里的出生时间与排盘锁定时间不一致。四柱以锁定时间为准；请保存生辰并确认重算，或重新测算。',
+      'zh-Hant':
+        '注意：資料裡的出生時間與排盤鎖定時間不一致。四柱以鎖定時間為準；請保存生辰並確認重算，或重新測算。',
+      en: 'Stored birth time differs from the locked chart time. Pillars follow the lock — save with recompute or re-run analyze.',
+    }),
+    lateZiEnabled: pick(locale, {
+      'zh-CN': '晚子时换日：开',
+      'zh-Hant': '晚子時換日：開',
+      en: 'Late Zi next-day: on',
+    }),
+    trueSolarEnabled: pick(locale, {
+      'zh-CN': '真太阳时：已用',
+      'zh-Hant': '真太陽時：已用',
+      en: 'True solar: applied',
+    }),
     labelName: pick(locale, {
       'zh-CN': '姓名',
       'zh-Hant': '姓名',

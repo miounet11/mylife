@@ -190,6 +190,17 @@ export interface ProfileAccountView {
   timezone: number;
 }
 
+/** Locked chart calculation identity (from analyze) — people-facing summary only. */
+export interface ProfileChartIdentityView {
+  clockBirthTime: string | null;
+  effectiveBirthTime: string | null;
+  chartFingerprint: string | null;
+  useSolarTime: boolean;
+  useSeparateZiHour: boolean;
+  /** true when stored birthTime differs from identity clock (display drift) */
+  timeMismatch: boolean;
+}
+
 export interface ProfileFortuneView {
   id: string;
   name: string;
@@ -206,6 +217,7 @@ export interface ProfileFortuneView {
   birthSignature: string | null;
   reportId: string;
   pillarSummary: string | null;
+  chartIdentity: ProfileChartIdentityView | null;
   completeness: number;
   updatedAt: string | null;
 }

@@ -696,9 +696,37 @@ export default function ProfileSettingsPanel({
                   <span>{copy.engineChangedWarning}</span>
                 </div>
               ) : null}
-              {activeFortune?.pillarSummary ? (
-                <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-3.5 py-2.5 text-[13px] text-[color:var(--ink-2)]">
-                  {copy.pillarSummary(activeFortune.pillarSummary)}
+              {activeFortune?.pillarSummary || activeFortune?.chartIdentity ? (
+                <div className="space-y-1.5 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-3.5 py-2.5 text-[13px] text-[color:var(--ink-2)]">
+                  {activeFortune.pillarSummary ? (
+                    <div>{copy.pillarSummary(activeFortune.pillarSummary)}</div>
+                  ) : null}
+                  {activeFortune.chartIdentity?.clockBirthTime ? (
+                    <div className="text-[12px] text-[color:var(--ink-3)]">
+                      {copy.chartLockedTime(activeFortune.chartIdentity.clockBirthTime)}
+                      {activeFortune.chartIdentity.effectiveBirthTime &&
+                      activeFortune.chartIdentity.effectiveBirthTime !==
+                        activeFortune.chartIdentity.clockBirthTime
+                        ? ` · ${copy.chartEffectiveTime(activeFortune.chartIdentity.effectiveBirthTime)}`
+                        : null}
+                    </div>
+                  ) : null}
+                  {(activeFortune.chartIdentity?.useSolarTime ||
+                    activeFortune.chartIdentity?.useSeparateZiHour) && (
+                    <div className="flex flex-wrap gap-2 text-[11px] text-[color:var(--ink-4)]">
+                      {activeFortune.chartIdentity.useSolarTime ? (
+                        <span>{copy.trueSolarEnabled}</span>
+                      ) : null}
+                      {activeFortune.chartIdentity.useSeparateZiHour ? (
+                        <span>{copy.lateZiEnabled}</span>
+                      ) : null}
+                    </div>
+                  )}
+                  {activeFortune.chartIdentity?.timeMismatch ? (
+                    <div className="text-[12px] font-medium text-amber-800 dark:text-amber-200">
+                      {copy.chartTimeMismatch}
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
               <div className="grid gap-4 md:grid-cols-2">
