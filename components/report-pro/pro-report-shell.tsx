@@ -4,13 +4,11 @@ import type { FortuneAnalysisResult } from '@/lib/user-types';
 import { buildDecisionSheet } from '@/lib/report-decision-sheet';
 import { buildDecisionPacks } from '@/lib/decision-packs';
 import { buildHehunHref, personFromProView } from '@/lib/hehun-prefill';
-import { buildPersonalKlineHighlight } from '@/lib/kline-showcase';
 import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
 import ProPillarsBar from '@/components/report-pro/pro-pillars-bar';
 import ProOverviewCard from '@/components/report-pro/pro-overview-card';
 import ProOutlookPair from '@/components/report-pro/pro-outlook-pair';
 import ProTopicGrid from '@/components/report-pro/pro-topic-grid';
-import ProKlineSection from '@/components/report-pro/pro-kline-section';
 import ProBeginnerGuide from '@/components/report-pro/pro-beginner-guide';
 import ProElementsCard from '@/components/report-pro/pro-elements-card';
 import ProTimeScores from '@/components/report-pro/pro-time-scores';
@@ -23,7 +21,7 @@ import ProPredictionsStrip from '@/components/report-pro/pro-predictions-strip';
 import ProDecisionPacks from '@/components/report-pro/pro-decision-packs';
 import ProRevisitStrip from '@/components/report-pro/pro-revisit-strip';
 import ProLearningPath from '@/components/report-pro/pro-learning-path';
-import PersonalKlineHero from '@/components/kline/personal-kline-hero';
+import ProKlineLiveIsland from '@/components/kline/pro-kline-live-island';
 import TeacherPicker from '@/components/teachers/teacher-picker';
 import ReportConsultantCards from '@/components/report/report-consultant-cards';
 import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
@@ -87,10 +85,6 @@ export default function ProReportShell({
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
-  const klineHighlight = buildPersonalKlineHighlight(klineData, {
-    birthYear,
-    calibrationMarkers,
-  });
   const dayPillar = view.pillars.find((p) => p.label === '日柱') || view.pillars[2];
   const hehunHref = buildHehunHref({
     reportId,
@@ -274,42 +268,36 @@ export default function ProReportShell({
         />
       </div>
 
-      {/* 人生 K 线：核心功能先讲清，再给完整曲线 */}
-      <PersonalKlineHero highlight={klineHighlight} anchorId="pro-kline" />
-
-      <div id="pro-pillars" className="scroll-mt-header">
-        <ProPillarsBar pillars={view.pillars} />
-      </div>
-
-      {/* 人生 K 线完整图：引擎 klineData，放在命理总评之前 */}
-      <div id="pro-kline" className="scroll-mt-header space-y-3">
-        <ReportIllustrationCite keys={['dayun', 'timing']} title="节奏窗口" limit={1} />
-        <ProKlineSection
-          klineData={klineData}
-          peak={view.klinePeak}
-          trough={view.klineTrough}
-          birthYear={
-            birthYear ||
-            (() => {
-              const years = Array.isArray(klineData)
-                ? klineData.map((p) => p.year).filter((y): y is number => typeof y === 'number')
-                : [];
-              // 仅当样本已像人生跨度时用最小年，否则交给 inferBirthYear
-              if (years.length && Math.max(...years) - Math.min(...years) >= 40) {
-                return Math.min(...years);
-              }
-              return undefined;
-            })()
-          }
-          yongShen={view.elements.yongShen}
-          jiShen={view.elements.jiShen}
-          dayun={dayun}
-          publicName={publicName}
-          reportId={reportId}
-          locale={locale}
-          calibrationMarkers={calibrationMarkers}
-        />
-      </div>
+      {/* 人生 K 线：client island，校准后即时标到图上（无需刷新） */}
+      <ProKlineLiveIsland
+        reportId={reportId}
+        klineData={klineData}
+        peak={view.klinePeak}
+        trough={view.klineTrough}
+        birthYear={
+          birthYear ||
+          (() => {
+            const years = Array.isArray(klineData)
+              ? klineData.map((p) => p.year).filter((y): y is number => typeof y === 'number')
+              : [];
+            if (years.length && Math.max(...years) - Math.min(...years) >= 40) {
+              return Math.min(...years);
+            }
+            return undefined;
+          })()
+        }
+        yongShen={view.elements.yongShen}
+        jiShen={view.elements.jiShen}
+        dayun={dayun}
+        publicName={publicName}
+        locale={locale}
+        initialMarkers={calibrationMarkers}
+        between={
+          <div id="pro-pillars" className="scroll-mt-header">
+            <ProPillarsBar pillars={view.pillars} />
+          </div>
+        }
+      />
 
       <div id="pro-overview" className="scroll-mt-header">
         <ProOverviewCard overview={view.overview} />

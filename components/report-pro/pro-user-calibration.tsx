@@ -9,6 +9,10 @@ import {
   getEstimatedPastEventDateKey,
 } from '@/lib/event-view';
 import { presentReportText } from '@/lib/report-presentation';
+import {
+  emitKlineCalibration,
+  yearFromCalibrationText,
+} from '@/lib/kline-calibration-bus';
 
 type PastTemplate = {
   key: string;
@@ -117,7 +121,26 @@ export default function ProUserCalibration({
         page: `/result/${reportId}`,
         meta: { reportId, templateKey: item.key },
       });
-      setMessage(occurred ? '已记录「发生过」，后续判断会参考这条样本。' : '已记录「未发生」，感谢校准。');
+      // Live-paint marker on Life K-Line without full reload
+      const year =
+        yearFromCalibrationText(item.occurrenceWindow) ||
+        yearFromCalibrationText(item.title) ||
+        yearFromCalibrationText(item.reason) ||
+        new Date().getFullYear();
+      emitKlineCalibration({
+        reportId,
+        marker: {
+          year,
+          kind: occurred ? 'confirmed' : 'denied',
+          title: presentReportText(item.title, 40) || item.key,
+          note: occurred ? '用户确认发生' : '用户标记未发生',
+        },
+      });
+      setMessage(
+        occurred
+          ? '已记录「发生过」，并标到上方人生 K 线（无需刷新）。'
+          : '已记录「未发生」，并标到上方人生 K 线（无需刷新）。',
+      );
     } catch (e) {
       setError(isAbortLikeError(e) ? '请求超时，请重试' : '网络异常');
     } finally {
@@ -216,7 +239,11 @@ export default function ProUserCalibration({
       <div className="text-[12px] font-medium text-[color:var(--ink-5)]">校准</div>
       <h2 className="mt-1 text-[14px] font-semibold text-[color:var(--ink-1)]">用真实经历校准这份报告</h2>
       <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-        点几下即可，帮助后续判断更贴近你的现实。
+        点几下即可；确认/否认过往节点会
+        <a href="#pro-kline" className="mx-0.5 font-medium text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+          即时标到人生 K 线
+        </a>
+        （无需刷新页面）。
       </p>
 
       {/* 1. 准确度 */}
