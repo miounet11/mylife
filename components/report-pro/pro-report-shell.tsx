@@ -80,7 +80,7 @@ export default function ProReportShell({
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
-  const klineHighlight = buildPersonalKlineHighlight(klineData);
+  const klineHighlight = buildPersonalKlineHighlight(klineData, { birthYear });
   const dayPillar = view.pillars.find((p) => p.label === '日柱') || view.pillars[2];
   const hehunHref = buildHehunHref({
     reportId,

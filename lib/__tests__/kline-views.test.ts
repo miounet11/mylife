@@ -37,6 +37,16 @@ describe('kline multi-range views', () => {
     assert.ok(series.every((p) => p.overall >= 20 && p.overall <= 100));
   });
 
+  it('focus mode defaults via buildKlineViewSeries', () => {
+    const focus = buildKlineViewSeries(sampleYearly(), 'focus', {
+      birthYear: 1990,
+      now: new Date('2026-07-15'),
+      horizonYears: 10,
+    });
+    assert.equal(focus[0]!.year, 1990);
+    assert.ok(focus[focus.length - 1]!.year <= 2036);
+  });
+
   it('months10 and months3 return monthly keys', () => {
     const m10 = buildMonthlySeries(sampleYearly(), {
       yearsBack: 10,

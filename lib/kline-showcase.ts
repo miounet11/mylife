@@ -11,6 +11,7 @@ import { determineYongShen } from '@/lib/bazi-analyzer';
 import { calculateDayun } from '@/lib/dayun-calculator';
 import { calculateFourPillars } from '@/lib/fortune-engine';
 import { generateLifeKlineV6, type KlinePointV6 } from '@/lib/kline-v6';
+import { buildKlineStageNarrative } from '@/lib/kline-stage';
 
 export type KlineShowcaseChartPoint = {
   year: number;
@@ -207,6 +208,12 @@ export type PersonalKlineHighlight = {
   peak: { year: number; score: number } | null;
   trough: { year: number; score: number } | null;
   readingTips: string[];
+  /** 人话阶段结论（一眼好） */
+  stageHeadline: string | null;
+  stageSupport: string | null;
+  stageAction: string | null;
+  age: number | null;
+  tone: 'rising' | 'steady' | 'pressure' | 'mixed' | null;
 };
 
 /** 从用户报告 klineData 提炼「结果页首屏可读」摘要。 */
@@ -218,9 +225,19 @@ export function buildPersonalKlineHighlight(
     marriage?: number;
     health?: number;
     score?: number;
+    evidence?: {
+      ganZhi?: string;
+      dayunGanZhi?: string | null;
+      drivers?: string[];
+      risks?: string[];
+    };
   }> | null,
+  opts?: { birthYear?: number },
 ): PersonalKlineHighlight | null {
   if (!Array.isArray(klineData) || klineData.length < 3) return null;
+
+  const stage = buildKlineStageNarrative(klineData, { birthYear: opts?.birthYear });
+
   const points = klineData
     .map((p) => {
       const year = Number(p.year);
@@ -251,18 +268,37 @@ export function buildPersonalKlineHighlight(
     if (p.score < trough.score) trough = p;
   }
 
+  const readingTips = stage
+    ? [
+        stage.support,
+        stage.actionHint,
+        stage.peak?.reason
+          ? `高点 ${stage.peak.year} 参考原因：${stage.peak.reason}`
+          : `高点参考约 ${peak.year}（${peak.score}）· 低谷约 ${trough.year}（${trough.score}）`,
+      ]
+    : [
+        current
+          ? `今年综合参考约 ${current.score} 分，先看综合线再切分线。`
+          : `样本覆盖 ${points.length} 年，建议先看「人生焦点」窗。`,
+        `高点参考约 ${peak.year} 年（${peak.score}），低谷参考约 ${trough.year} 年（${trough.score}）。`,
+        '曲线由大运 + 流年 + 用神加权生成；改生辰会重算整条线。',
+      ];
+
   return {
     sampleYears: points.length,
     spanLabel: `${minY}–${maxY}`,
-    currentYearScore: current?.score ?? null,
-    peak: { year: peak.year, score: peak.score },
-    trough: { year: trough.year, score: trough.score },
-    readingTips: [
-      current
-        ? `今年综合参考约 ${current.score} 分，先对照事业/财/关系/健康分线。`
-        : `样本覆盖 ${points.length} 年，可先切到「人生 80 年」看整段节奏。`,
-      `高点参考约 ${peak.year} 年（${peak.score}），低谷参考约 ${trough.year} 年（${trough.score}）——作阶段对照，勿当预言。`,
-      '曲线由大运 + 流年 + 用神加权生成；改生辰或真太阳时选项会重算整条线。',
-    ],
+    currentYearScore: stage?.currentScore ?? current?.score ?? null,
+    peak: stage?.peak
+      ? { year: stage.peak.year, score: stage.peak.score }
+      : { year: peak.year, score: peak.score },
+    trough: stage?.trough
+      ? { year: stage.trough.year, score: stage.trough.score }
+      : { year: trough.year, score: trough.score },
+    readingTips,
+    stageHeadline: stage?.headline ?? null,
+    stageSupport: stage?.support ?? null,
+    stageAction: stage?.actionHint ?? null,
+    age: stage?.age ?? null,
+    tone: stage?.tone ?? null,
   };
 }

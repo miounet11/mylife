@@ -143,6 +143,12 @@ export default function FortuneKLineChart(props: {
   subtitle?: string;
   /** 月粒度：X 轴为 YYYY-MM */
   xIsMonth?: boolean;
+  /** 出生公历年 → 「你在这里 · N 岁」 */
+  birthYear?: number;
+  /** 默认可见维度（焦点模式建议只开 overall） */
+  defaultDims?: Partial<Record<DimKey, boolean>>;
+  /** 强化「你在这里」标注 */
+  emphasizeYouAreHere?: boolean;
   /** 兼容旧 props，忽略 */
   source?: string;
   ctaStrategyKey?: string;
@@ -152,13 +158,13 @@ export default function FortuneKLineChart(props: {
     () => normalizePoints(props.data || [], props.xIsMonth),
     [props.data, props.xIsMonth]
   );
-  const [visible, setVisible] = useState<Record<DimKey, boolean>>({
-    overall: true,
-    career: true,
-    wealth: false,
-    marriage: false,
-    health: true,
-  });
+  const [visible, setVisible] = useState<Record<DimKey, boolean>>(() => ({
+    overall: props.defaultDims?.overall ?? true,
+    career: props.defaultDims?.career ?? false,
+    wealth: props.defaultDims?.wealth ?? false,
+    marriage: props.defaultDims?.marriage ?? false,
+    health: props.defaultDims?.health ?? false,
+  }));
 
   if (!points.length) {
     return (
@@ -187,6 +193,17 @@ export default function FortuneKLineChart(props: {
     ? Math.round(avg(next3.map((p) => p.overall)))
     : Math.round(current.overall);
   const height = props.height || 300;
+  const birthYear =
+    props.birthYear && props.birthYear > 1900 && props.birthYear < currentYear
+      ? props.birthYear
+      : null;
+  const ageNow = birthYear != null ? currentYear - birthYear : null;
+  const hereLabel =
+    props.emphasizeYouAreHere && ageNow != null
+      ? `你在这里 · ${ageNow}岁`
+      : props.emphasizeYouAreHere
+        ? '你在这里'
+        : '今年';
 
   const toggle = (key: DimKey) => {
     setVisible((prev) => {
@@ -209,7 +226,7 @@ export default function FortuneKLineChart(props: {
           </h3>
           <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
             {props.subtitle ||
-              `${firstYear}–${lastYear} 共 ${points.length} ${isMonth ? '月' : '年'} · 综合 / 事业 / 财富 / 关系 / 健康`}
+              `${firstYear}–${lastYear} 共 ${points.length} ${isMonth ? '月' : '年'} · 点亮维度查看分线`}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -304,12 +321,14 @@ export default function FortuneKLineChart(props: {
               <ReferenceLine
                 x={isMonth ? currentMonthKey : currentYear}
                 stroke="#3b5998"
-                strokeDasharray="4 3"
+                strokeWidth={props.emphasizeYouAreHere ? 2 : 1}
+                strokeDasharray={props.emphasizeYouAreHere ? '0' : '4 3'}
                 label={{
-                  value: '今年',
+                  value: hereLabel,
                   position: 'insideTopRight',
                   fill: '#3b5998',
                   fontSize: 11,
+                  fontWeight: 600,
                 }}
               />
             ) : null}
@@ -321,7 +340,7 @@ export default function FortuneKLineChart(props: {
                   dataKey={DIM_META[key].dataKey}
                   name={key}
                   stroke={DIM_META[key].color}
-                  strokeWidth={key === 'overall' ? 2.5 : 1.6}
+                  strokeWidth={key === 'overall' ? 2.8 : 1.6}
                   dot={false}
                   activeDot={{ r: 4 }}
                   isAnimationActive={false}
@@ -338,16 +357,25 @@ export default function FortuneKLineChart(props: {
           <div className="text-[11px] font-bold text-[color:var(--data-up)]">高点窗口（宜推进）</div>
           {anchors.peaks.length ? (
             <ul className="mt-1.5 space-y-1">
-              {anchors.peaks.map((p) => (
-                <li key={`p-${p.year}`} className="text-[12px] leading-[1.5] text-[color:var(--ink-2)]">
-                  <span className="font-semibold text-[color:var(--ink-1)]">{p.year}</span>
-                  <span className="mx-1 text-[color:var(--ink-4)]">·</span>
-                  综合 {Math.round(p.overall)}
-                  {p.drivers?.length ? (
-                    <span className="text-[color:var(--ink-4)]"> · {p.drivers[0]}</span>
-                  ) : null}
-                </li>
-              ))}
+              {anchors.peaks.map((p) => {
+                const age =
+                  birthYear != null && Number.isFinite(p.yearNum)
+                    ? p.yearNum - birthYear
+                    : null;
+                return (
+                  <li key={`p-${p.year}`} className="text-[12px] leading-[1.5] text-[color:var(--ink-2)]">
+                    <span className="font-semibold text-[color:var(--ink-1)]">{p.year}</span>
+                    {age != null ? (
+                      <span className="text-[color:var(--ink-4)]"> · {age} 岁</span>
+                    ) : null}
+                    <span className="mx-1 text-[color:var(--ink-4)]">·</span>
+                    综合 {Math.round(p.overall)}
+                    {p.drivers?.length ? (
+                      <span className="text-[color:var(--ink-4)]"> · {p.drivers[0]}</span>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="mt-1 text-[12px] text-[color:var(--ink-4)]">样本内未形成明显峰值，宜稳态推进。</p>
@@ -357,16 +385,25 @@ export default function FortuneKLineChart(props: {
           <div className="text-[11px] font-bold text-[color:var(--signal-strong)]">压力低点（宜防守）</div>
           {anchors.troughs.length ? (
             <ul className="mt-1.5 space-y-1">
-              {anchors.troughs.map((p) => (
-                <li key={`t-${p.year}`} className="text-[12px] leading-[1.5] text-[color:var(--ink-2)]">
-                  <span className="font-semibold text-[color:var(--ink-1)]">{p.year}</span>
-                  <span className="mx-1 text-[color:var(--ink-4)]">·</span>
-                  综合 {Math.round(p.overall)}
-                  {p.risks?.length ? (
-                    <span className="text-[color:var(--ink-4)]"> · {p.risks[0]}</span>
-                  ) : null}
-                </li>
-              ))}
+              {anchors.troughs.map((p) => {
+                const age =
+                  birthYear != null && Number.isFinite(p.yearNum)
+                    ? p.yearNum - birthYear
+                    : null;
+                return (
+                  <li key={`t-${p.year}`} className="text-[12px] leading-[1.5] text-[color:var(--ink-2)]">
+                    <span className="font-semibold text-[color:var(--ink-1)]">{p.year}</span>
+                    {age != null ? (
+                      <span className="text-[color:var(--ink-4)]"> · {age} 岁</span>
+                    ) : null}
+                    <span className="mx-1 text-[color:var(--ink-4)]">·</span>
+                    综合 {Math.round(p.overall)}
+                    {p.risks?.length ? (
+                      <span className="text-[color:var(--ink-4)]"> · {p.risks[0]}</span>
+                    ) : null}
+                  </li>
+                );
+              })}
             </ul>
           ) : (
             <p className="mt-1 text-[12px] text-[color:var(--ink-4)]">样本内未形成明显低谷，仍需按板块控风险。</p>
@@ -375,7 +412,7 @@ export default function FortuneKLineChart(props: {
       </div>
 
       <p className="mt-2 text-[11px] leading-[1.5] text-[color:var(--ink-4)]">
-        读法：综合线看总节奏；健康/关系/事业/财富可单独点亮。虚线为当前年。分数为引擎趋势刻度，不是吉凶判决。
+        读法：先看综合线与「{hereLabel}」；点亮事业/财/关系/健康看分线。分数是趋势刻度，不是吉凶判决。
       </p>
     </section>
   );

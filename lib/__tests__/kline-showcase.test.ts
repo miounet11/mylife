@@ -25,15 +25,27 @@ describe('kline showcase', () => {
   });
 
   it('summarizes personal report kline for hero strip', () => {
-    const highlight = buildPersonalKlineHighlight([
-      { year: 2000, career: 60, wealth: 55, marriage: 50, health: 58 },
-      { year: 2010, career: 80, wealth: 75, marriage: 62, health: 60 },
-      { year: 2020, career: 70, wealth: 68, marriage: 65, health: 55 },
-      { year: new Date().getFullYear(), career: 72, wealth: 70, marriage: 66, health: 58 },
-    ]);
+    const highlight = buildPersonalKlineHighlight(
+      [
+        { year: 2000, career: 60, wealth: 55, marriage: 50, health: 58 },
+        { year: 2010, career: 80, wealth: 75, marriage: 62, health: 60 },
+        { year: 2020, career: 70, wealth: 68, marriage: 65, health: 55 },
+        {
+          year: new Date().getFullYear(),
+          career: 72,
+          wealth: 70,
+          marriage: 66,
+          health: 58,
+        },
+      ],
+      { birthYear: 1985 },
+    );
     assert.ok(highlight);
     assert.equal(highlight!.sampleYears, 4);
     assert.equal(highlight!.peak?.year, 2010);
     assert.ok(highlight!.readingTips.length >= 2);
+    assert.ok(highlight!.stageHeadline);
+    assert.ok(highlight!.stageAction);
   });
 });
+

@@ -1,9 +1,12 @@
 /**
- * K 线阅读视图：人生 80 年（年）/ 近 10 年（月）/ 近 3 年（月）
+ * K 线阅读视图：
+ * - focus：出生 → 今年+10（默认，一眼能定位「我在哪」）
+ * - life80：整段人生年粒度
+ * - months10 / months3：近窗月粒度
  * 优先使用报告已有 year 点；缺口用流年干支×用忌确定性补全（无 sin 周期）。
  */
 
-export type KlineViewMode = 'life80' | 'months10' | 'months3';
+export type KlineViewMode = 'focus' | 'life80' | 'months10' | 'months3';
 
 export interface KlineYearInput {
   year: number;
@@ -273,11 +276,51 @@ export function buildMonthlySeries(
   return out;
 }
 
+/**
+ * 人生焦点窗：出生年 → 当前年 + horizonYears（默认 10）。
+ * 给大众默认视图——先定位「我在哪」，再展开 80 年。
+ */
+export function buildFocusWindowSeries(
+  yearly: KlineYearInput[],
+  opts?: {
+    birthYear?: number;
+    yongShen?: string[];
+    jiShen?: string[];
+    now?: Date;
+    /** 今年之后再看几年（默认 10） */
+    horizonYears?: number;
+  }
+): KlineChartPoint[] {
+  const now = opts?.now || new Date();
+  const currentYear = now.getFullYear();
+  const horizon = Math.max(3, Math.min(20, opts?.horizonYears ?? 10));
+  const birthYear = inferBirthYear(yearly, opts?.birthYear);
+  const endYear = Math.max(currentYear + horizon, birthYear + 15);
+  // Reuse life series fill, then slice to focus window
+  const lifeYears = Math.max(endYear - birthYear + 1, 40);
+  const full = buildLife80YearSeries(yearly, {
+    birthYear,
+    yongShen: opts?.yongShen,
+    jiShen: opts?.jiShen,
+    lifeYears,
+  });
+  return full.filter((p) => p.year >= birthYear && p.year <= endYear);
+}
+
 export function buildKlineViewSeries(
   yearly: KlineYearInput[],
   mode: KlineViewMode,
-  opts?: { birthYear?: number; yongShen?: string[]; jiShen?: string[]; now?: Date }
+  opts?: {
+    birthYear?: number;
+    yongShen?: string[];
+    jiShen?: string[];
+    now?: Date;
+    horizonYears?: number;
+  }
 ): KlineChartPoint[] {
+  if (mode === 'focus') {
+    return buildFocusWindowSeries(yearly, opts);
+  }
   if (mode === 'life80') {
     return buildLife80YearSeries(yearly, opts);
   }
@@ -291,6 +334,11 @@ export const KLINE_VIEW_META: Record<
   KlineViewMode,
   { label: string; short: string; description: string }
 > = {
+  focus: {
+    label: '人生焦点',
+    short: '焦点·年',
+    description: '从出生到未来十年：一眼看见你现在的位置',
+  },
   life80: {
     label: '人生 80 年',
     short: '80年·年',
