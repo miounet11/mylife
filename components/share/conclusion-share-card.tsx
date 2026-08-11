@@ -13,6 +13,12 @@ export type ConclusionShareCardProps = {
   lines?: string[];
   /** Absolute or path URL to share */
   url?: string;
+  /**
+   * QR on share image — free analyze invite.
+   * Defaults to /go/share when omitted.
+   */
+  qrUrl?: string;
+  qrCaption?: string;
   /** Compact = single row actions under card */
   compact?: boolean;
   className?: string;
@@ -53,6 +59,8 @@ export function ConclusionShareCard({
   title,
   lines = [],
   url,
+  qrUrl,
+  qrCaption,
   compact = false,
   className = '',
   showImageShare = true,
@@ -75,6 +83,18 @@ export function ConclusionShareCard({
     if (typeof window !== 'undefined') return window.location.href;
     return 'https://www.life-kline.com/';
   }, [url]);
+
+  const resolvedQrUrl = useMemo(() => {
+    if (qrUrl) {
+      if (qrUrl.startsWith('http')) return qrUrl;
+      const origin =
+        typeof window !== 'undefined' ? window.location.origin : 'https://www.life-kline.com';
+      return `${origin}${qrUrl.startsWith('/') ? qrUrl : `/${qrUrl}`}`;
+    }
+    const origin =
+      typeof window !== 'undefined' ? window.location.origin : 'https://www.life-kline.com';
+    return `${origin}/go/share`;
+  }, [qrUrl]);
 
   const shareBody = useMemo(() => {
     const parts = [resolvedEyebrow, title, ...lines.filter(Boolean), pageUrl].filter(Boolean);
@@ -182,12 +202,15 @@ export function ConclusionShareCard({
         </button>
         {showImageShare ? (
           <DownloadShareImageButton
+            locale={locale}
             brand={en ? 'Life K-Line' : '人生K线'}
             title={title}
             lines={imageLines}
             footerLeft={en ? 'Structure reference' : '结构参考'}
             footerRight="life-kline.com"
             pageUrl={pageUrl}
+            qrUrl={resolvedQrUrl}
+            qrCaption={qrCaption || (en ? 'Scan · free chart' : '扫码免费测算')}
           />
         ) : null}
       </div>

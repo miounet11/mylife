@@ -57,12 +57,12 @@ export default function ReportShareViral({
   const inviteUrl = useMemo(() => {
     const origin =
       typeof window !== 'undefined' ? window.location.origin : 'https://www.life-kline.com';
+    // Short landing is QR-friendly; still carries attribution via /go/share → analyze
     const q = new URLSearchParams({
-      source: 'share_viral',
-      from: `report:${reportId}`,
       ref: reportId.slice(0, 24),
+      from: `report:${reportId}`,
     });
-    return `${origin}/analyze?${q.toString()}`;
+    return `${origin}/go/share?${q.toString()}`;
   }, [reportId]);
 
   const resultUrl = useMemo(() => {
@@ -162,6 +162,8 @@ export default function ReportShareViral({
         title={headline}
         lines={lines.slice(0, 3)}
         url={resultUrl}
+        qrUrl={inviteUrl}
+        qrCaption={en ? 'Scan · free chart' : '扫码免费测算'}
       />
 
       <div className="flex flex-wrap gap-2">

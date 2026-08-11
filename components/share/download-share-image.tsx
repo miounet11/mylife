@@ -18,6 +18,13 @@ export type ShareImageDrawProps = {
   disclaimer?: string;
   /** Optional absolute URL for share fallback */
   pageUrl?: string;
+  /**
+   * When set, draw a scannable QR (usually free /analyze invite).
+   * Loaded at export time via public QR API (no npm dep).
+   */
+  qrUrl?: string;
+  /** Caption under QR, e.g. 扫码免费测算 */
+  qrCaption?: string;
   /** PNG pixel size; default portrait 1080×1350 */
   width?: number;
   height?: number;
@@ -32,6 +39,8 @@ export type ShareImageDrawProps = {
   sparkline?: number[];
   /** Index in sparkline for “you are here” (default last third) */
   sparklineHereIndex?: number;
+  /** Preloaded QR image (set by exporter) */
+  _qrImage?: HTMLImageElement | null;
 };
 
 const DEFAULT_W = 1080;
@@ -74,6 +83,34 @@ function wrapText(
  * Draw a Linear/editorial conclusion PNG via Canvas 2D.
  * No html2canvas / heavy deps. Safe for 小红书 / 微信 style shares.
  */
+/** Load QR via public endpoint (client-only; fails soft). */
+export async function loadShareQrImage(
+  data: string,
+  size = 240,
+): Promise<HTMLImageElement | null> {
+  if (!data || typeof window === 'undefined') return null;
+  try {
+    const src = `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&margin=8&data=${encodeURIComponent(data)}`;
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    await new Promise<void>((resolve, reject) => {
+      const t = window.setTimeout(() => reject(new Error('qr timeout')), 8000);
+      img.onload = () => {
+        window.clearTimeout(t);
+        resolve();
+      };
+      img.onerror = () => {
+        window.clearTimeout(t);
+        reject(new Error('qr error'));
+      };
+      img.src = src;
+    });
+    return img;
+  } catch {
+    return null;
+  }
+}
+
 export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElement {
   const {
     brand = '人生K线',
@@ -86,6 +123,8 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
     height = DEFAULT_H,
     sparkline,
     sparklineHereIndex,
+    _qrImage,
+    qrCaption = '扫码免费测算',
   } = props;
 
   const canvas = document.createElement('canvas');
@@ -177,11 +216,39 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
     y += Math.round(bodySize * 0.25);
   }
 
+  // QR invite (bottom-right, above footer)
+  if (_qrImage && _qrImage.complete && _qrImage.naturalWidth > 0) {
+    const qrSize = Math.round(width * 0.168);
+    const qrX = width - padX - qrSize;
+    const qrY = height - Math.round(height * 0.22) - qrSize;
+    // white plate
+    ctx.fillStyle = '#ffffff';
+    roundRect(ctx, qrX - 12, qrY - 12, qrSize + 24, qrSize + 48, 14);
+    ctx.fill();
+    ctx.strokeStyle = '#e6e8eb';
+    ctx.lineWidth = 2;
+    roundRect(ctx, qrX - 12, qrY - 12, qrSize + 24, qrSize + 48, 14);
+    ctx.stroke();
+    ctx.drawImage(_qrImage, qrX, qrY, qrSize, qrSize);
+    ctx.fillStyle = '#3c4149';
+    ctx.font = `600 ${Math.round(width * 0.018)}px ui-sans-serif, system-ui, "PingFang SC", "Noto Sans SC", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(qrCaption, qrX + qrSize / 2, qrY + qrSize + 22);
+    ctx.textAlign = 'left';
+  }
+
   // Disclaimer
   const discY = height - Math.round(height * 0.12);
   ctx.fillStyle = '#8b929e';
   ctx.font = `400 ${Math.round(width * 0.02)}px ui-sans-serif, system-ui, "PingFang SC", "Noto Sans SC", sans-serif`;
-  ctx.fillText(disclaimer, padX, discY);
+  // leave room if QR present
+  const discMaxW = _qrImage ? contentW * 0.62 : contentW;
+  const discLines = wrapText(ctx, disclaimer, discMaxW, 2);
+  let discDrawY = discY - (discLines.length > 1 ? Math.round(height * 0.018) : 0);
+  for (const dl of discLines) {
+    ctx.fillText(dl, padX, discDrawY);
+    discDrawY += Math.round(height * 0.022);
+  }
 
   // Footer rule
   const footY = height - Math.round(height * 0.065);
@@ -445,7 +512,11 @@ export function DownloadShareImageButton({
     setBusy(true);
     const resolved = resolveShareDrawProps(siteLocale, drawProps);
     try {
-      const canvas = drawShareImageCanvas(resolved);
+      let qrImage: HTMLImageElement | null = null;
+      if (resolved.qrUrl) {
+        qrImage = await loadShareQrImage(resolved.qrUrl);
+      }
+      const canvas = drawShareImageCanvas({ ...resolved, _qrImage: qrImage });
       const blob = await canvasToBlob(canvas);
       if (!blob) throw new Error('PNG encode failed');
 
@@ -555,7 +626,8 @@ export async function downloadShareImage(
   try {
     const siteLocale = resolveReportChromeLocale(props.locale);
     const resolved = resolveShareDrawProps(siteLocale, props);
-    const canvas = drawShareImageCanvas(resolved);
+    const qrImage = resolved.qrUrl ? await loadShareQrImage(resolved.qrUrl) : null;
+    const canvas = drawShareImageCanvas({ ...resolved, _qrImage: qrImage });
     const blob = await canvasToBlob(canvas);
     if (!blob) return 'failed';
     const safeTitle = (resolved.title || 'conclusion')
