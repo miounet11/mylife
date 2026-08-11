@@ -120,6 +120,77 @@ export function sanitizeNext(raw?: string | null): string {
   return v.slice(0, 500);
 }
 
+/**
+ * Public site origin for post-login redirects.
+ * Behind nginx, request.url is often http://localhost:3000 — never use that for Location.
+ */
+export function resolvePublicOrigin(request?: {
+  headers?: { get(name: string): string | null };
+  url?: string;
+}): string {
+  const fromEnv =
+    env('APP_BASE_URL') ||
+    env('NEXT_PUBLIC_APP_URL') ||
+    env('SITE_URL') ||
+    '';
+  if (fromEnv) {
+    try {
+      const u = new URL(fromEnv);
+      if (!isLoopbackHost(u.hostname)) {
+        return u.origin;
+      }
+    } catch {
+      // fall through
+    }
+  }
+
+  const headers = request?.headers;
+  if (headers) {
+    const xfHost = (headers.get('x-forwarded-host') || '').split(',')[0]?.trim();
+    const host = xfHost || (headers.get('host') || '').split(',')[0]?.trim();
+    if (host && !isLoopbackHost(host.split(':')[0] || host)) {
+      const xfProto = (headers.get('x-forwarded-proto') || '').split(',')[0]?.trim();
+      const proto =
+        xfProto === 'http' || xfProto === 'https'
+          ? xfProto
+          : host.includes('localhost') || host.startsWith('127.')
+            ? 'http'
+            : 'https';
+      return `${proto}://${host}`;
+    }
+  }
+
+  // Last resort: production canonical (matches GOOGLE_REDIRECT_URI host)
+  try {
+    const redirect = getGoogleRedirectUri();
+    if (redirect) return new URL(redirect).origin;
+  } catch {
+    // ignore
+  }
+  return 'https://www.life-kline.com';
+}
+
+function isLoopbackHost(hostname: string): boolean {
+  const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
+  return (
+    h === 'localhost' ||
+    h === '127.0.0.1' ||
+    h === '0.0.0.0' ||
+    h === '::1' ||
+    h.endsWith('.local')
+  );
+}
+
+/** Absolute same-site URL for a relative next path */
+export function buildPublicRedirectUrl(
+  path: string,
+  request?: { headers?: { get(name: string): string | null }; url?: string },
+): string {
+  const origin = resolvePublicOrigin(request);
+  const next = sanitizeNext(path);
+  return new URL(next, origin).toString();
+}
+
 export function buildGoogleAuthorizeUrl(state: string): string {
   const params = new URLSearchParams({
     client_id: getGoogleClientId(),

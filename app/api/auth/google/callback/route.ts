@@ -10,6 +10,7 @@ import {
   REPORT_SUBSCRIPTION_TAGS,
 } from '@/lib/email-subscription-focus';
 import {
+  buildPublicRedirectUrl,
   decodeGoogleOAuthState,
   exchangeGoogleCode,
   fetchGoogleUserInfo,
@@ -23,9 +24,9 @@ import { getClientKey } from '@/lib/rate-limit';
 export const dynamic = 'force-dynamic';
 
 function loginErrorRedirect(request: NextRequest, code: string, next = '/profile') {
-  const url = new URL('/login', request.url);
+  const url = new URL(buildPublicRedirectUrl('/login', request));
   url.searchParams.set('error', code);
-  if (next && next !== '/profile') url.searchParams.set('next', next);
+  if (next && next !== '/profile') url.searchParams.set('next', sanitizeNext(next));
   return NextResponse.redirect(url);
 }
 
@@ -114,12 +115,8 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    const dest = new URL(next, request.url);
-    // stay same-origin
-    if (dest.origin !== new URL(request.url).origin) {
-      return NextResponse.redirect(new URL('/profile', request.url));
-    }
-    return NextResponse.redirect(dest);
+    // Never use request.url here — behind nginx it is often http://localhost:3000
+    return NextResponse.redirect(buildPublicRedirectUrl(next, request));
   } catch (error) {
     console.error('[auth/google] callback failed:', error);
     return loginErrorRedirect(request, 'google_failed', next);

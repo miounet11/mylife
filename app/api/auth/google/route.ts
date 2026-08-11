@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   buildGoogleAuthorizeUrl,
+  buildPublicRedirectUrl,
   encodeGoogleOAuthState,
   isGoogleOAuthConfigured,
   sanitizeNext,
@@ -15,7 +16,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   if (!isGoogleOAuthConfigured()) {
     return NextResponse.redirect(
-      new URL('/login?error=google_not_configured', request.url),
+      buildPublicRedirectUrl('/login?error=google_not_configured', request),
     );
   }
 
