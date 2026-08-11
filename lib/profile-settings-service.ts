@@ -59,6 +59,8 @@ type FortuneLike = {
   profileCompleteness?: number | null;
   updatedAt?: string | null;
   deletedAt?: string | null;
+  /** Full analyze analysis blob (includes calculationIdentity when present) */
+  analysis?: unknown;
 };
 
 function parseBaziSummary(bazi: string | Record<string, unknown> | undefined): string | null {
