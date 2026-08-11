@@ -63,6 +63,12 @@ export const RATE_LIMITS = {
   authCodeIp: { windowMs: 15 * 60 * 1000, maxRequests: 12 },
   // 登录验证：同一邮箱 15 分钟 12 次
   authVerifyEmail: { windowMs: 15 * 60 * 1000, maxRequests: 12 },
+  // 账号密码登录：同一 IP 15 分钟 30 次
+  authPasswordIp: { windowMs: 15 * 60 * 1000, maxRequests: 30 },
+  // 账号密码登录：同一账号 15 分钟 12 次
+  authPasswordAccount: { windowMs: 15 * 60 * 1000, maxRequests: 12 },
+  // 注册：同一 IP 1 小时 8 次
+  authRegisterIp: { windowMs: 60 * 60 * 1000, maxRequests: 8 },
 } as const;
 
 /**

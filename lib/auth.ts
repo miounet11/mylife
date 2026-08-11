@@ -7,6 +7,42 @@ import { generateId } from '@/lib/utils';
 const SESSION_COOKIE_NAME = 'life_kline_session_id';
 const LOGIN_PURPOSE = 'login';
 const CODE_TTL_MINUTES = 15;
+/** Long-lived product session (remember me) — ~2 years */
+const SESSION_MAX_AGE_REMEMBER_SEC = 60 * 60 * 24 * 730;
+/** Shorter session when user unchecks remember me — 30 days */
+const SESSION_MAX_AGE_SHORT_SEC = 60 * 60 * 24 * 30;
+
+let passwordSchemaReady = false;
+
+/** Add password/username columns once (prod SQLite). Safe to call often. */
+export function ensureAuthPasswordSchema() {
+  if (passwordSchemaReady) return;
+  try {
+    const cols = (
+      db.prepare(`PRAGMA table_info(users)`).all() as Array<{ name: string }>
+    ).map((c) => c.name);
+    if (!cols.includes('password_hash')) {
+      db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT`);
+    }
+    if (!cols.includes('username')) {
+      db.exec(`ALTER TABLE users ADD COLUMN username TEXT`);
+    }
+    if (!cols.includes('last_login_at')) {
+      db.exec(`ALTER TABLE users ADD COLUMN last_login_at TEXT`);
+    }
+    db.exec(
+      `CREATE UNIQUE INDEX IF NOT EXISTS idx_users_username_unique ON users(username) WHERE username IS NOT NULL AND username != ''`,
+    );
+    passwordSchemaReady = true;
+  } catch (error) {
+    console.warn(
+      '[auth] ensureAuthPasswordSchema:',
+      error instanceof Error ? error.message : error,
+    );
+    // still mark ready to avoid hammering bad schema in a tight loop
+    passwordSchemaReady = true;
+  }
+}
 
 function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
@@ -108,6 +144,10 @@ const USER_ID_MERGE_TABLES = [
   'tool_sessions',
 ] as const;
 
+export function mergeGuestIntoUserId(guestUserId: string, targetUserId: string) {
+  return mergeGuestDataIntoUser(guestUserId, targetUserId);
+}
+
 function mergeGuestDataIntoUser(guestUserId: string, targetUserId: string) {
   if (!guestUserId || !targetUserId || guestUserId === targetUserId) {
     return;
@@ -181,10 +221,14 @@ export function claimReportForUser(
   }
 }
 
-async function setSessionUserId(userId: string) {
+export async function setSessionUserId(
+  userId: string,
+  options?: { rememberMe?: boolean },
+) {
+  const rememberMe = options?.rememberMe !== false;
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, userId, {
-    maxAge: 60 * 60 * 24 * 365,
+    maxAge: rememberMe ? SESSION_MAX_AGE_REMEMBER_SEC : SESSION_MAX_AGE_SHORT_SEC,
     httpOnly: true,
     secure: isProductionEnvironment(),
     sameSite: 'lax',
@@ -193,6 +237,7 @@ async function setSessionUserId(userId: string) {
 }
 
 export async function getAuthSession() {
+  ensureAuthPasswordSchema();
   const cookieStore = await cookies();
   const userId = cookieStore.get(SESSION_COOKIE_NAME)?.value;
   if (!userId) {
@@ -210,15 +255,28 @@ export async function getAuthSession() {
     };
   }
 
-  const authenticated = !!user.email && user.email_verified === 1;
+  // Password / registered users are authenticated without requiring verified email.
+  // Guest cookies remain unauthenticated for gated surfaces.
+  const role = user.role || 'guest';
+  const hasPassword = Boolean(user.password_hash);
+  const emailVerified = user.email_verified === 1;
+  const authenticated =
+    role === 'admin' ||
+    role === 'user' ||
+    hasPassword ||
+    (Boolean(user.email) && emailVerified);
+
   return {
     authenticated,
     user: {
       id: user.id,
       name: user.name,
       email: user.email || null,
-      role: user.role || 'guest',
-      emailVerified: user.email_verified === 1,
+      username: user.username || null,
+      role,
+      emailVerified,
+      hasPassword,
+      needsEmailBind: !user.email,
     },
   };
 }
@@ -285,22 +343,50 @@ export async function createSessionForVerifiedEmail({
   currentUserId,
   reportId,
   displayName,
+  rememberMe = true,
+  requireEmailVerified = true,
+  existingUserId,
 }: {
   email: string;
   currentUserId?: string | null;
   reportId?: string | null;
   displayName?: string | null;
+  /** Default true — long product session (~2y) */
+  rememberMe?: boolean;
+  /** When false, do not force email_verified=1 (password user with unbound email path) */
+  requireEmailVerified?: boolean;
+  /** Prefer this user id when already known (password login) */
+  existingUserId?: string | null;
 }) {
+  ensureAuthPasswordSchema();
   const normalizedEmail = normalizeEmail(email);
   const guestId =
     currentUserId && currentUserId.startsWith('guest_') ? currentUserId : null;
 
-  let user = userOperations.getByEmail(normalizedEmail) as any;
+  let user: any = null;
+  if (existingUserId) {
+    user = userOperations.getById(existingUserId) as any;
+  }
+  if (!user) {
+    user = userOperations.getByEmail(normalizedEmail) as any;
+  }
   const isNewUser = !user;
   if (!user) {
     user = createUserForEmail(normalizedEmail, displayName);
   } else {
-    updateUserLoginState(user.id, normalizedEmail);
+    if (requireEmailVerified !== false) {
+      updateUserLoginState(user.id, normalizedEmail);
+    } else if (normalizedEmail) {
+      // keep role, optionally set email without forcing verified
+      try {
+        userOperations.update(user.id, {
+          email: normalizedEmail,
+          role: isAdminEmail(normalizedEmail) ? 'admin' : user.role || 'user',
+        });
+      } catch {
+        // ignore
+      }
+    }
     if (displayName && !user.name) {
       try {
         userOperations.update(user.id, { name: `${displayName}`.trim().slice(0, 64) });
@@ -320,7 +406,7 @@ export async function createSessionForVerifiedEmail({
   }
 
   const claim = claimReportForUser(reportId, user.id, guestId);
-  await setSessionUserId(user.id);
+  await setSessionUserId(user.id, { rememberMe: rememberMe !== false });
 
   return {
     success: true as const,

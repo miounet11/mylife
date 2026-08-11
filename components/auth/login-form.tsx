@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Loader2, Mail, ShieldCheck } from 'lucide-react';
+import { KeyRound, Loader2, Mail, ShieldCheck, UserPlus } from 'lucide-react';
 import { useLocale } from '@/components/i18n/locale-provider';
 import { AlertBanner } from '@/components/layout/alert-banner';
 import { loginFormCopy } from '@/lib/i18n/login-copy';
@@ -25,7 +25,11 @@ type LoginFormProps = {
   reportId?: string;
 };
 
+type Mode = 'password' | 'register' | 'email';
+type EmailStep = 'email' | 'code';
+
 const RESEND_COOLDOWN_SEC = 60;
+const ACCOUNT_STORAGE_KEY = 'life-kline:last-account';
 
 export default function LoginForm({
   locale: localeProp,
@@ -52,11 +56,17 @@ export default function LoginForm({
     searchParams.get('source')?.trim() ||
     (reportId ? 'report_bind' : 'login');
 
-  const [step, setStep] = useState<'email' | 'code'>('email');
+  const [mode, setMode] = useState<Mode>('password');
+  const [emailStep, setEmailStep] = useState<EmailStep>('email');
+
+  const [account, setAccount] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [adminRequired, setAdminRequired] = useState(false);
+  const [rememberMe, setRememberMe] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -74,15 +84,28 @@ export default function LoginForm({
     const fromQuery = searchParams.get('email')?.trim().toLowerCase() || '';
     if (fromQuery.includes('@')) {
       setEmail(fromQuery);
+      setAccount(fromQuery);
       return;
     }
     try {
-      const stored = localStorage.getItem('life-kline:lead-email')?.trim().toLowerCase() || '';
-      if (stored.includes('@')) setEmail(stored);
+      const stored =
+        localStorage.getItem(ACCOUNT_STORAGE_KEY)?.trim() ||
+        localStorage.getItem('life-kline:lead-email')?.trim() ||
+        '';
+      if (stored) {
+        setAccount(stored);
+        if (stored.includes('@')) setEmail(stored.toLowerCase());
+      }
     } catch {
       // ignore
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    if (resendIn <= 0) return;
+    const t = window.setTimeout(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
+    return () => window.clearTimeout(t);
+  }, [resendIn]);
 
   useEffect(() => {
     const err = searchParams.get('error')?.trim() || '';
@@ -96,14 +119,91 @@ export default function LoginForm({
     }
   }, [searchParams, copy.googleDenied, copy.googleError]);
 
-  useEffect(() => {
-    if (resendIn <= 0) return;
-    const t = window.setTimeout(() => setResendIn((s) => Math.max(0, s - 1)), 1000);
-    return () => window.clearTimeout(t);
-  }, [resendIn]);
-
   const isMembershipNext =
     nextPath.includes('/membership') || nextPath.includes('membership');
+
+  function finishSuccess(identity: string) {
+    try {
+      if (identity) {
+        localStorage.setItem(ACCOUNT_STORAGE_KEY, identity);
+        if (identity.includes('@')) {
+          localStorage.setItem('life-kline:lead-email', identity.toLowerCase());
+        }
+      }
+      localStorage.setItem('newsletter-subscribed', 'done');
+    } catch {
+      // ignore
+    }
+    if (onSuccess) {
+      onSuccess(identity);
+      return;
+    }
+    router.push(nextPath);
+    router.refresh();
+  }
+
+  async function passwordLogin() {
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/auth/password/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          account: account.trim(),
+          password,
+          rememberMe,
+          source,
+          reportId: reportId || undefined,
+          page: typeof window !== 'undefined' ? window.location.pathname : '/login',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || copy.passwordLoginFailed);
+      }
+      if (data.needsEmailBind) {
+        setMessage(copy.emailOptionalHint);
+      }
+      finishSuccess(account.trim() || data.user?.username || data.user?.email || '');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : copy.passwordLoginFailed);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function passwordRegister() {
+    setLoading(true);
+    setError(null);
+    setMessage(null);
+    try {
+      const res = await fetch('/api/auth/password/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: username.trim(),
+          password,
+          email: email.trim() || undefined,
+          rememberMe,
+          source,
+          reportId: reportId || undefined,
+          page: typeof window !== 'undefined' ? window.location.pathname : '/login',
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || copy.registerFailed);
+      }
+      if (data.message) setMessage(String(data.message));
+      finishSuccess(username.trim() || email.trim() || data.user?.username || '');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : copy.registerFailed);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function requestCode() {
     setLoading(true);
@@ -126,13 +226,12 @@ export default function LoginForm({
       if (!res.ok || !data.success) {
         throw new Error(data.error || data.warning || copy.sendFailed);
       }
-      // Only advance when mail was sent (or dev returned success with warning).
       if (data.emailSent === false && !data.devCode) {
         throw new Error(data.warning || copy.deliveryFailed);
       }
       setEmail(normalized);
       setAdminRequired(!!data.adminPasswordRequired);
-      setStep('code');
+      setEmailStep('code');
       setResendIn(RESEND_COOLDOWN_SEC);
       const devHint = data.devCode ? `${copy.devCodePrefix}${data.devCode}` : '';
       const domain = normalized.split('@')[1] || '';
@@ -179,23 +278,20 @@ export default function LoginForm({
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || copy.verifyFailed);
-      try {
-        localStorage.setItem('life-kline:lead-email', normalized);
-        localStorage.setItem('newsletter-subscribed', 'done');
-      } catch {
-        // ignore
-      }
-      if (onSuccess) {
-        onSuccess(normalized);
-        return;
-      }
-      router.push(nextPath);
-      router.refresh();
+      finishSuccess(normalized);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : copy.verifyFailed);
     } finally {
       setLoading(false);
     }
+  }
+
+  function switchMode(next: Mode) {
+    setMode(next);
+    setError(null);
+    setMessage(null);
+    setEmailStep('email');
+    setCode('');
   }
 
   return (
@@ -219,62 +315,223 @@ export default function LoginForm({
       )}
 
       {isMembershipNext ? (
-        <p className="mb-3 text-[12px] leading-[1.55] text-[color:var(--ink-3)]">{copy.membershipNextHint}</p>
+        <p className="mb-3 text-[12px] leading-[1.55] text-[color:var(--ink-3)]">
+          {copy.membershipNextHint}
+        </p>
       ) : null}
 
       {message ? <AlertBanner tone="success" className="mb-3 text-xs">{message}</AlertBanner> : null}
       {error ? <AlertBanner className="mb-3 text-xs">{error}</AlertBanner> : null}
 
-      {step === 'email' ? (
-        <div className="space-y-3">
-          <a
-            href={googleHref}
-            className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline-strong)] bg-white text-sm font-medium text-[color:var(--ink-1)] hover:bg-[color:var(--bg-sunken)]"
+      <a
+        href={googleHref}
+        className="inline-flex h-11 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] border border-[color:var(--hairline-strong)] bg-white text-sm font-medium text-[color:var(--ink-1)] hover:bg-[color:var(--bg-sunken)]"
+      >
+        <GoogleMark />
+        {copy.googleSignIn}
+      </a>
+
+      <div className="my-3 flex items-center gap-2 text-[11px] text-[color:var(--ink-5)]">
+        <span className="h-px flex-1 bg-[color:var(--hairline)]" />
+        {copy.googleOrEmail}
+        <span className="h-px flex-1 bg-[color:var(--hairline)]" />
+      </div>
+
+      <div className="mb-3 flex rounded-[var(--radius-sm)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] p-0.5 text-[12px]">
+        {(
+          [
+            ['password', copy.tabPassword],
+            ['register', copy.tabRegister],
+            ['email', copy.tabEmail],
+          ] as const
+        ).map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => switchMode(key)}
+            className={
+              mode === key
+                ? 'flex-1 rounded-[calc(var(--radius-sm)-2px)] bg-white px-2 py-1.5 font-semibold text-[color:var(--ink-1)] shadow-sm'
+                : 'flex-1 px-2 py-1.5 text-[color:var(--ink-4)]'
+            }
           >
-            <GoogleMark />
-            {copy.googleSignIn}
-          </a>
-          <div className="flex items-center gap-2 text-[11px] text-[color:var(--ink-5)]">
-            <span className="h-px flex-1 bg-[color:var(--hairline)]" />
-            {copy.googleOrEmail}
-            <span className="h-px flex-1 bg-[color:var(--hairline)]" />
-          </div>
-          <form
-            onSubmit={(e) => {
-              e.preventDefault();
-              void requestCode();
-            }}
-            className="space-y-3"
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {mode === 'password' ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void passwordLogin();
+          }}
+          className="space-y-3"
+        >
+          <label className="block space-y-1.5">
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">
+              {copy.accountLabel}
+            </span>
+            <input
+              type="text"
+              required
+              autoComplete="username"
+              autoFocus={!compact}
+              value={account}
+              onChange={(e) => setAccount(e.target.value)}
+              placeholder={copy.accountPlaceholder}
+              className="fb-input h-11 w-full px-3 text-sm"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">
+              {copy.passwordLabel}
+            </span>
+            <input
+              type="password"
+              required
+              autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={copy.passwordPlaceholder}
+              className="fb-input h-11 w-full px-3 text-sm"
+            />
+          </label>
+          <label className="flex items-center gap-2 text-[12px] text-[color:var(--ink-3)]">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="rounded border-[color:var(--hairline)]"
+            />
+            {copy.rememberMe}
+          </label>
+          <button
+            type="submit"
+            disabled={loading || !account.trim() || password.length < 6}
+            className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-sm font-medium text-white disabled:opacity-50"
           >
-            <label className="block space-y-1.5">
-              <span className="text-[12px] font-medium text-[color:var(--ink-2)]">{copy.emailLabel}</span>
-              <input
-                type="email"
-                required
-                autoComplete="email"
-                inputMode="email"
-                autoFocus={!compact}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder={copy.emailPlaceholder}
-                className="fb-input h-11 w-full px-3 text-sm"
-              />
-            </label>
-            <button
-              type="submit"
-              disabled={loading || !email.trim()}
-              className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-sm font-medium text-white disabled:opacity-50"
-            >
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              {copy.sendCode}
-            </button>
-            <p className="flex items-center gap-1.5 text-[11px] text-[color:var(--ink-4)]">
-              <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[color:var(--brand-strong)]" />
-              {copy.sendCodeHint}
-            </p>
-          </form>
-        </div>
-      ) : (
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <KeyRound className="h-4 w-4" />}
+            {copy.loginButton}
+          </button>
+        </form>
+      ) : null}
+
+      {mode === 'register' ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void passwordRegister();
+          }}
+          className="space-y-3"
+        >
+          <label className="block space-y-1.5">
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">
+              {copy.usernameLabel}
+            </span>
+            <input
+              type="text"
+              required
+              autoComplete="username"
+              autoFocus={!compact}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder={copy.usernamePlaceholder}
+              className="fb-input h-11 w-full px-3 text-sm"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">
+              {copy.passwordLabel}
+            </span>
+            <input
+              type="password"
+              required
+              autoComplete="new-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={copy.passwordPlaceholder}
+              className="fb-input h-11 w-full px-3 text-sm"
+            />
+          </label>
+          <label className="block space-y-1.5">
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">
+              {copy.emailOptionalLabel}
+            </span>
+            <input
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={copy.emailPlaceholder}
+              className="fb-input h-11 w-full px-3 text-sm"
+            />
+            <span className="block text-[11px] text-[color:var(--ink-5)]">
+              {copy.emailOptionalHint}
+            </span>
+          </label>
+          <label className="flex items-center gap-2 text-[12px] text-[color:var(--ink-3)]">
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={(e) => setRememberMe(e.target.checked)}
+              className="rounded border-[color:var(--hairline)]"
+            />
+            {copy.rememberMe}
+          </label>
+          <button
+            type="submit"
+            disabled={loading || username.trim().length < 3 || password.length < 6}
+            className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-sm font-medium text-white disabled:opacity-50"
+          >
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <UserPlus className="h-4 w-4" />
+            )}
+            {copy.registerButton}
+          </button>
+        </form>
+      ) : null}
+
+      {mode === 'email' && emailStep === 'email' ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void requestCode();
+          }}
+          className="space-y-3"
+        >
+          <label className="block space-y-1.5">
+            <span className="text-[12px] font-medium text-[color:var(--ink-2)]">{copy.emailLabel}</span>
+            <input
+              type="email"
+              required
+              autoComplete="email"
+              inputMode="email"
+              autoFocus={!compact}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={copy.emailPlaceholder}
+              className="fb-input h-11 w-full px-3 text-sm"
+            />
+          </label>
+          <button
+            type="submit"
+            disabled={loading || !email.trim()}
+            className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-sm font-medium text-white disabled:opacity-50"
+          >
+            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+            {copy.sendCode}
+          </button>
+          <p className="flex items-center gap-1.5 text-[11px] text-[color:var(--ink-4)]">
+            <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-[color:var(--brand-strong)]" />
+            {copy.sendCodeHint}
+          </p>
+        </form>
+      ) : null}
+
+      {mode === 'email' && emailStep === 'code' ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -327,7 +584,7 @@ export default function LoginForm({
               type="button"
               disabled={loading}
               onClick={() => {
-                setStep('email');
+                setEmailStep('email');
                 setCode('');
                 setError(null);
                 setMessage(null);
@@ -347,7 +604,7 @@ export default function LoginForm({
             </button>
           </div>
         </form>
-      )}
+      ) : null}
     </div>
   );
 }

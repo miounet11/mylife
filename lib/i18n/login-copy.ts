@@ -19,10 +19,10 @@ function pick(locale: SiteLocale, map: Tri): string {
 export function emailBindWhyCopy(locale: SiteLocale) {
   return pick(locale, {
     'zh-CN':
-      '绑定邮箱是为了后续方便召回你、跨设备找回报告，并与你保持持续关系（节点提醒、回访建议）。无需密码，验证码即可。',
+      '推荐绑定邮箱：方便接收节点提醒、订阅内容与跨设备找回报告。也可用用户名+密码直接登录，不必每次验证码。',
     'zh-Hant':
-      '綁定郵箱是為了後續方便召回你、跨裝置找回報告，並與你保持持續關係（節點提醒、回訪建議）。無需密碼，驗證碼即可。',
-    en: 'We bind email so we can reach you later, restore reports across devices, and keep an ongoing relationship (timing notes, follow-ups). No password — code only.',
+      '推薦綁定郵箱：方便接收節點提醒、訂閱內容與跨裝置找回報告。也可用用戶名+密碼直接登入，不必每次驗證碼。',
+    en: 'We recommend binding email for reminders, subscriptions, and restoring reports. You can also sign in with username + password — no code every time.',
   });
 }
 
@@ -58,10 +58,10 @@ export function loginPageCopy(locale: SiteLocale) {
     }),
     description: pick(locale, {
       'zh-CN':
-        '验证码登录，无需设密码。绑定后可保存报告、领取会员，并在关键节点收到轻量提醒，保持持续关系。',
+        '支持账号密码、Google 与邮箱验证码。登录状态可长期保持。推荐绑定邮箱，方便订阅与提醒。',
       'zh-Hant':
-        '驗證碼登入，無需設密碼。綁定後可保存報告、領取會員，並在關鍵節點收到輕量提醒，保持持續關係。',
-      en: 'Code sign-in, no password. After binding you can save reports, claim membership, and get light timing notes so we stay in touch.',
+        '支援帳號密碼、Google 與郵箱驗證碼。登入狀態可長期保持。推薦綁定郵箱，方便訂閱與提醒。',
+      en: 'Sign in with password, Google, or email code. Sessions stay signed in. Binding email is recommended for subscriptions and reminders.',
     }),
     linkMembership: pick(locale, {
       'zh-CN': '领会员',
@@ -134,9 +134,88 @@ export function loginFormCopy(locale: SiteLocale) {
       en: 'Continue with Google',
     }),
     googleOrEmail: pick(locale, {
-      'zh-CN': '或使用邮箱验证码',
-      'zh-Hant': '或使用郵箱驗證碼',
-      en: 'Or use email code',
+      'zh-CN': '或使用其他方式',
+      'zh-Hant': '或使用其他方式',
+      en: 'Or continue another way',
+    }),
+    tabPassword: pick(locale, {
+      'zh-CN': '账号密码',
+      'zh-Hant': '帳號密碼',
+      en: 'Password',
+    }),
+    tabRegister: pick(locale, {
+      'zh-CN': '注册',
+      'zh-Hant': '註冊',
+      en: 'Sign up',
+    }),
+    tabEmail: pick(locale, {
+      'zh-CN': '邮箱验证码',
+      'zh-Hant': '郵箱驗證碼',
+      en: 'Email code',
+    }),
+    accountLabel: pick(locale, {
+      'zh-CN': '用户名或邮箱',
+      'zh-Hant': '用戶名或郵箱',
+      en: 'Username or email',
+    }),
+    accountPlaceholder: pick(locale, {
+      'zh-CN': 'username 或 your@email.com',
+      en: 'username or your@email.com',
+    }),
+    usernameLabel: pick(locale, {
+      'zh-CN': '用户名',
+      'zh-Hant': '用戶名',
+      en: 'Username',
+    }),
+    usernamePlaceholder: pick(locale, {
+      'zh-CN': '3–32 位字母数字',
+      'zh-Hant': '3–32 位字母數字',
+      en: '3–32 letters or numbers',
+    }),
+    passwordLabel: pick(locale, {
+      'zh-CN': '密码',
+      'zh-Hant': '密碼',
+      en: 'Password',
+    }),
+    passwordPlaceholder: pick(locale, {
+      'zh-CN': '至少 6 位',
+      'zh-Hant': '至少 6 位',
+      en: 'At least 6 characters',
+    }),
+    emailOptionalLabel: pick(locale, {
+      'zh-CN': '邮箱（可选，推荐）',
+      'zh-Hant': '郵箱（可選，推薦）',
+      en: 'Email (optional, recommended)',
+    }),
+    emailOptionalHint: pick(locale, {
+      'zh-CN': '绑定邮箱方便订阅内容与节点提醒；可之后再绑。',
+      'zh-Hant': '綁定郵箱方便訂閱內容與節點提醒；可之後再綁。',
+      en: 'Bind email for subscriptions and reminders — you can do it later.',
+    }),
+    rememberMe: pick(locale, {
+      'zh-CN': '保持登录（长期有效，本机更方便）',
+      'zh-Hant': '保持登入（長期有效，本機更方便）',
+      en: 'Stay signed in (long-lived on this device)',
+    }),
+    loginButton: pick(locale, {
+      'zh-CN': '登录',
+      'zh-Hant': '登入',
+      en: 'Sign in',
+    }),
+    registerButton: pick(locale, {
+      'zh-CN': '创建账号并登录',
+      'zh-Hant': '建立帳號並登入',
+      en: 'Create account & sign in',
+    }),
+    passwordLoginFailed: pick(locale, {
+      'zh-CN': '登录失败',
+      'zh-Hant': '登入失敗',
+      en: 'Sign-in failed',
+    }),
+    registerFailed: pick(locale, {
+      'zh-CN': '注册失败',
+      'zh-Hant': '註冊失敗',
+      en: 'Sign-up failed',
     }),
     googleError: pick(locale, {
       'zh-CN': 'Google 登录未完成，请重试或改用邮箱验证码',
