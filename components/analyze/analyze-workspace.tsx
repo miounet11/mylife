@@ -720,6 +720,18 @@ export default function AnalyzeWorkspace({
                   {loading ? copy.submitLoading : canSubmit ? copy.submitReady : copy.submitDisabled}
                   {!loading && canSubmit ? <ArrowRight className="h-4 w-4" /> : null}
                 </button>
+                <p className="mt-2 text-center text-[11px] leading-relaxed text-[color:var(--ink-5)]">
+                  报告将给出你的{' '}
+                  <span className="font-semibold text-[color:var(--ink-3)]">人生 K 线</span>
+                  （事业 / 财 / 关系 / 健康多年趋势）+ 结构判断与行动建议。
+                  {' '}
+                  <a
+                    href="#life-kline-showcase"
+                    className="underline-offset-2 hover:underline"
+                  >
+                    先看示例曲线
+                  </a>
+                </p>
               </div>
             </div>
           </section>

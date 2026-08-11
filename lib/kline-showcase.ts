@@ -1,0 +1,268 @@
+/**
+ * 人生 K 线 · 产品说明与示例样本
+ *
+ * 人生 K 线 = 以八字原局为基线，叠加大运 / 流年 / 用神匹配后的
+ * 「事业 · 财富 · 关系 · 健康」多年趋势曲线（V6：无 Math.sin 伪周期）。
+ *
+ * 示例用固定生辰实时演算，仅作产品演示，非真人档案。
+ */
+
+import { determineYongShen } from '@/lib/bazi-analyzer';
+import { calculateDayun } from '@/lib/dayun-calculator';
+import { calculateFourPillars } from '@/lib/fortune-engine';
+import { generateLifeKlineV6, type KlinePointV6 } from '@/lib/kline-v6';
+
+export type KlineShowcaseChartPoint = {
+  year: number;
+  career: number;
+  wealth: number;
+  marriage: number;
+  health: number;
+  score: number;
+  evidence?: {
+    ganZhi?: string;
+    dayunGanZhi?: string | null;
+    drivers?: string[];
+    risks?: string[];
+  };
+};
+
+export type KlineShowcaseSample = {
+  id: string;
+  /** 展示用化名 */
+  label: string;
+  /** 一句话人设 */
+  persona: string;
+  /** 可读的出生摘要（演示） */
+  birthSummary: string;
+  /** 本例要教什么 */
+  teach: string;
+  peakYear: number | null;
+  troughYear: number | null;
+  series: KlineShowcaseChartPoint[];
+};
+
+export const LIFE_KLINE_PRODUCT = {
+  name: '人生 K 线',
+  english: 'Life K-Line',
+  oneLiner: '把八字大运与流年，画成一条可对照的人生趋势曲线。',
+  whatItIs: [
+    '不是股市 K 线，也不是占卜「定生死」。',
+    '以你的日主、用神与大运为底，按年（可切到月）给出事业 / 财富 / 关系 / 健康四条可解释分数。',
+    '高点与低谷会标出参考年：用来对照人生阶段，而不是替代你的选择。',
+  ],
+  howBuilt: [
+    { step: '1', title: '原局基线', detail: '四柱五行与用神 / 忌神，定事业、财、关系、健康的底色。' },
+    { step: '2', title: '大运加权', detail: '十年大运天干地支与用忌匹配，形成阶段背景。' },
+    { step: '3', title: '流年触发', detail: '每年干支再叠加合冲刑害与十神关系，得到当年分。' },
+    { step: '4', title: '读图行动', detail: '看当前处于高 / 平 / 低段，再决定冲刺、布局或防守。' },
+  ],
+  howToRead: [
+    { title: '先看综合线', detail: '把握整段人生的起伏，不必盯住某一年的绝对数字。' },
+    { title: '再切事业 / 财 / 关系 / 健康', detail: '同一年不同板块可能一强一弱——这是结构差异，不是「全好或全坏」。' },
+    { title: '对照当下与未来 2–3 年', detail: '当前年附近最有决策价值；远期只作阶段参考。' },
+    { title: '低谷不等于坏事', detail: '常对应宜稳、宜修结构的窗口；高峰也要避免过度扩张。' },
+  ],
+  disclaimer:
+    '示例与报告曲线均为结构参考，不构成投资、医疗或人生决策保证。生辰越准确，阶段定位越稳。',
+} as const;
+
+type DemoSeed = {
+  id: string;
+  label: string;
+  persona: string;
+  teach: string;
+  birthDate: string; // YYYY-MM-DD
+  birthTime: string;
+  gender: 'male' | 'female';
+  birthPlace: string;
+};
+
+/** 固定演示盘（公开假名），仅用于产品说明 */
+const DEMO_SEEDS: DemoSeed[] = [
+  {
+    id: 'steady-builder',
+    label: '稳建型 · 阿森',
+    persona: '偏事业节奏清晰、财富线随大运抬升的示例',
+    teach: '看清「十年大运背景」如何托起或压低事业与财线。',
+    birthDate: '1988-05-12',
+    birthTime: '09:30',
+    gender: 'male',
+    birthPlace: '上海',
+  },
+  {
+    id: 'wave-connector',
+    label: '波段型 · 小林',
+    persona: '关系与事业波段更明显、宜择窗推进的示例',
+    teach: '同一人生里，板块节奏可以不同步——先保优势线。',
+    birthDate: '1992-11-03',
+    birthTime: '14:20',
+    gender: 'female',
+    birthPlace: '成都',
+  },
+  {
+    id: 'late-bloom',
+    label: '后发型 · 老周',
+    persona: '前段偏稳、中后段窗口抬升的示例',
+    teach: '人生 K 线不是「越早越高越好」，关键看你所在的大运段。',
+    birthDate: '1978-03-21',
+    birthTime: '07:45',
+    gender: 'male',
+    birthPlace: '北京',
+  },
+];
+
+function parseYmd(ymd: string): Date {
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(y, (m || 1) - 1, d || 1);
+}
+
+function toChartPoints(raw: KlinePointV6[]): KlineShowcaseChartPoint[] {
+  return raw.map((p) => {
+    const career = Number(p.career) || 0;
+    const wealth = Number(p.wealth) || 0;
+    const marriage = Number(p.marriage) || 0;
+    const health = Number(p.health) || 0;
+    return {
+      year: p.year,
+      career,
+      wealth,
+      marriage,
+      health,
+      score: Math.round((career + wealth + marriage + health) / 4),
+      evidence: {
+        ganZhi: p.evidence?.ganZhi,
+        dayunGanZhi: p.evidence?.dayunGanZhi,
+        drivers: p.evidence?.drivers?.slice(0, 2),
+        risks: p.evidence?.risks?.slice(0, 2),
+      },
+    };
+  });
+}
+
+function findExtremes(series: KlineShowcaseChartPoint[]) {
+  let peak: KlineShowcaseChartPoint | null = null;
+  let trough: KlineShowcaseChartPoint | null = null;
+  for (const p of series) {
+    if (!peak || p.score > peak.score) peak = p;
+    if (!trough || p.score < trough.score) trough = p;
+  }
+  return {
+    peakYear: peak?.year ?? null,
+    troughYear: trough?.year ?? null,
+  };
+}
+
+function buildOneSample(seed: DemoSeed): KlineShowcaseSample | null {
+  try {
+    const birthDate = parseYmd(seed.birthDate);
+    const pillars = calculateFourPillars(birthDate, seed.birthTime, 8, {
+      birthPlace: seed.birthPlace,
+      useTrueSolarTime: false,
+      sect: 2,
+    });
+    const baziStr = pillars.map((p) => `${p.celestialStem}${p.earthlyBranch}`);
+    const yongShen = determineYongShen(baziStr);
+    const dayun = calculateDayun(
+      birthDate,
+      seed.birthTime,
+      seed.gender,
+      pillars[0]?.celestialStem || '',
+      { gan: pillars[1]?.celestialStem || '', zhi: pillars[1]?.earthlyBranch || '' },
+      yongShen,
+      birthDate.getFullYear(),
+    );
+    const raw = generateLifeKlineV6(birthDate, seed.gender, pillars, yongShen, dayun as any, {
+      fromBirth: true,
+      lifeYears: 80,
+    });
+    const series = toChartPoints(raw);
+    if (series.length < 20) return null;
+    const extremes = findExtremes(series);
+    return {
+      id: seed.id,
+      label: seed.label,
+      persona: seed.persona,
+      birthSummary: `演示生辰 ${seed.birthDate} ${seed.birthTime} · ${seed.birthPlace}（非真人）`,
+      teach: seed.teach,
+      peakYear: extremes.peakYear,
+      troughYear: extremes.troughYear,
+      series,
+    };
+  } catch (err) {
+    console.warn('[kline-showcase] sample failed', seed.id, err instanceof Error ? err.message : err);
+    return null;
+  }
+}
+
+/** 服务端生成演示样本（真实 V6 引擎）。 */
+export function getKlineShowcaseSamples(): KlineShowcaseSample[] {
+  return DEMO_SEEDS.map(buildOneSample).filter((s): s is KlineShowcaseSample => Boolean(s));
+}
+
+export type PersonalKlineHighlight = {
+  sampleYears: number;
+  spanLabel: string;
+  currentYearScore: number | null;
+  peak: { year: number; score: number } | null;
+  trough: { year: number; score: number } | null;
+  readingTips: string[];
+};
+
+/** 从用户报告 klineData 提炼「结果页首屏可读」摘要。 */
+export function buildPersonalKlineHighlight(
+  klineData?: Array<{
+    year?: number;
+    career?: number;
+    wealth?: number;
+    marriage?: number;
+    health?: number;
+    score?: number;
+  }> | null,
+): PersonalKlineHighlight | null {
+  if (!Array.isArray(klineData) || klineData.length < 3) return null;
+  const points = klineData
+    .map((p) => {
+      const year = Number(p.year);
+      if (!Number.isFinite(year)) return null;
+      const dims = [p.career, p.wealth, p.marriage, p.health]
+        .map(Number)
+        .filter((n) => Number.isFinite(n));
+      const score =
+        Number(p.score) > 0
+          ? Number(p.score)
+          : dims.length
+            ? dims.reduce((a, b) => a + b, 0) / dims.length
+            : 0;
+      return { year, score: Math.round(score) };
+    })
+    .filter((p): p is { year: number; score: number } => Boolean(p));
+  if (points.length < 3) return null;
+
+  const years = points.map((p) => p.year);
+  const minY = Math.min(...years);
+  const maxY = Math.max(...years);
+  const currentYear = new Date().getFullYear();
+  const current = points.find((p) => p.year === currentYear) || null;
+  let peak = points[0]!;
+  let trough = points[0]!;
+  for (const p of points) {
+    if (p.score > peak.score) peak = p;
+    if (p.score < trough.score) trough = p;
+  }
+
+  return {
+    sampleYears: points.length,
+    spanLabel: `${minY}–${maxY}`,
+    currentYearScore: current?.score ?? null,
+    peak: { year: peak.year, score: peak.score },
+    trough: { year: trough.year, score: trough.score },
+    readingTips: [
+      current
+        ? `今年综合参考约 ${current.score} 分，先对照事业/财/关系/健康分线。`
+        : `样本覆盖 ${points.length} 年，可先切到「人生 80 年」看整段节奏。`,
+      `高点参考约 ${peak.year} 年（${peak.score}），低谷参考约 ${trough.year} 年（${trough.score}）——作阶段对照，勿当预言。`,
+      '曲线由大运 + 流年 + 用神加权生成；改生辰或真太阳时选项会重算整条线。',
+    ],
+  };
+}

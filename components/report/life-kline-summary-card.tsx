@@ -38,8 +38,8 @@ export default function LifeKLineSummaryCard({ section, klineData }: LifeKLineSu
     <div className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:var(--ink-4)]">
-            人生长弧线
+          <div className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:var(--brand-strong)]">
+            核心 · 人生 K 线
           </div>
           <h3 className="mt-1 text-[17px] font-bold leading-snug text-[color:var(--ink-1)] md:text-[18px]">
             {headline}
@@ -51,6 +51,10 @@ export default function LifeKLineSummaryCard({ section, klineData }: LifeKLineSu
           </div>
         ) : null}
       </div>
+
+      <p className="mt-1.5 max-w-3xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+        原局基线 + 大运背景 + 流年触发的多年趋势。可切换事业 / 财富 / 关系 / 健康。
+      </p>
 
       {summary ? (
         <p className="mt-2 max-w-3xl text-[13px] leading-[1.65] text-[color:var(--ink-3)]">

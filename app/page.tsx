@@ -3,8 +3,10 @@ import { Suspense } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AnalyzeWorkspace from '@/components/analyze/analyze-workspace';
 import { FeaturedToolsStrip } from '@/components/home/featured-tools-strip';
+import LifeKlineShowcase from '@/components/kline/life-kline-showcase';
 import { AppPage } from '@/components/layout/app-page';
 import { FunnelPageView } from '@/components/funnel-tracker';
+import { getKlineShowcaseSamples } from '@/lib/kline-showcase';
 import { getSystemCapabilityStats } from '@/lib/system-capability-stats';
 import { withLocalePrefix } from '@/lib/seo';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
@@ -41,6 +43,8 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const copy = funnelCopy(locale);
   const initialSource = sp.source || sp.from || 'home_workspace';
   const initialIntent = sp.intent || null;
+  // Real V6 demo curves for product education (not user data)
+  const klineSamples = getKlineShowcaseSamples();
 
   const seoPack = getPageSeoGeoPack('/');
   return (
@@ -89,6 +93,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           initialSource={initialSource}
         />
       </Suspense>
+      {klineSamples.length > 0 ? (
+        <div className="page-content-wide pb-8 pt-2 md:pb-10">
+          <LifeKlineShowcase samples={klineSamples} ctaHref="#analyze-workspace" />
+        </div>
+      ) : null}
       <div className="page-content pb-16">
         <PageSeoGeoSection pathOrSlug="/" />
       </div>

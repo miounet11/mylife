@@ -68,17 +68,44 @@ export default function ProKlineSection({
   }));
 
   return (
-    <section id="pro-kline" className="scroll-mt-header border-y border-[color:var(--hairline)] py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h2 className="text-[14px] font-semibold text-[color:var(--ink-1)]">人生 K 线</h2>
-          <p className="mt-0.5 text-[12px] text-[color:var(--ink-5)]">
-            大运 / 流年 / 用神加权。{meta.description}
+    <section className="border-y border-[color:var(--hairline)] py-4" aria-labelledby="pro-kline-heading">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 max-w-2xl">
+          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:var(--brand-strong)]">
+            核心功能 · Life K-Line
+          </p>
+          <h2
+            id="pro-kline-heading"
+            className="mt-0.5 text-[16px] font-bold text-[color:var(--ink-1)] md:text-[17px]"
+          >
+            人生 K 线
+          </h2>
+          <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+            把你的八字原局、大运与流年，画成事业 / 财富 / 关系 / 健康的多年趋势。
+            可解释加权，不是随机波动。{meta.description}
           </p>
         </div>
         <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-[color:var(--ink-5)]">
           {peak ? <span>高点 · {peak.label}</span> : null}
           {trough ? <span>低点 · {trough.label}</span> : null}
+        </div>
+      </div>
+
+      <div className="mt-3 grid gap-1.5 rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-3 py-2.5 text-[11px] leading-relaxed text-[color:var(--ink-4)] sm:grid-cols-3">
+        <div>
+          <span className="font-semibold text-[color:var(--ink-2)]">怎么算</span>
+          {' · '}
+          原局基线 + 大运背景 + 流年触发 + 用忌匹配
+        </div>
+        <div>
+          <span className="font-semibold text-[color:var(--ink-2)]">怎么读</span>
+          {' · '}
+          先综合线看阶段，再切分线看板块
+        </div>
+        <div>
+          <span className="font-semibold text-[color:var(--ink-2)]">怎么用</span>
+          {' · '}
+          对照当下与近 2–3 年做节奏选择
         </div>
       </div>
 

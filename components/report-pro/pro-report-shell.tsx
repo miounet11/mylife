@@ -4,6 +4,7 @@ import type { FortuneAnalysisResult } from '@/lib/user-types';
 import { buildDecisionSheet } from '@/lib/report-decision-sheet';
 import { buildDecisionPacks } from '@/lib/decision-packs';
 import { buildHehunHref, personFromProView } from '@/lib/hehun-prefill';
+import { buildPersonalKlineHighlight } from '@/lib/kline-showcase';
 import ProPillarsBar from '@/components/report-pro/pro-pillars-bar';
 import ProOverviewCard from '@/components/report-pro/pro-overview-card';
 import ProOutlookPair from '@/components/report-pro/pro-outlook-pair';
@@ -21,6 +22,7 @@ import ProPredictionsStrip from '@/components/report-pro/pro-predictions-strip';
 import ProDecisionPacks from '@/components/report-pro/pro-decision-packs';
 import ProRevisitStrip from '@/components/report-pro/pro-revisit-strip';
 import ProLearningPath from '@/components/report-pro/pro-learning-path';
+import PersonalKlineHero from '@/components/kline/personal-kline-hero';
 import TeacherPicker from '@/components/teachers/teacher-picker';
 import ReportConsultantCards from '@/components/report/report-consultant-cards';
 import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
@@ -78,6 +80,7 @@ export default function ProReportShell({
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
+  const klineHighlight = buildPersonalKlineHighlight(klineData);
   const dayPillar = view.pillars.find((p) => p.label === '日柱') || view.pillars[2];
   const hehunHref = buildHehunHref({
     reportId,
@@ -261,11 +264,14 @@ export default function ProReportShell({
         />
       </div>
 
+      {/* 人生 K 线：核心功能先讲清，再给完整曲线 */}
+      <PersonalKlineHero highlight={klineHighlight} anchorId="pro-kline" />
+
       <div id="pro-pillars" className="scroll-mt-header">
         <ProPillarsBar pillars={view.pillars} />
       </div>
 
-      {/* 人生 K 线：引擎 klineData，放在命理总评之前 */}
+      {/* 人生 K 线完整图：引擎 klineData，放在命理总评之前 */}
       <div id="pro-kline" className="scroll-mt-header space-y-3">
         <ReportIllustrationCite keys={['dayun', 'timing']} title="节奏窗口" limit={1} />
         <ProKlineSection
