@@ -12,6 +12,8 @@ import {
 } from '@/lib/kline-views';
 import { buildDayunBandsFromResult } from '@/lib/kline-dayun-bands';
 import { buildPersonalKlineHighlight } from '@/lib/kline-showcase';
+import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
+import { calibrationSummaryLine } from '@/lib/kline-calibration';
 import KlineShareStrip from '@/components/kline/kline-share-strip';
 
 const FortuneChart = NextDynamic(() => import('@/components/fortune-kline-chart'), {
@@ -34,6 +36,7 @@ export default function ProKlineSection({
   publicName,
   reportId,
   locale,
+  calibrationMarkers,
 }: {
   klineData?: FortuneAnalysisResult['klineData'] | null;
   peak: ProKlinePeak | null;
@@ -47,6 +50,7 @@ export default function ProKlineSection({
   publicName?: string;
   reportId?: string;
   locale?: string | null;
+  calibrationMarkers?: KlineCalibrationMarker[] | null;
 }) {
   const raw = Array.isArray(klineData) ? klineData : [];
   const [mode, setMode] = useState<KlineViewMode>('focus');
@@ -95,6 +99,13 @@ export default function ProKlineSection({
   }));
 
   const isYearMode = mode === 'focus' || mode === 'life80';
+  const currentYear = new Date().getFullYear();
+  const sparkline = series.map((p) => p.overall);
+  const sparklineHereIndex = Math.max(
+    0,
+    series.findIndex((p) => p.year === currentYear),
+  );
+  const calibNote = calibrationSummaryLine(calibrationMarkers || []);
 
   return (
     <section className="border-y border-[color:var(--hairline)] py-4" aria-labelledby="pro-kline-heading">
@@ -144,6 +155,7 @@ export default function ProKlineSection({
       <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
         {meta.label} · {series.length} 个点
         {isYearMode ? ' · 年粒度 · 默认只亮综合线' : ' · 月粒度（公历月近似）'}
+        {calibNote ? ` · ${calibNote}` : ''}
       </p>
 
       <div className="mt-4">
@@ -180,6 +192,7 @@ export default function ProKlineSection({
             }
             emphasizeYouAreHere
             dayunBands={isYearMode ? dayunBands : undefined}
+            calibrationMarkers={isYearMode ? calibrationMarkers : undefined}
           />
         </Suspense>
       </div>
@@ -190,6 +203,10 @@ export default function ProKlineSection({
           publicName={publicName}
           reportId={reportId}
           locale={locale}
+          sparkline={sparkline}
+          sparklineHereIndex={
+            sparklineHereIndex >= 0 ? sparklineHereIndex : undefined
+          }
         />
       </div>
     </section>

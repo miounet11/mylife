@@ -5,6 +5,7 @@ import { buildDecisionSheet } from '@/lib/report-decision-sheet';
 import { buildDecisionPacks } from '@/lib/decision-packs';
 import { buildHehunHref, personFromProView } from '@/lib/hehun-prefill';
 import { buildPersonalKlineHighlight } from '@/lib/kline-showcase';
+import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
 import ProPillarsBar from '@/components/report-pro/pro-pillars-bar';
 import ProOverviewCard from '@/components/report-pro/pro-overview-card';
 import ProOutlookPair from '@/components/report-pro/pro-outlook-pair';
@@ -52,6 +53,7 @@ export default function ProReportShell({
   consultantWindows,
   locale,
   dayun,
+  calibrationMarkers,
 }: {
   view: ProReportView;
   klineData?: FortuneAnalysisResult['klineData'] | null;
@@ -80,6 +82,8 @@ export default function ProReportShell({
   locale?: string | null;
   /** 全量大运（色带） */
   dayun?: FortuneAnalysisResult['dayun'] | unknown;
+  /** 用户校准节点 → K 线标注 */
+  calibrationMarkers?: KlineCalibrationMarker[] | null;
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
@@ -300,6 +304,7 @@ export default function ProReportShell({
           publicName={publicName}
           reportId={reportId}
           locale={locale}
+          calibrationMarkers={calibrationMarkers}
         />
       </div>
 

@@ -15,6 +15,7 @@ import {
 } from 'recharts';
 import type { KlineDayunBand } from '@/lib/kline-dayun-bands';
 import { qualityLabelZh } from '@/lib/kline-dayun-bands';
+import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
 
 export type FortuneKlinePoint = {
   /** 年：number；月视图可为 "2024-03" 字符串 */
@@ -154,6 +155,8 @@ export default function FortuneKLineChart(props: {
   emphasizeYouAreHere?: boolean;
   /** 大运色带（年视图） */
   dayunBands?: KlineDayunBand[] | null;
+  /** 用户校准节点（确认/未发生） */
+  calibrationMarkers?: KlineCalibrationMarker[] | null;
   /** 兼容旧 props，忽略 */
   source?: string;
   ctaStrategyKey?: string;
@@ -226,6 +229,11 @@ export default function FortuneKLineChart(props: {
   const yearNums = points.map((p) => p.yearNum).filter((y) => y > 0);
   const chartMin = yearNums.length ? Math.min(...yearNums) : 0;
   const chartMax = yearNums.length ? Math.max(...yearNums) : 0;
+  const calibMarkers = !isMonth && Array.isArray(props.calibrationMarkers)
+    ? props.calibrationMarkers.filter(
+        (m) => m.year >= chartMin && m.year <= chartMax,
+      )
+    : [];
 
   const selectedBand =
     selected && !isMonth
@@ -406,6 +414,29 @@ export default function FortuneKLineChart(props: {
                 strokeOpacity={0.35}
               />
             ) : null}
+            {/* 校准标注：确认=绿，未发生=琥珀虚线 */}
+            {calibMarkers.map((m) => {
+              const onAxis = yearNums.includes(m.year);
+              if (!onAxis) return null;
+              const confirmed = m.kind === 'confirmed';
+              return (
+                <ReferenceLine
+                  key={`cal-${m.kind}-${m.year}-${m.title}`}
+                  x={m.year}
+                  stroke={confirmed ? '#2f7d52' : '#d97706'}
+                  strokeWidth={1.5}
+                  strokeDasharray={confirmed ? '0' : '4 3'}
+                  strokeOpacity={0.75}
+                  label={{
+                    value: confirmed ? '✓' : '×',
+                    position: 'insideTopLeft',
+                    fill: confirmed ? '#2f7d52' : '#d97706',
+                    fontSize: 11,
+                    fontWeight: 700,
+                  }}
+                />
+              );
+            })}
             {(Object.keys(DIM_META) as DimKey[]).map((key) =>
               visible[key] ? (
                 <Line
@@ -424,6 +455,20 @@ export default function FortuneKLineChart(props: {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {calibMarkers.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[color:var(--ink-5)]">
+          <span className="font-semibold text-[color:var(--ink-4)]">校准标注</span>
+          {calibMarkers.slice(0, 6).map((m) => (
+            <span key={`leg-${m.kind}-${m.year}-${m.title}`}>
+              <span style={{ color: m.kind === 'confirmed' ? '#2f7d52' : '#d97706' }}>
+                {m.kind === 'confirmed' ? '✓' : '×'}
+              </span>{' '}
+              {m.year} {m.title.slice(0, 10)}
+            </span>
+          ))}
+        </div>
+      ) : null}
 
       {/* 点选年份抽屉：原因 / 大运 / 四维 */}
       {selected ? (

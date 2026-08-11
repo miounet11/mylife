@@ -111,6 +111,7 @@ import ProReportShell from '@/components/report-pro/pro-report-shell';
 import ProExpertBanner from '@/components/report-pro/pro-expert-banner';
 import ProUserCalibration from '@/components/report-pro/pro-user-calibration';
 import { buildExpertDeskView } from '@/lib/report-expert-view';
+import { buildKlineCalibrationMarkers } from '@/lib/kline-calibration';
 import ExpertDesk from '@/components/report-expert/expert-desk';
 import { buildStateVectorData } from '@/lib/state-vector';
 import { ENGINE_BUILD_VERSIONS } from '@/lib/report-pipeline';
@@ -445,6 +446,31 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     })
     .map((event) => event.title)
     .slice(0, 3);
+  const klineCalibrationMarkers = buildKlineCalibrationMarkers({
+    events: linkedEvents.map((event) => {
+      const rawDate = (event as { date?: string | Date }).date;
+      const dateStr =
+        rawDate instanceof Date
+          ? rawDate.toISOString()
+          : typeof rawDate === 'string'
+            ? rawDate
+            : undefined;
+      return {
+        title: event.title,
+        date: dateStr,
+        userFeedback: event.userFeedback as { wasAccurate?: boolean; userNotes?: string } | undefined,
+        fortuneAnalysis: event.fortuneAnalysis as {
+          templateKind?: string;
+          occurrenceWindow?: string;
+          title?: string;
+          reportId?: string;
+        },
+      };
+    }),
+    pastTemplates: result.analysis?.pastEventTemplates as
+      | Array<{ title?: string; occurrenceWindow?: string; key?: string }>
+      | undefined,
+  });
   const correctionInsight = buildReportCorrectionInsight({
     validationInsights,
     confidence: result.confidence,
@@ -890,6 +916,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       (rawFortuneData as any).dayun ||
                       null
                     }
+                    calibrationMarkers={klineCalibrationMarkers}
                     birthYear={(() => {
                       const raw =
                         (rawFortuneData as any).birthDate ||

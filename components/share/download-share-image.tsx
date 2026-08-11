@@ -1,7 +1,12 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Check, ImageDown, Loader2 } from 'lucide-react';
+import {
+  resolveReportChromeLocale,
+  shareImageCopy,
+} from '@/lib/i18n/report-chrome-copy';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 export type ShareImageDrawProps = {
   brand?: string;
@@ -9,11 +14,24 @@ export type ShareImageDrawProps = {
   lines?: string[];
   footerLeft?: string;
   footerRight?: string;
+  /** Canvas disclaimer line */
+  disclaimer?: string;
   /** Optional absolute URL for share fallback */
   pageUrl?: string;
   /** PNG pixel size; default portrait 1080×1350 */
   width?: number;
   height?: number;
+  /** Filename prefix before title (default from locale) */
+  filePrefix?: string;
+  /** Text + URL share fallback trailing line */
+  fallbackLine?: string;
+  /**
+   * Real Life K-Line overall scores (0–100) for bottom sparkline.
+   * When present, replaces the abstract decorative bars.
+   */
+  sparkline?: number[];
+  /** Index in sparkline for “you are here” (default last third) */
+  sparklineHereIndex?: number;
 };
 
 const DEFAULT_W = 1080;
@@ -63,8 +81,11 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
     lines = [],
     footerLeft = '结构参考',
     footerRight = 'life-kline.com',
+    disclaimer = '结构与节奏参考，不替代专业医疗 / 法律 / 投资意见。',
     width = DEFAULT_W,
     height = DEFAULT_H,
+    sparkline,
+    sparklineHereIndex,
   } = props;
 
   const canvas = document.createElement('canvas');
@@ -90,54 +111,16 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
   ctx.fillStyle = 'rgba(67, 56, 202, 0.06)';
   ctx.fillRect(0, 0, width, Math.round(height * 0.018));
 
-  // Abstract K-line bars (bottom third)
+  // Bottom chart area: real sparkline when provided, else abstract bars
   const baseY = height * 0.72;
-  ctx.strokeStyle = '#d0d4db';
-  ctx.setLineDash([6, 8]);
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, baseY);
-  ctx.lineTo(width, baseY);
-  ctx.stroke();
-  ctx.setLineDash([]);
-
-  const barSpecs = [
-    [0.08, 0.12, 0.1],
-    [0.16, 0.1, 0.13],
-    [0.24, 0.11, 0.11],
-    [0.32, 0.08, 0.15],
-    [0.4, 0.09, 0.14],
-    [0.48, 0.06, 0.18],
-    [0.56, 0.085, 0.15],
-    [0.64, 0.05, 0.2],
-    [0.72, 0.08, 0.15],
-    [0.8, 0.07, 0.17],
-    [0.88, 0.1, 0.12],
-  ] as const;
-  const barW = width * 0.018;
-  barSpecs.forEach(([xr, yOff, hFrac], i) => {
-    const x = width * xr;
-    const h = height * hFrac;
-    const y = baseY - height * yOff - h * 0.35;
-    const active = i === 7;
-    ctx.fillStyle = active ? 'rgba(67, 56, 202, 0.88)' : 'rgba(208, 212, 219, 0.55)';
-    const r = 3;
-    roundRect(ctx, x, y, barW, h, r);
-    ctx.fill();
+  drawBottomChart(ctx, {
+    width,
+    height,
+    baseY,
+    padX,
+    sparkline,
+    sparklineHereIndex,
   });
-
-  // Gold diamond marker
-  const dx = width * 0.84;
-  const dy = baseY + height * 0.04;
-  const ds = width * 0.016;
-  ctx.fillStyle = 'rgba(201, 162, 39, 0.88)';
-  ctx.beginPath();
-  ctx.moveTo(dx, dy - ds);
-  ctx.lineTo(dx + ds, dy);
-  ctx.lineTo(dx, dy + ds);
-  ctx.lineTo(dx - ds, dy);
-  ctx.closePath();
-  ctx.fill();
 
   // Brand mark square
   const markSize = Math.round(width * 0.055);
@@ -198,9 +181,7 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
   const discY = height - Math.round(height * 0.12);
   ctx.fillStyle = '#8b929e';
   ctx.font = `400 ${Math.round(width * 0.02)}px ui-sans-serif, system-ui, "PingFang SC", "Noto Sans SC", sans-serif`;
-  const disc =
-    '结构与节奏参考，不替代专业医疗 / 法律 / 投资意见。';
-  ctx.fillText(disc, padX, discY);
+  ctx.fillText(disclaimer, padX, discY);
 
   // Footer rule
   const footY = height - Math.round(height * 0.065);
@@ -242,6 +223,139 @@ function roundRect(
   ctx.closePath();
 }
 
+/** Bottom decoration: real Life K-Line sparkline or fallback abstract bars. */
+function drawBottomChart(
+  ctx: CanvasRenderingContext2D,
+  opts: {
+    width: number;
+    height: number;
+    baseY: number;
+    padX: number;
+    sparkline?: number[];
+    sparklineHereIndex?: number;
+  },
+) {
+  const { width, height, baseY, padX, sparkline, sparklineHereIndex } = opts;
+  const scores = (sparkline || [])
+    .map(Number)
+    .filter((n) => Number.isFinite(n) && n > 0);
+
+  // Baseline
+  ctx.strokeStyle = '#d0d4db';
+  ctx.setLineDash([6, 8]);
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, baseY);
+  ctx.lineTo(width, baseY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (scores.length >= 4) {
+    const chartLeft = padX;
+    const chartRight = width - padX;
+    const chartW = chartRight - chartLeft;
+    const chartTop = baseY - height * 0.22;
+    const chartBottom = baseY - height * 0.02;
+    const chartH = chartBottom - chartTop;
+    const minS = Math.min(...scores);
+    const maxS = Math.max(...scores);
+    const span = Math.max(8, maxS - minS);
+    const n = scores.length;
+    const pts = scores.map((s, i) => {
+      const x = chartLeft + (n === 1 ? chartW / 2 : (i / (n - 1)) * chartW);
+      const t = (s - minS) / span;
+      const y = chartBottom - t * chartH;
+      return { x, y, s };
+    });
+
+    // Soft fill under curve
+    ctx.beginPath();
+    ctx.moveTo(pts[0]!.x, baseY);
+    for (const p of pts) ctx.lineTo(p.x, p.y);
+    ctx.lineTo(pts[pts.length - 1]!.x, baseY);
+    ctx.closePath();
+    const fill = ctx.createLinearGradient(0, chartTop, 0, baseY);
+    fill.addColorStop(0, 'rgba(67, 56, 202, 0.18)');
+    fill.addColorStop(1, 'rgba(67, 56, 202, 0.02)');
+    ctx.fillStyle = fill;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(67, 56, 202, 0.9)';
+    ctx.lineWidth = Math.max(2.5, width * 0.0035);
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    pts.forEach((p, i) => {
+      if (i === 0) ctx.moveTo(p.x, p.y);
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.stroke();
+
+    // You-are-here marker
+    let hereIdx =
+      typeof sparklineHereIndex === 'number' &&
+      sparklineHereIndex >= 0 &&
+      sparklineHereIndex < n
+        ? sparklineHereIndex
+        : Math.min(n - 1, Math.max(0, Math.round(n * 0.72)));
+    const here = pts[hereIdx]!;
+    ctx.fillStyle = 'rgba(201, 162, 39, 0.95)';
+    const ds = width * 0.012;
+    ctx.beginPath();
+    ctx.moveTo(here.x, here.y - ds * 1.4);
+    ctx.lineTo(here.x + ds, here.y);
+    ctx.lineTo(here.x, here.y + ds * 1.4);
+    ctx.lineTo(here.x - ds, here.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Tiny label
+    ctx.fillStyle = '#6b7280';
+    ctx.font = `500 ${Math.round(width * 0.016)}px ui-sans-serif, system-ui, "PingFang SC", sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText('你在这里', here.x, baseY + height * 0.035);
+    ctx.textAlign = 'left';
+    return;
+  }
+
+  // Fallback abstract bars (legacy)
+  const barSpecs = [
+    [0.08, 0.12, 0.1],
+    [0.16, 0.1, 0.13],
+    [0.24, 0.11, 0.11],
+    [0.32, 0.08, 0.15],
+    [0.4, 0.09, 0.14],
+    [0.48, 0.06, 0.18],
+    [0.56, 0.085, 0.15],
+    [0.64, 0.05, 0.2],
+    [0.72, 0.08, 0.15],
+    [0.8, 0.07, 0.17],
+    [0.88, 0.1, 0.12],
+  ] as const;
+  const barW = width * 0.018;
+  barSpecs.forEach(([xr, yOff, hFrac], i) => {
+    const x = width * xr;
+    const h = height * hFrac;
+    const y = baseY - height * yOff - h * 0.35;
+    const active = i === 7;
+    ctx.fillStyle = active ? 'rgba(67, 56, 202, 0.88)' : 'rgba(208, 212, 219, 0.55)';
+    roundRect(ctx, x, y, barW, h, 3);
+    ctx.fill();
+  });
+  const dx = width * 0.84;
+  const dy = baseY + height * 0.04;
+  const ds = width * 0.016;
+  ctx.fillStyle = 'rgba(201, 162, 39, 0.88)';
+  ctx.beginPath();
+  ctx.moveTo(dx, dy - ds);
+  ctx.lineTo(dx + ds, dy);
+  ctx.lineTo(dx, dy + ds);
+  ctx.lineTo(dx - ds, dy);
+  ctx.closePath();
+  ctx.fill();
+}
+
 function canvasToBlob(canvas: HTMLCanvasElement): Promise<Blob | null> {
   return new Promise((resolve) => {
     canvas.toBlob((blob) => resolve(blob), 'image/png');
@@ -281,9 +395,29 @@ async function tryCopyImageBlob(blob: Blob): Promise<boolean> {
 export type DownloadShareImageButtonProps = ShareImageDrawProps & {
   className?: string;
   label?: string;
+  /** Busy / success button labels (defaults from locale) */
+  generatingLabel?: string;
+  downloadedLabel?: string;
+  /** UI locale — English chrome when en; default zh-CN */
+  locale?: string | null;
   /** Called after successful download / share attempt */
   onDone?: (result: 'downloaded' | 'shared' | 'copied') => void;
 };
+
+function resolveShareDrawProps(
+  locale: SiteLocale,
+  props: ShareImageDrawProps,
+): ShareImageDrawProps {
+  const chrome = shareImageCopy(locale);
+  return {
+    ...props,
+    brand: props.brand ?? chrome.brand,
+    footerLeft: props.footerLeft ?? chrome.footerLeft,
+    disclaimer: props.disclaimer ?? chrome.disclaimer,
+    filePrefix: props.filePrefix ?? chrome.filePrefix,
+    fallbackLine: props.fallbackLine ?? chrome.fallbackLine,
+  };
+}
 
 /**
  * Client control: draw branded 1080×1350 PNG via Canvas 2D and download.
@@ -291,25 +425,35 @@ export type DownloadShareImageButtonProps = ShareImageDrawProps & {
  */
 export function DownloadShareImageButton({
   className = '',
-  label = '生成分享图',
+  label,
+  generatingLabel,
+  downloadedLabel,
+  locale,
   onDone,
   ...drawProps
 }: DownloadShareImageButtonProps) {
   const [busy, setBusy] = useState(false);
   const [done, setDone] = useState(false);
+  const siteLocale = resolveReportChromeLocale(locale);
+  const chrome = useMemo(() => shareImageCopy(siteLocale), [siteLocale]);
+  const resolvedLabel = label ?? chrome.label;
+  const resolvedGenerating = generatingLabel ?? chrome.generating;
+  const resolvedDownloaded = downloadedLabel ?? chrome.downloaded;
 
   const run = useCallback(async () => {
     if (busy) return;
     setBusy(true);
+    const resolved = resolveShareDrawProps(siteLocale, drawProps);
     try {
-      const canvas = drawShareImageCanvas(drawProps);
+      const canvas = drawShareImageCanvas(resolved);
       const blob = await canvasToBlob(canvas);
       if (!blob) throw new Error('PNG encode failed');
 
-      const safeTitle = (drawProps.title || 'conclusion')
+      const safeTitle = (resolved.title || 'conclusion')
         .replace(/[^\w\u4e00-\u9fff·\-]+/g, '_')
         .slice(0, 40);
-      const filename = `人生K线_${safeTitle || 'share'}.png`;
+      const prefix = resolved.filePrefix || chrome.filePrefix;
+      const filename = `${prefix}_${safeTitle || 'share'}.png`;
 
       // Prefer download; try clipboard image in parallel when available
       triggerDownload(blob, filename);
@@ -339,15 +483,15 @@ export function DownloadShareImageButton({
     } catch {
       // Text + URL fallback
       const pageUrl =
-        drawProps.pageUrl ||
+        resolved.pageUrl ||
         (typeof window !== 'undefined'
           ? window.location.href
           : 'https://www.life-kline.com/');
       const text = [
-        drawProps.brand || '人生K线',
-        drawProps.title,
-        ...(drawProps.lines || []).filter(Boolean).slice(0, 3),
-        '结构参考 · life-kline.com',
+        resolved.brand || chrome.brand,
+        resolved.title,
+        ...(resolved.lines || []).filter(Boolean).slice(0, 3),
+        resolved.fallbackLine || chrome.fallbackLine,
         pageUrl,
       ]
         .filter(Boolean)
@@ -356,7 +500,7 @@ export function DownloadShareImageButton({
       try {
         if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
           await navigator.share({
-            title: (drawProps.title || '人生K线').slice(0, 80),
+            title: (resolved.title || chrome.brand).slice(0, 80),
             text,
             url: pageUrl,
           });
@@ -380,7 +524,7 @@ export function DownloadShareImageButton({
     } finally {
       setBusy(false);
     }
-  }, [busy, drawProps, onDone]);
+  }, [busy, chrome, drawProps, onDone, siteLocale]);
 
   return (
     <button
@@ -399,23 +543,26 @@ export function DownloadShareImageButton({
       ) : (
         <ImageDown className="h-3.5 w-3.5" />
       )}
-      {busy ? '生成中…' : done ? '已下载' : label}
+      {busy ? resolvedGenerating : done ? resolvedDownloaded : resolvedLabel}
     </button>
   );
 }
 
 /** Programmatic helper for callers that do not need the button UI. */
 export async function downloadShareImage(
-  props: ShareImageDrawProps,
+  props: ShareImageDrawProps & { locale?: string | null },
 ): Promise<'downloaded' | 'shared' | 'copied' | 'failed'> {
   try {
-    const canvas = drawShareImageCanvas(props);
+    const siteLocale = resolveReportChromeLocale(props.locale);
+    const resolved = resolveShareDrawProps(siteLocale, props);
+    const canvas = drawShareImageCanvas(resolved);
     const blob = await canvasToBlob(canvas);
     if (!blob) return 'failed';
-    const safeTitle = (props.title || 'conclusion')
+    const safeTitle = (resolved.title || 'conclusion')
       .replace(/[^\w\u4e00-\u9fff·\-]+/g, '_')
       .slice(0, 40);
-    triggerDownload(blob, `人生K线_${safeTitle || 'share'}.png`);
+    const prefix = resolved.filePrefix || shareImageCopy(siteLocale).filePrefix;
+    triggerDownload(blob, `${prefix}_${safeTitle || 'share'}.png`);
     void tryCopyImageBlob(blob);
     return 'downloaded';
   } catch {

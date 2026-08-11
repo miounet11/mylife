@@ -4,18 +4,23 @@ import { DownloadShareImageButton } from '@/components/share/download-share-imag
 import type { PersonalKlineHighlight } from '@/lib/kline-showcase';
 
 /**
- * 人生 K 线分享条：一句话阶段 + 关键数字 → 下载分享图。
+ * 人生 K 线分享条：阶段结论 + 真实 sparkline → 下载分享图。
  */
 export default function KlineShareStrip({
   highlight,
   publicName,
   reportId,
   locale,
+  sparkline,
+  sparklineHereIndex,
 }: {
   highlight: PersonalKlineHighlight | null;
   publicName?: string;
   reportId?: string;
   locale?: string | null;
+  /** overall scores for real curve on share PNG */
+  sparkline?: number[];
+  sparklineHereIndex?: number;
 }) {
   if (!highlight?.stageHeadline) return null;
 
@@ -41,12 +46,14 @@ export default function KlineShareStrip({
         <span className="font-semibold text-[color:var(--ink-1)]">分享人生 K 线</span>
         <span className="text-[color:var(--ink-5)]">
           {' '}
-          · 一张图带走阶段结论（结构参考，非宿命）
+          · 含真实曲线剪影的一张图（结构参考）
         </span>
       </div>
       <DownloadShareImageButton
         title={title}
         lines={lines}
+        sparkline={sparkline}
+        sparklineHereIndex={sparklineHereIndex}
         pageUrl={
           reportId
             ? `https://www.life-kline.com/result/${encodeURIComponent(reportId)}`
