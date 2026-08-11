@@ -32,6 +32,7 @@ import { ReportToolsStrip } from '@/components/report/report-tools-strip';
 import { ReportFoundationStrip } from '@/components/report/report-foundation-strip';
 import ReportEmailCapture from '@/components/report/report-email-capture';
 import AccountSavePanel from '@/components/auth/account-save-panel';
+import ReportShareViral from '@/components/share/report-share-viral';
 import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
 import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
 
@@ -407,6 +408,30 @@ export default function ProReportShell({
       <ProPredictionsStrip reportId={reportId} view={view} />
 
       <ProDecisionPacks packs={decisionPacks} />
+
+      <ReportShareViral
+        reportId={reportId}
+        publicName={publicName}
+        locale={locale}
+        headline={[
+          view.dayMaster ? `日主${view.dayMaster}` : '',
+          view.patternLabel || '',
+          view.overview.oneLiner?.slice(0, 48) || view.title,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        lines={[
+          view.elements.yongShen?.length
+            ? `用神 ${view.elements.yongShen.slice(0, 3).join('、')}`
+            : '',
+          view.klinePeak
+            ? `高点参考 ${view.klinePeak.year} · ${view.klinePeak.label || view.klinePeak.score}`
+            : '',
+          view.nowAction?.doThis
+            ? `现在宜：${String(view.nowAction.doThis).slice(0, 40)}`
+            : '结构与节奏参考 · 免费再测一份',
+        ].filter(Boolean)}
+      />
 
       <nav className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
         <Link href={hehunHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

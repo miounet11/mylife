@@ -217,8 +217,14 @@ export default async function KnowledgeArticlePage({ params, searchParams }: Pag
         }
         actions={
           <>
-            <Link href={crosslinks.analyzeHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-              {crosslinks.primaryLabel}
+            <Link
+              href={crosslinks.analyzeHref}
+              className="rounded-full bg-[color:var(--ink-1)] px-3 py-1 text-[13px] font-semibold text-white no-underline hover:no-underline"
+            >
+              {crosslinks.primaryLabel || '一键测算'}
+            </Link>
+            <Link href="#quick-analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              填生辰直出
             </Link>
             {crosslinks.dimensions[0] ? (
               <Link

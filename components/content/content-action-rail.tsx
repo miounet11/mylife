@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight, BookOpen, Layers3, Wrench } from 'lucide-react';
 import type { ContentCrosslinks, CrosslinkItem } from '@/lib/content-crosslinks';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
+import QuickAnalyzeCta from '@/components/content/quick-analyze-cta';
 
 function LinkCard({ item, tone = 'default' }: { item: CrosslinkItem; tone?: 'default' | 'brand' }) {
   return (
@@ -59,6 +60,20 @@ export default function ContentActionRail({
   const bridgeSource = source || 'content_action_rail';
 
   return (
+    <div className="space-y-4">
+      {/* 内容页统一一键测算（含 sticky 底栏） */}
+      <QuickAnalyzeCta
+        source={bridgeSource}
+        page={page}
+        intent={intent}
+        title={bridgeTitle || '一键测算 · 先填生辰生成结构报告'}
+        description={
+          bridgeDescription ||
+          '阅读只是开始。用出生日期打开命盘结构，再决定是否深聊或用工具。'
+        }
+        sticky
+      />
+
     <section className="fb-card space-y-4 border-t-2 border-[color:var(--brand)] p-4 md:p-5">
       <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
         <div>
@@ -68,7 +83,7 @@ export default function ContentActionRail({
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href={crosslinks.analyzeHref} className="fb-btn fb-btn-primary h-8 px-3 text-[12px] hover:no-underline">
-            {crosslinks.primaryLabel}
+            {crosslinks.primaryLabel || '一键测算'}
           </Link>
           <Link href="/dimensions" className="fb-btn h-8 px-3 text-[12px] hover:no-underline">
             十维度中心
@@ -131,5 +146,6 @@ export default function ContentActionRail({
         </div>
       ) : null}
     </section>
+    </div>
   );
 }
