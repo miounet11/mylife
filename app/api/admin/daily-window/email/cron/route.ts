@@ -256,6 +256,7 @@ async function dispatchDailyWindowEmail(params: {
         subtype: 'html',
         text: params.text,
         content: params.html,
+        priority: 'bulk',
       });
     }
   } catch {

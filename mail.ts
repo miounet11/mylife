@@ -1,11 +1,26 @@
 /**
  * 邮件发送工具
- * - Resend HTTP（RESEND_API_KEY）优先：Gmail 投递显著优于自建 :25
+ * - Resend HTTP（RESEND_API_KEY）：免费约 100/天，**只给 Gmail 收件箱** + 日预算 + 登录预留
+ * - 非 Gmail / 批量 / 超预算 → SMTP（或其他平台邮箱正常）
  * - SMTP 回退 + 可选 DKIM（MAIL_DKIM_PRIVATE_KEY / MAIL_DKIM_SELECTOR）
+ *
+ * Env:
+ *   MAIL_RESEND_GMAIL_ONLY=true   (default) only gmail.com / googlemail.com via Resend
+ *   MAIL_RESEND_DAILY_BUDGET=95   soft cap under free 100
+ *   MAIL_RESEND_AUTH_RESERVE=25   hold last N for login codes
+ *   MAIL_RESEND_SKIP_BULK=true    bulk/cron never use Resend
  */
 import nodemailer from 'nodemailer'
 import { isResendConfigured, sendViaResend } from '@/lib/mail-resend'
 import { isBrevoConfigured, sendViaBrevo } from '@/lib/mail-brevo'
+import {
+  canUseResend,
+  isGmailAddress,
+  isResendQuotaError,
+  markResendExhausted,
+  recordResendSend,
+  type MailPriority,
+} from '@/lib/mail-resend-budget'
 
 interface SendMailOptions {
   to: string | string[]
@@ -20,7 +35,15 @@ interface SendMailV2Options {
   content: string
   subtype?: 'plain' | 'html'
   text?: string // 纯文本版本（用于HTML邮件的fallback）
+  /**
+   * auth = login codes (may use Resend auth reserve)
+   * transactional = report ready, service notices (uses Resend only if budget above reserve)
+   * bulk = digests / cron / lifecycle (never Resend by default)
+   */
+  priority?: MailPriority
 }
+
+export type { MailPriority }
 
 function readString(name: string, fallback = '') {
   const value = process.env[name]
@@ -235,16 +258,13 @@ export async function sendMail(options: SendMailOptions) {
 
 /**
  * 发送邮件 V2（支持HTML模板）
- * Prefer Resend when configured (Gmail), else SMTP (+ optional DKIM).
+ * Resend: Gmail only + daily budget (free ~100/day). Others → SMTP.
  */
 export async function sendMailV2(options: SendMailV2Options) {
   const mailTo = typeof options.to === 'string' ? options.to : `${options.to}`
   const mailFromName = readString('MAIL_FROM_NAME') || readString('EMAIL_APP_NAME') || '人生K线'
-  const domainHint = mailTo.split('@')[1]?.toLowerCase() || ''
-  const isGmail =
-    domainHint === 'gmail.com' ||
-    domainHint === 'googlemail.com' ||
-    domainHint.endsWith('.gmail.com')
+  const isGmail = isGmailAddress(mailTo)
+  const priority: MailPriority = options.priority || 'transactional'
 
   // 为HTML邮件生成纯文本版本
   let textContent = options.text
@@ -260,42 +280,70 @@ export async function sendMailV2(options: SendMailV2Options) {
       .trim()
   }
 
-  // ── HTTP ESP first (Resend → Brevo) for Gmail-class inbox rates ────────
+  // ── HTTP ESP: Resend only when budget + Gmail policy allow ────────
   if (preferHttpEspFirst()) {
     const html = options.subtype === 'html' ? options.content : undefined
     const text = textContent || (options.subtype !== 'html' ? options.content : undefined)
     const mode = readString('MAIL_PROVIDER').toLowerCase()
 
     if ((mode === 'resend' || mode === 'auto' || !mode) && isResendConfigured()) {
-      const resend = await sendViaResend({
-        to: mailTo,
-        subject: options.subject,
-        html,
-        text,
-        fromName: mailFromName,
-        tags: [
-          { name: 'app', value: 'life-kline' },
-          { name: 'gmail', value: isGmail ? '1' : '0' },
-        ],
-      })
-      console.log('[mail] resend', {
-        success: resend.success,
-        messageId: resend.messageId,
-        to: mailTo,
-        error: resend.message,
-      })
-      if (resend.success) {
-        return {
-          success: true,
+      const gate = canUseResend({ to: mailTo, priority })
+      if (!gate.allowed) {
+        console.log('[mail] resend skipped', {
+          to: mailTo,
+          priority,
+          reason: gate.reason,
+          remaining: gate.snapshot.remaining,
+          used: gate.snapshot.used,
+          gmail: isGmail,
+        })
+      } else {
+        const resend = await sendViaResend({
+          to: mailTo,
+          subject: options.subject,
+          html,
+          text,
+          fromName: mailFromName,
+          tags: [
+            { name: 'app', value: 'life-kline' },
+            { name: 'gmail', value: isGmail ? '1' : '0' },
+            { name: 'priority', value: priority },
+          ],
+        })
+        console.log('[mail] resend', {
+          success: resend.success,
           messageId: resend.messageId,
-          provider: 'resend',
-          accepted: [mailTo],
+          to: mailTo,
+          priority,
+          remaining: gate.snapshot.remaining,
+          error: resend.message,
+        })
+        if (resend.success) {
+          const after = recordResendSend(priority)
+          return {
+            success: true,
+            messageId: resend.messageId,
+            provider: 'resend',
+            accepted: [mailTo],
+            budgetRemaining: Math.max(0, gate.snapshot.dailyBudget - after.used),
+          }
+        }
+        if (isResendQuotaError(resend.message) || resend.errorCode === 'RESEND_429') {
+          markResendExhausted(resend.message)
+          console.warn('[mail] resend daily quota hit — mark exhausted, fall back to SMTP')
+        } else {
+          console.warn('[mail] resend failed, trying next', resend.message)
         }
       }
-      console.warn('[mail] resend failed, trying next', resend.message)
     }
 
-    if ((mode === 'brevo' || mode === 'auto' || !mode) && isBrevoConfigured()) {
+    // Brevo: only for Gmail when Resend skipped/failed (save for hard cases)
+    // Non-Gmail stays on SMTP which already works.
+    if (
+      isGmail &&
+      (mode === 'brevo' || mode === 'auto' || !mode) &&
+      isBrevoConfigured()
+    ) {
       const brevo = await sendViaBrevo({
         to: mailTo,
         subject: options.subject,
@@ -307,6 +355,7 @@ export async function sendMailV2(options: SendMailV2Options) {
         success: brevo.success,
         messageId: brevo.messageId,
         to: mailTo,
+        priority,
         error: brevo.message,
       })
       if (brevo.success) {
@@ -561,5 +610,6 @@ export async function sendVerificationCode(
     content: html,
     text,
     subtype: 'html',
+    priority: 'auth', // login codes get Resend auth reserve
   });
 }

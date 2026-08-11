@@ -145,6 +145,7 @@ async function dispatch(params: { email: string; subject: string; html: string; 
         subtype: 'html',
         text: params.text,
         content: params.html,
+        priority: 'bulk',
       });
     }
   } catch {

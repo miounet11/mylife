@@ -653,6 +653,7 @@ export async function sendUserLifecycleEmail(params: {
     subtype: 'html',
     text: `${localizeText(params.previewText, locale)} ${params.primaryCtaHref}`,
     content: html,
+    priority: 'bulk',
   });
 }
 
@@ -958,6 +959,7 @@ export async function sendTimingMonthlyDigestEmail(params: {
     subtype: 'html',
     text,
     content: html,
+    priority: 'bulk',
   });
 }
 
@@ -1029,6 +1031,7 @@ export async function sendTimingSolarTermEmail(params: {
     subtype: 'html',
     text,
     content: html,
+    priority: 'bulk',
   });
 }
 
@@ -1099,6 +1102,7 @@ export async function sendTimingMajorEventEmail(params: {
     subtype: 'html',
     text,
     content: html,
+    priority: 'bulk',
   });
 }
 

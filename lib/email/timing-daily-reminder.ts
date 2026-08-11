@@ -184,5 +184,6 @@ export async function sendTimingDailyReminderEmail(params: TimingDailyReminderPa
     subtype: 'html',
     text,
     content: html,
+    priority: 'bulk',
   });
 }
