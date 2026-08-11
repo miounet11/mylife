@@ -3,9 +3,11 @@ import { describe, it } from 'node:test';
 import {
   approxMonthGanZhi,
   buildEngineEvidenceBlocks,
+  buildNeighborYearStrip,
   buildYearDeskModel,
   expandYearToMonths,
   findYearPoint,
+  listAllYearSummaries,
 } from '@/lib/kline-year-detail';
 
 describe('kline year detail', () => {
@@ -62,7 +64,26 @@ describe('kline year detail', () => {
         wealth: 75,
         marriage: 62,
         health: 60,
-        evidence: { ganZhi: '戊戌', drivers: ['高点'] },
+        evidence: {
+          ganZhi: '戊戌',
+          drivers: ['高点'],
+          natal: [{ driver: '原局', impact: 2 }],
+          dayun: [{ driver: '大运', impact: 5 }],
+          liunian: [{ driver: '流年', impact: 3 }],
+          elementBreakdown: {
+            yearElement: 'earth',
+            yongShenMatch: 'strong',
+            relationSummary: '合',
+          },
+        },
+      },
+      {
+        year: 2019,
+        career: 70,
+        wealth: 68,
+        marriage: 60,
+        health: 58,
+        evidence: { ganZhi: '己亥' },
       },
     ];
     const pt = findYearPoint(data, 2018);
@@ -71,6 +92,18 @@ describe('kline year detail', () => {
     assert.equal(desk.months.length, 12);
     assert.equal(desk.bestMonths.length, 3);
     assert.match(desk.almanacYearHref, /\/almanac\/2018-01-01/);
+    assert.ok(desk.impactStack.length >= 2);
+    assert.equal(desk.dimRanks.length, 4);
+    assert.equal(desk.dimRanks[0]!.label, '事业');
+    assert.ok(desk.formulaLines.length >= 4);
+    assert.equal(desk.monthOverallSeries.length, 12);
+
+    const neighbors = buildNeighborYearStrip(data, 2018, 1);
+    assert.equal(neighbors.length, 3);
+    assert.ok(neighbors.some((n) => n.isFocus));
+
+    const all = listAllYearSummaries(data);
+    assert.equal(all.length, 2);
   });
 
   it('approx month ganZhi is stable', () => {
@@ -78,3 +111,4 @@ describe('kline year detail', () => {
     assert.notEqual(approxMonthGanZhi(2024, 1), approxMonthGanZhi(2024, 6));
   });
 });
+

@@ -255,6 +255,32 @@ export function buildEngineEvidenceBlocks(
   return blocks;
 }
 
+export type NeighborYearCell = {
+  year: number;
+  overall: number;
+  career: number;
+  wealth: number;
+  marriage: number;
+  health: number;
+  ganZhi: string;
+  deltaVsFocus: number;
+  isFocus: boolean;
+  almanacHref: string;
+};
+
+export type ImpactStackRow = {
+  layer: string;
+  text: string;
+  impact: number;
+};
+
+export type DimRank = {
+  key: string;
+  label: string;
+  score: number;
+  rank: number;
+};
+
 export type YearDeskModel = {
   year: number;
   overall: number;
@@ -264,13 +290,65 @@ export type YearDeskModel = {
   health: number;
   ganZhi: string;
   dayunGanZhi: string | null;
+  yongShenMatch: string | null;
+  yearElement: string | null;
+  relationSummary: string | null;
   evidenceBlocks: EngineEvidenceBlock[];
+  impactStack: ImpactStackRow[];
+  dimRanks: DimRank[];
   months: KlineMonthCell[];
   bestMonths: KlineMonthCell[];
   toughMonths: KlineMonthCell[];
+  monthOverallSeries: number[];
+  pushMonthCount: number;
+  steadyMonthCount: number;
+  conserveMonthCount: number;
   almanacYearHref: string;
+  almanacTodayHref: string;
+  formulaLines: string[];
   note: string;
 };
+
+function buildImpactStack(yearPoint: KlineYearPointLike): ImpactStackRow[] {
+  const e = yearPoint.evidence;
+  if (!e) return [];
+  const rows: ImpactStackRow[] = [];
+  for (const x of e.natal || []) {
+    if (!x.driver) continue;
+    rows.push({
+      layer: '原局',
+      text: x.driver,
+      impact: Number(x.impact) || 0,
+    });
+  }
+  for (const x of e.dayun || []) {
+    if (!x.driver) continue;
+    rows.push({
+      layer: '大运',
+      text: x.driver,
+      impact: Number(x.impact) || 0,
+    });
+  }
+  for (const x of e.liunian || []) {
+    if (!x.driver) continue;
+    rows.push({
+      layer: '流年',
+      text: x.driver,
+      impact: Number(x.impact) || 0,
+    });
+  }
+  return rows.slice(0, 12);
+}
+
+function buildDimRanks(p: KlineYearPointLike): DimRank[] {
+  const dims = [
+    { key: 'career', label: '事业', score: Math.round(p.career) },
+    { key: 'wealth', label: '财富', score: Math.round(p.wealth) },
+    { key: 'marriage', label: '关系', score: Math.round(p.marriage) },
+    { key: 'health', label: '健康', score: Math.round(p.health) },
+  ].sort((a, b) => b.score - a.score);
+  return dims.map((d, i) => ({ ...d, rank: i + 1 }));
+}
 
 export function buildYearDeskModel(
   yearPoint: KlineYearPointLike,
@@ -279,6 +357,19 @@ export function buildYearDeskModel(
   const months = expandYearToMonths(yearPoint, opts);
   const sorted = [...months].sort((a, b) => b.overall - a.overall);
   const overall = overallOf(yearPoint);
+  const eb = yearPoint.evidence?.elementBreakdown;
+  const matchMap: Record<string, string> = {
+    strong: '强用神年',
+    good: '偏喜用年',
+    neutral: '中平年',
+    bad: '偏忌年',
+    conflict: '忌神触达年',
+  };
+  const yong = normEls(opts?.yongShen);
+  const ji = normEls(opts?.jiShen);
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+
   return {
     year: yearPoint.year,
     overall,
@@ -288,14 +379,126 @@ export function buildYearDeskModel(
     health: Math.round(yearPoint.health),
     ganZhi: yearPoint.evidence?.ganZhi || yearGanZhi(yearPoint.year),
     dayunGanZhi: yearPoint.evidence?.dayunGanZhi || null,
+    yongShenMatch: eb?.yongShenMatch
+      ? matchMap[eb.yongShenMatch] || eb.yongShenMatch
+      : null,
+    yearElement: eb?.yearElement
+      ? EN_TO_CN[eb.yearElement] || eb.yearElement
+      : null,
+    relationSummary: eb?.relationSummary || null,
     evidenceBlocks: buildEngineEvidenceBlocks(yearPoint),
+    impactStack: buildImpactStack(yearPoint),
+    dimRanks: buildDimRanks(yearPoint),
     months,
     bestMonths: sorted.slice(0, 3),
     toughMonths: [...sorted].reverse().slice(0, 3),
+    monthOverallSeries: months.map((m) => m.overall),
+    pushMonthCount: months.filter((m) => m.stance === 'push').length,
+    steadyMonthCount: months.filter((m) => m.stance === 'steady').length,
+    conserveMonthCount: months.filter((m) => m.stance === 'conserve').length,
     almanacYearHref: `/almanac/${yearPoint.year}-01-01`,
+    almanacTodayHref: `/almanac/${todayStr}`,
+    formulaLines: [
+      '综合 ≈ (事业+财富+关系+健康)/4',
+      '年分 = 60 + 原局因子 + 大运加权 + 流年加权（格局权重）',
+      '月分 = 年分 + 流月干支×用忌修正（公历月近似）',
+      yong.length ? `用神：${yong.join('、')}` : '用神：—',
+      ji.length ? `忌神：${ji.join('、')}` : '忌神：—',
+      '引擎：generateLifeKlineV6 · 无 Math.sin · 非 LLM 画线',
+    ],
     note:
-      '月分由流月干支×用忌在年分上修正（公历月近似，非精确节气月）。日运请点入万年历查看通书+个人结构。',
+      '月分由流月干支×用忌在年分上修正（公历月近似，非精确节气月）。日运请点入万年历查看通书+个人结构。分数为结构刻度，不是吉凶判决。',
   };
+}
+
+/** 焦点年前后邻居对比条 */
+export function buildNeighborYearStrip(
+  klineData: unknown,
+  focusYear: number,
+  radius = 4,
+): NeighborYearCell[] {
+  const out: NeighborYearCell[] = [];
+  const focus = findYearPoint(klineData, focusYear);
+  const focusOverall = focus ? overallOf(focus) : 60;
+  for (let y = focusYear - radius; y <= focusYear + radius; y++) {
+    const pt = findYearPoint(klineData, y);
+    const career = pt?.career ?? 60;
+    const wealth = pt?.wealth ?? 60;
+    const marriage = pt?.marriage ?? 60;
+    const health = pt?.health ?? 60;
+    const overall = pt
+      ? overallOf(pt)
+      : Math.round((career + wealth + marriage + health) / 4);
+    out.push({
+      year: y,
+      overall,
+      career: Math.round(career),
+      wealth: Math.round(wealth),
+      marriage: Math.round(marriage),
+      health: Math.round(health),
+      ganZhi: pt?.evidence?.ganZhi || yearGanZhi(y),
+      deltaVsFocus: overall - focusOverall,
+      isFocus: y === focusYear,
+      almanacHref: `/almanac/${y}-06-15`,
+    });
+  }
+  return out;
+}
+
+/** 从原始 klineData 列出全部有 evidence 的年份摘要（供「全样本」表） */
+export function listAllYearSummaries(klineData: unknown): Array<{
+  year: number;
+  overall: number;
+  career: number;
+  wealth: number;
+  marriage: number;
+  health: number;
+  ganZhi: string;
+  dayunGanZhi: string | null;
+  drivers: string[];
+  risks: string[];
+}> {
+  if (!Array.isArray(klineData)) return [];
+  const rows: Array<{
+    year: number;
+    overall: number;
+    career: number;
+    wealth: number;
+    marriage: number;
+    health: number;
+    ganZhi: string;
+    dayunGanZhi: string | null;
+    drivers: string[];
+    risks: string[];
+  }> = [];
+  for (const raw of klineData) {
+    if (!raw || typeof raw !== 'object') continue;
+    const p = raw as Record<string, unknown>;
+    const year = Number(p.year);
+    if (!Number.isFinite(year)) continue;
+    const career = Number(p.career) || 0;
+    const wealth = Number(p.wealth) || 0;
+    const marriage = Number(p.marriage) || 0;
+    const health = Number(p.health) || 0;
+    const overall =
+      typeof p.score === 'number' && Number(p.score) > 0
+        ? Math.round(Number(p.score))
+        : Math.round((career + wealth + marriage + health) / 4);
+    const ev = (p.evidence || {}) as KlineEvidenceLike;
+    rows.push({
+      year,
+      overall,
+      career: Math.round(career),
+      wealth: Math.round(wealth),
+      marriage: Math.round(marriage),
+      health: Math.round(health),
+      ganZhi: ev.ganZhi || yearGanZhi(year),
+      dayunGanZhi: ev.dayunGanZhi || null,
+      drivers: (ev.drivers || []).slice(0, 2),
+      risks: (ev.risks || []).slice(0, 2),
+    });
+  }
+  return rows.sort((a, b) => a.year - b.year);
 }
 
 /** 从 klineData 数组取某年点（含完整 evidence） */
