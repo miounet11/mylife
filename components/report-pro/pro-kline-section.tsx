@@ -10,6 +10,9 @@ import {
   KLINE_VIEW_META,
   type KlineViewMode,
 } from '@/lib/kline-views';
+import { buildDayunBandsFromResult } from '@/lib/kline-dayun-bands';
+import { buildPersonalKlineHighlight } from '@/lib/kline-showcase';
+import KlineShareStrip from '@/components/kline/kline-share-strip';
 
 const FortuneChart = NextDynamic(() => import('@/components/fortune-kline-chart'), {
   loading: () => (
@@ -27,6 +30,10 @@ export default function ProKlineSection({
   birthYear,
   yongShen,
   jiShen,
+  dayun,
+  publicName,
+  reportId,
+  locale,
 }: {
   klineData?: FortuneAnalysisResult['klineData'] | null;
   peak: ProKlinePeak | null;
@@ -35,6 +42,11 @@ export default function ProKlineSection({
   birthYear?: number;
   yongShen?: string[];
   jiShen?: string[];
+  /** fortune.dayun 全量，用于色带 */
+  dayun?: unknown;
+  publicName?: string;
+  reportId?: string;
+  locale?: string | null;
 }) {
   const raw = Array.isArray(klineData) ? klineData : [];
   const [mode, setMode] = useState<KlineViewMode>('focus');
@@ -47,6 +59,21 @@ export default function ProKlineSection({
         jiShen,
       }),
     [raw, mode, birthYear, yongShen, jiShen],
+  );
+
+  const dayunBands = useMemo(() => {
+    if (!series.length) return [];
+    const years = series.map((p) => p.year).filter((y) => Number.isFinite(y));
+    if (!years.length) return [];
+    return buildDayunBandsFromResult(dayun, {
+      chartMinYear: Math.min(...years),
+      chartMaxYear: Math.max(...years),
+    });
+  }, [dayun, series]);
+
+  const shareHighlight = useMemo(
+    () => buildPersonalKlineHighlight(raw as any, { birthYear }),
+    [raw, birthYear],
   );
 
   if (!raw.length && !series.length) return null;
@@ -136,8 +163,8 @@ export default function ProKlineSection({
             subtitle={
               mode === 'focus'
                 ? birthYear
-                  ? `出生 ${birthYear} → 未来十年 · 综合主线`
-                  : '出生到未来十年 · 综合主线'
+                  ? `出生 ${birthYear} → 未来十年 · 综合主线${dayunBands.length ? ' · 底色为大运段' : ''}`
+                  : `出生到未来十年 · 综合主线${dayunBands.length ? ' · 底色为大运段' : ''}`
                 : mode === 'life80'
                   ? peak
                     ? `巅峰参考 · ${peak.year}年`
@@ -152,8 +179,18 @@ export default function ProKlineSection({
                 : undefined
             }
             emphasizeYouAreHere
+            dayunBands={isYearMode ? dayunBands : undefined}
           />
         </Suspense>
+      </div>
+
+      <div className="mt-3">
+        <KlineShareStrip
+          highlight={shareHighlight}
+          publicName={publicName}
+          reportId={reportId}
+          locale={locale}
+        />
       </div>
     </section>
   );

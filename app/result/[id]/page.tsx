@@ -885,6 +885,11 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     canManage={canManage}
                     consultantWindows={consultantWindows}
                     locale={uiLocale}
+                    dayun={
+                      (result as any).dayun ||
+                      (rawFortuneData as any).dayun ||
+                      null
+                    }
                     birthYear={(() => {
                       const raw =
                         (rawFortuneData as any).birthDate ||

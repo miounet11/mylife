@@ -6,12 +6,15 @@ import {
   Legend,
   Line,
   LineChart,
+  ReferenceArea,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
   YAxis,
 } from 'recharts';
+import type { KlineDayunBand } from '@/lib/kline-dayun-bands';
+import { qualityLabelZh } from '@/lib/kline-dayun-bands';
 
 export type FortuneKlinePoint = {
   /** 年：number；月视图可为 "2024-03" 字符串 */
@@ -149,6 +152,8 @@ export default function FortuneKLineChart(props: {
   defaultDims?: Partial<Record<DimKey, boolean>>;
   /** 强化「你在这里」标注 */
   emphasizeYouAreHere?: boolean;
+  /** 大运色带（年视图） */
+  dayunBands?: KlineDayunBand[] | null;
   /** 兼容旧 props，忽略 */
   source?: string;
   ctaStrategyKey?: string;
@@ -165,6 +170,9 @@ export default function FortuneKLineChart(props: {
     marriage: props.defaultDims?.marriage ?? false,
     health: props.defaultDims?.health ?? false,
   }));
+  const [selected, setSelected] = useState<ReturnType<typeof normalizePoints>[number] | null>(
+    null,
+  );
 
   if (!points.length) {
     return (
@@ -214,6 +222,19 @@ export default function FortuneKLineChart(props: {
     });
   };
 
+  const bands = !isMonth && Array.isArray(props.dayunBands) ? props.dayunBands : [];
+  const yearNums = points.map((p) => p.yearNum).filter((y) => y > 0);
+  const chartMin = yearNums.length ? Math.min(...yearNums) : 0;
+  const chartMax = yearNums.length ? Math.max(...yearNums) : 0;
+
+  const selectedBand =
+    selected && !isMonth
+      ? bands.find(
+          (b) =>
+            selected.yearNum >= b.startYear && selected.yearNum <= b.endYear,
+        ) || null
+      : null;
+
   return (
     <section className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 md:p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -227,6 +248,7 @@ export default function FortuneKLineChart(props: {
           <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
             {props.subtitle ||
               `${firstYear}–${lastYear} 共 ${points.length} ${isMonth ? '月' : '年'} · 点亮维度查看分线`}
+            {!isMonth ? ' · 点击曲线选年看原因' : ''}
           </p>
         </div>
         <div className="flex flex-wrap gap-1.5">
@@ -290,18 +312,62 @@ export default function FortuneKLineChart(props: {
         </div>
       </div>
 
+      {bands.length > 0 ? (
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-[color:var(--ink-5)]">
+          <span className="font-semibold text-[color:var(--ink-4)]">大运底色</span>
+          {bands.slice(0, 6).map((b) => (
+            <span key={`${b.ganZhi}-${b.startYear}`} className="inline-flex items-center gap-1">
+              <span
+                className="inline-block h-2.5 w-2.5 rounded-[2px] border border-[color:var(--hairline)]"
+                style={{ background: b.fill }}
+              />
+              {b.ganZhi}
+              {b.isCurrent ? ' · 当前' : ''}
+            </span>
+          ))}
+        </div>
+      ) : null}
+
       <div className="mt-3 w-full min-w-0" style={{ height: Math.max(height, 200), minHeight: 200 }}>
         {/* minWidth/minHeight avoid Recharts "width(-1) height(-1)" when parent is still 0 during layout */}
         <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
-          <LineChart data={points} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+          <LineChart
+            data={points}
+            margin={{ top: 8, right: 12, left: 0, bottom: 4 }}
+            onClick={(state: any) => {
+              const payload = state?.activePayload?.[0]?.payload;
+              if (payload) setSelected(payload);
+            }}
+            style={{ cursor: isMonth ? 'default' : 'pointer' }}
+          >
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(15,23,42,0.08)" />
+            {/* 大运色带：分段人生节奏 */}
+            {bands.map((b) => {
+              // Snap band edges to nearest points present in chart data
+              const x1 = yearNums.find((y) => y >= b.startYear) ?? b.startYear;
+              const x2Candidates = yearNums.filter((y) => y <= b.endYear);
+              const x2 = x2Candidates.length
+                ? x2Candidates[x2Candidates.length - 1]!
+                : b.endYear;
+              if (x2 < x1 || x1 < chartMin || x2 > chartMax) return null;
+              return (
+                <ReferenceArea
+                  key={`band-${b.ganZhi}-${b.startYear}`}
+                  x1={x1}
+                  x2={x2}
+                  fill={b.fill}
+                  strokeOpacity={0}
+                  ifOverflow="hidden"
+                />
+              );
+            })}
             <XAxis
               dataKey="year"
               tick={{ fontSize: isMonth ? 10 : 11, fill: '#64748b' }}
               tickLine={false}
               axisLine={{ stroke: 'rgba(15,23,42,0.12)' }}
               minTickGap={isMonth ? 36 : 28}
-              interval={isMonth ? 'preserveStartEnd' : 0}
+              interval={isMonth ? 'preserveStartEnd' : 'preserveStartEnd'}
             />
             <YAxis
               domain={[0, 100]}
@@ -332,6 +398,14 @@ export default function FortuneKLineChart(props: {
                 }}
               />
             ) : null}
+            {selected && !isMonth ? (
+              <ReferenceLine
+                x={selected.year}
+                stroke="#0f172a"
+                strokeDasharray="3 3"
+                strokeOpacity={0.35}
+              />
+            ) : null}
             {(Object.keys(DIM_META) as DimKey[]).map((key) =>
               visible[key] ? (
                 <Line
@@ -342,7 +416,7 @@ export default function FortuneKLineChart(props: {
                   stroke={DIM_META[key].color}
                   strokeWidth={key === 'overall' ? 2.8 : 1.6}
                   dot={false}
-                  activeDot={{ r: 4 }}
+                  activeDot={{ r: 5 }}
                   isAnimationActive={false}
                 />
               ) : null
@@ -350,6 +424,87 @@ export default function FortuneKLineChart(props: {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      {/* 点选年份抽屉：原因 / 大运 / 四维 */}
+      {selected ? (
+        <div className="mt-3 rounded-[10px] border border-[color:var(--ink-1)]/15 bg-[color:var(--bg-sunken)]/60 px-3 py-3">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-[color:var(--ink-5)]">
+                选中{isMonth ? '月' : '年'}
+              </div>
+              <div className="mt-0.5 text-[15px] font-bold text-[color:var(--ink-1)]">
+                {selected.year}
+                {birthYear != null && selected.yearNum > 0 ? (
+                  <span className="ml-1.5 text-[12px] font-semibold text-[color:var(--ink-4)]">
+                    {selected.yearNum - birthYear} 岁
+                  </span>
+                ) : null}
+                <span className="ml-2 text-[13px] font-semibold text-[color:var(--brand-strong)]">
+                  综合 {Math.round(selected.overall)}
+                </span>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setSelected(null)}
+              className="text-[12px] text-[color:var(--ink-4)] hover:text-[color:var(--ink-1)]"
+            >
+              关闭
+            </button>
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-[12px] sm:grid-cols-4">
+            <div>事业 {Math.round(selected.career)}</div>
+            <div>财富 {Math.round(selected.wealth)}</div>
+            <div>关系 {Math.round(selected.marriage)}</div>
+            <div>健康 {Math.round(selected.health)}</div>
+          </div>
+          <div className="mt-2 space-y-1 text-[12px] leading-relaxed text-[color:var(--ink-3)]">
+            {selected.ganZhi ? (
+              <p>
+                <span className="font-semibold text-[color:var(--ink-2)]">干支</span>
+                {' · '}
+                {selected.ganZhi}
+                {selectedBand ? (
+                  <span>
+                    {' '}
+                    · 大运 {selectedBand.ganZhi}
+                    {selectedBand.quality
+                      ? `（${qualityLabelZh(selectedBand.quality)}）`
+                      : ''}
+                  </span>
+                ) : null}
+              </p>
+            ) : null}
+            {selected.drivers?.length ? (
+              <p>
+                <span className="font-semibold text-[color:var(--data-up)]">驱动</span>
+                {' · '}
+                {selected.drivers.join('、')}
+              </p>
+            ) : null}
+            {selected.risks?.length ? (
+              <p>
+                <span className="font-semibold text-[color:var(--signal-strong)]">风险</span>
+                {' · '}
+                {selected.risks.join('、')}
+              </p>
+            ) : null}
+            {selectedBand?.description ? (
+              <p className="text-[color:var(--ink-4)]">{selectedBand.description}</p>
+            ) : null}
+            {!selected.drivers?.length && !selected.risks?.length ? (
+              <p className="text-[color:var(--ink-5)]">
+                该点证据较少；可结合大运色带与综合线判断阶段，勿单点定论。
+              </p>
+            ) : null}
+          </div>
+        </div>
+      ) : !isMonth ? (
+        <p className="mt-2 text-[11px] text-[color:var(--ink-5)]">
+          提示：点击曲线上的年份，查看干支、大运与驱动/风险。
+        </p>
+      ) : null}
 
       {/* 高低点解读，补全“简图”之外的可读信息 */}
       <div className="mt-3 grid gap-2 md:grid-cols-2">

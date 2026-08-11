@@ -51,6 +51,7 @@ export default function ProReportShell({
   birthYear,
   consultantWindows,
   locale,
+  dayun,
 }: {
   view: ProReportView;
   klineData?: FortuneAnalysisResult['klineData'] | null;
@@ -77,6 +78,8 @@ export default function ProReportShell({
   consultantWindows?: { best?: string; risk?: string } | null;
   /** UI locale for consultant / reading chrome */
   locale?: string | null;
+  /** 全量大运（色带） */
+  dayun?: FortuneAnalysisResult['dayun'] | unknown;
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
@@ -293,6 +296,10 @@ export default function ProReportShell({
           }
           yongShen={view.elements.yongShen}
           jiShen={view.elements.jiShen}
+          dayun={dayun}
+          publicName={publicName}
+          reportId={reportId}
+          locale={locale}
         />
       </div>
 
