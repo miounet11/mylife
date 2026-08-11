@@ -2,7 +2,8 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AnalyzeWorkspace from '@/components/analyze/analyze-workspace';
-import { FeaturedToolsStrip } from '@/components/home/featured-tools-strip';
+import { HomeExplore } from '@/components/home/home-explore';
+import { HomeHero } from '@/components/home/home-hero';
 import LifeKlineShowcase from '@/components/kline/life-kline-showcase';
 import { AppPage } from '@/components/layout/app-page';
 import { FunnelPageView } from '@/components/funnel-tracker';
@@ -36,6 +37,14 @@ export async function generateMetadata({ searchParams }: HomePageProps): Promise
   });
 }
 
+/**
+ * Homepage layout (top → bottom):
+ * 1. Hero — value + primary CTA into form
+ * 2. Analyze workspace — the only heavy conversion block
+ * 3. K-line showcase — product education with real engine samples
+ * 4. Explore paths / tools — secondary discovery
+ * 5. SEO / GEO section
+ */
 export default async function HomePage({ searchParams }: HomePageProps) {
   const stats = getSystemCapabilityStats();
   const sp = searchParams ? await searchParams : {};
@@ -43,21 +52,34 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const copy = funnelCopy(locale);
   const initialSource = sp.source || sp.from || 'home_workspace';
   const initialIntent = sp.intent || null;
-  // Real V6 demo curves for product education (not user data)
   const klineSamples = getKlineShowcaseSamples();
-
   const seoPack = getPageSeoGeoPack('/');
+
   return (
-    <AppPage header={{ ctaHref: '#analyze-workspace', ctaLabel: copy.ctaStart, compact: true }}>
+    <AppPage
+      header={{ ctaHref: '#analyze-workspace', ctaLabel: copy.ctaStart, compact: true }}
+      mainClassName="page-frame pb-16 pt-0 md:pb-20"
+    >
       {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView
         eventName="home_page_viewed"
         page="/"
-        meta={{ surface: 'workspace', intent: initialIntent, source: initialSource, locale, geoReady: true }}
+        meta={{
+          surface: 'workspace',
+          intent: initialIntent,
+          source: initialSource,
+          locale,
+          geoReady: true,
+          layout: 'home_v2',
+        }}
       />
       <FunnelPageView event="home_page_view" sourceFallback="home" />
-      <FeaturedToolsStrip />
-            <Suspense
+
+      {/* 1 · Hero */}
+      <HomeHero ctaLabel={copy.ctaStart} locale={locale} />
+
+      {/* 2 · Birth form (main conversion) */}
+      <Suspense
         fallback={
           <div className="page-content-wide space-y-4 py-6 md:py-8">
             <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-5 shadow-card">
@@ -85,20 +107,29 @@ export default async function HomePage({ searchParams }: HomePageProps) {
           </div>
         }
       >
-        <AnalyzeWorkspace
-          stats={stats}
-          activePath="/"
-          source="home_workspace"
-          initialIntent={initialIntent}
-          initialSource={initialSource}
-        />
+        <div className="border-b border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/25">
+          <AnalyzeWorkspace
+            stats={stats}
+            activePath="/"
+            source="home_workspace"
+            initialIntent={initialIntent}
+            initialSource={initialSource}
+          />
+        </div>
       </Suspense>
+
+      {/* 3 · Product education: real V6 demo curves */}
       {klineSamples.length > 0 ? (
-        <div className="page-content-wide pb-8 pt-2 md:pb-10">
+        <div className="page-content-wide py-8 md:py-10">
           <LifeKlineShowcase samples={klineSamples} ctaHref="#analyze-workspace" />
         </div>
       ) : null}
-      <div className="page-content pb-16">
+
+      {/* 4 · Secondary paths & tools */}
+      <HomeExplore />
+
+      {/* 5 · SEO / GEO */}
+      <div className="page-content pb-10 pt-8 md:pb-12">
         <PageSeoGeoSection pathOrSlug="/" />
       </div>
     </AppPage>
