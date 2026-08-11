@@ -128,6 +128,26 @@ export function loginFormCopy(locale: SiteLocale) {
       'zh-Hant': '免費 · 無需密碼 · 約 1 分鐘',
       en: 'Free · no password · about 1 minute',
     }),
+    googleSignIn: pick(locale, {
+      'zh-CN': '使用 Google 账号继续',
+      'zh-Hant': '使用 Google 帳號繼續',
+      en: 'Continue with Google',
+    }),
+    googleOrEmail: pick(locale, {
+      'zh-CN': '或使用邮箱验证码',
+      'zh-Hant': '或使用郵箱驗證碼',
+      en: 'Or use email code',
+    }),
+    googleError: pick(locale, {
+      'zh-CN': 'Google 登录未完成，请重试或改用邮箱验证码',
+      'zh-Hant': 'Google 登入未完成，請重試或改用郵箱驗證碼',
+      en: 'Google sign-in did not finish. Try again or use an email code.',
+    }),
+    googleDenied: pick(locale, {
+      'zh-CN': '已取消 Google 授权',
+      'zh-Hant': '已取消 Google 授權',
+      en: 'Google authorization was cancelled.',
+    }),
     /** Gmail deliverability is weak on self-hosted SMTP (prod: ~0% code use vs QQ). */
     gmailDeliverabilityHint: pick(locale, {
       'zh-CN':

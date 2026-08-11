@@ -57,10 +57,13 @@ function markCodeUsed(id: string) {
   db.prepare(`UPDATE auth_codes SET used_at = datetime('now') WHERE id = ?`).run(id);
 }
 
-function createUserForEmail(email: string) {
+function createUserForEmail(email: string, displayName?: string | null) {
   const normalizedEmail = normalizeEmail(email);
   const userId = `user_${generateId()}`;
-  const localName = normalizedEmail.split('@')[0] || '用户';
+  const localName =
+    `${displayName || ''}`.trim().slice(0, 64) ||
+    normalizedEmail.split('@')[0] ||
+    '用户';
   const role = isAdminEmail(normalizedEmail) ? 'admin' : 'user';
 
   userOperations.create({
@@ -264,32 +267,63 @@ export async function verifyLoginCodeAndCreateSession({
     return { success: false, error: '验证码已过期，请重新获取' };
   }
 
+  markCodeUsed(row.id);
+
+  return createSessionForVerifiedEmail({
+    email: normalizedEmail,
+    currentUserId: guestId,
+    reportId,
+  });
+}
+
+/**
+ * Create session after a trusted identity proof (email OTP or Google OAuth).
+ * Does not re-check OTP / OAuth — caller must verify first.
+ */
+export async function createSessionForVerifiedEmail({
+  email,
+  currentUserId,
+  reportId,
+  displayName,
+}: {
+  email: string;
+  currentUserId?: string | null;
+  reportId?: string | null;
+  displayName?: string | null;
+}) {
+  const normalizedEmail = normalizeEmail(email);
+  const guestId =
+    currentUserId && currentUserId.startsWith('guest_') ? currentUserId : null;
+
   let user = userOperations.getByEmail(normalizedEmail) as any;
   const isNewUser = !user;
   if (!user) {
-    user = createUserForEmail(normalizedEmail);
+    user = createUserForEmail(normalizedEmail, displayName);
   } else {
     updateUserLoginState(user.id, normalizedEmail);
+    if (displayName && !user.name) {
+      try {
+        userOperations.update(user.id, { name: `${displayName}`.trim().slice(0, 64) });
+      } catch {
+        // optional
+      }
+    }
     user = userOperations.getById(user.id) as any;
   }
-
-  markCodeUsed(row.id);
 
   if (guestId && guestId !== user.id) {
     try {
       mergeGuestDataIntoUser(guestId, user.id);
     } catch (error) {
-      // Login must succeed even if merge partially fails.
       console.error('[auth] mergeGuestDataIntoUser failed:', error);
     }
   }
 
   const claim = claimReportForUser(reportId, user.id, guestId);
-
   await setSessionUserId(user.id);
 
   return {
-    success: true,
+    success: true as const,
     isNewUser,
     reportClaimed: claim.claimed,
     user: {
