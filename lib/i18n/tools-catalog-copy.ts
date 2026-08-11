@@ -5,8 +5,17 @@
  */
 
 import type { PortalEntry } from '@/lib/portal-nav';
-import type { ToolCategoryKey } from '@/lib/portal-tools';
-import { TOOL_CATEGORY_META } from '@/lib/portal-tools';
+import type {
+  ToolCategoryKey,
+  ToolHubGroup,
+  ToolHubGroupKey,
+  ToolIntentMatch,
+} from '@/lib/portal-tools';
+import {
+  TOOL_CATEGORY_META,
+  TOOL_HUB_GROUPS,
+  TOOL_INTENT_MATCHES,
+} from '@/lib/portal-tools';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { toSiteLocaleText } from '@/lib/i18n/site-locale';
 
@@ -526,4 +535,88 @@ export function toolCategoryPageCopy(locale: SiteLocale) {
     ),
     toolsInCategory: t('本类工具', 'Tools in this category'),
   };
+}
+
+const TOOL_HUB_GROUP_META_EN: Record<ToolHubGroupKey, { title: string; description: string }> = {
+  quick: {
+    title: 'Quick checks (birth date only)',
+    description: 'No full report needed—topic reads in one step.',
+  },
+  structure: {
+    title: 'Full structure & scene depth',
+    description: 'From full chart report to ten-dimension judgment.',
+  },
+  relationship: {
+    title: 'Relationship · match · family',
+    description: 'Dual charts and relationship rhythm tools.',
+  },
+  naming_face: {
+    title: 'Naming · face · palm',
+    description: 'Name support and structural physiognomy (not medical).',
+  },
+  space: {
+    title: 'Feng shui · space lab',
+    description: 'Home and shop environment structure.',
+  },
+  daily: {
+    title: 'Daily rhythm',
+    description: 'Almanac, zodiac, timing, and light daily entries.',
+  },
+  verify: {
+    title: 'Verification loop',
+    description: 'Log real nodes and check prediction hits.',
+  },
+  consult: {
+    title: 'Consultants & follow-up',
+    description: 'Pick a consultant or keep asking against a report.',
+  },
+};
+
+const TOOL_INTENT_EN: Record<string, { label: string; hint: string }> = {
+  yearly: { label: 'This year’s fortune', hint: 'Yearly main window' },
+  career: { label: 'Career / job change', hint: 'Career structure report' },
+  wealth: { label: 'Wealth rhythm', hint: 'Wealth structure report' },
+  marriage: { label: 'Love & match', hint: 'Compatibility dual chart' },
+  naming: { label: 'Naming / rename', hint: 'Naming studio' },
+  daily: { label: 'Today’s almanac', hint: 'Almanac · daily match' },
+  fengshui: { label: 'Home / shop feng shui', hint: 'Space lab' },
+  full: { label: 'Full chart', hint: 'Free structure report' },
+};
+
+export function presentToolIntentMatches(locale: SiteLocale): ToolIntentMatch[] {
+  return TOOL_INTENT_MATCHES.map((item) => {
+    if (locale === 'zh-CN') return item;
+    if (locale === 'zh-Hant') {
+      return {
+        ...item,
+        label: toSiteLocaleText(item.label, 'zh-Hant'),
+        hint: toSiteLocaleText(item.hint, 'zh-Hant'),
+      };
+    }
+    const en = TOOL_INTENT_EN[item.id];
+    if (!en) return item;
+    return { ...item, label: en.label, hint: en.hint };
+  });
+}
+
+export function presentToolHubGroups(locale: SiteLocale): ToolHubGroup[] {
+  return TOOL_HUB_GROUPS.map((group) => {
+    const tools = presentToolEntries(group.tools, locale);
+    if (locale === 'zh-CN') return { ...group, tools };
+    if (locale === 'zh-Hant') {
+      return {
+        ...group,
+        title: toSiteLocaleText(group.title, 'zh-Hant'),
+        description: toSiteLocaleText(group.description, 'zh-Hant'),
+        tools,
+      };
+    }
+    const meta = TOOL_HUB_GROUP_META_EN[group.key];
+    return {
+      ...group,
+      title: meta?.title ?? group.title,
+      description: meta?.description ?? group.description,
+      tools,
+    };
+  });
 }

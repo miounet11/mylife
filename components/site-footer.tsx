@@ -13,17 +13,18 @@ import {
 } from '@/lib/site-social';
 
 const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: string }> = [
+  { href: '/analyze', labelKey: 'navAnalyze' },
+  { href: '/tools', labelKey: 'navTools' },
+  { href: '/dimensions', labelKey: 'navDimensions' },
   { href: '/almanac', labelKey: 'navAlmanac' },
-  { href: '/astro', labelKey: 'navAstro' },
-  { href: '/world-yi', labelKey: 'navWorldYi' },
+  { href: '/hehun', labelKey: 'navHehun' },
+  { href: '/tools/naming', labelKey: 'navNaming' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
-  { href: '/topics', labelKey: 'navTopics', labelFallback: '主题库' },
-  { href: '/hotlist', labelKey: 'navHotlist', labelFallback: '热门榜' },
+  { href: '/teachers', labelKey: 'navTeachers' },
   { href: '/cases', labelKey: 'navCases' },
   { href: '/learn', labelKey: 'navLearn' },
-  { href: '/docs', labelKey: 'navDocs' },
   { href: '/membership', labelKey: 'navMembership' },
-  { href: '/movement', labelKey: 'navMovement' },
+  { href: '/docs', labelKey: 'navDocs' },
 ];
 
 export default function SiteFooter() {

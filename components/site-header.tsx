@@ -14,24 +14,27 @@ import { cn } from '@/lib/utils';
 
 type NavItem = { href: string; labelKey: string };
 
+/**
+ * Primary nav — keep short so users find the right surface fast.
+ * Tools hub owns discovery of individual tools; profile owns predictions.
+ */
 const primaryNavItems: NavItem[] = [
-  { href: '/analyze', labelKey: 'navWorkbench' },
-  { href: '/dimensions', labelKey: 'navDimensions' },
+  { href: '/analyze', labelKey: 'navAnalyze' },
   { href: '/tools', labelKey: 'navTools' },
-  { href: '/teachers', labelKey: 'navTeachers' },
+  { href: '/dimensions', labelKey: 'navDimensions' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
-  { href: '/predictions', labelKey: 'navPredictions' },
-  { href: '/chat?mode=opening&teacher=overview&source=site_header', labelKey: 'navChat' },
+  { href: '/teachers', labelKey: 'navTeachers' },
   { href: '/profile', labelKey: 'navProfile' },
 ];
 
+/** Daily / high-intent shortcuts (lg+ only). */
 const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
   { href: '/almanac', labelKey: 'navAlmanac' },
   { href: '/astro', labelKey: 'navAstro' },
+  { href: '/hehun', labelKey: 'navHehun' },
+  { href: '/tools/naming', labelKey: 'navNaming' },
   { href: '/cases', labelKey: 'navCases' },
   { href: '/events', labelKey: 'navEvents' },
-  { href: '/annual-review', labelKey: 'navAnnual' },
-  { href: '/docs', labelKey: 'navDocs' },
 ];
 
 /** Always-visible quick entry (also shown in compact header on sm+) */

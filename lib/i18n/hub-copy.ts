@@ -167,17 +167,17 @@ export function dimensionsHubCopy(locale: SiteLocale) {
 export function toolsHubCopy(locale: SiteLocale) {
   return {
     eyebrow: pick(locale, {
-      'zh-CN': '工具',
-      en: 'Tools',
+      'zh-CN': '工具中心',
+      en: 'Tools hub',
     }),
     title: pick(locale, {
-      'zh-CN': '填生日即可测',
-      en: 'Try with birth date only',
+      'zh-CN': '按你的问题匹配工具',
+      en: 'Match the right tool to your question',
     }),
     description: pick(locale, {
       'zh-CN':
-        '不用先出完整报告。选一个问题，填出生信息，引擎即时给主题判断；需要时再升级完整报告与老师追问。',
-      en: 'No full report required. Pick a question, enter birth details, get a topic read—upgrade to full report or consultants when you need depth.',
+        '先点下面最接近的场景，直接进入最匹配的入口；也可以按分组浏览。多数工具填生日即可，需要时再升级完整报告或请老师。',
+      en: 'Pick the closest scene below for the best entry, or browse by group. Most tools need only a birth date—upgrade to a full report or consultant when you need depth.',
     }),
     ctaBirth: pick(locale, {
       'zh-CN': '填生日测',
@@ -199,13 +199,25 @@ export function toolsHubCopy(locale: SiteLocale) {
       'zh-CN': '合婚',
       en: 'Compatibility',
     }),
+    intentTitle: pick(locale, {
+      'zh-CN': '你现在最关心什么',
+      en: 'What do you care about now?',
+    }),
+    intentDesc: pick(locale, {
+      'zh-CN': '点一项即可进入最匹配工具，不必在列表里翻找。',
+      en: 'One tap opens the best-matching tool—no hunting through lists.',
+    }),
+    groupsTitle: pick(locale, {
+      'zh-CN': '按工具类型浏览',
+      en: 'Browse by tool type',
+    }),
     threeStepsTitle: pick(locale, {
       'zh-CN': '三步走通',
       en: 'Three steps',
     }),
     threeStepsDesc: pick(locale, {
-      'zh-CN': '1）填生日跑单项 → 2）看日主/用神与窗口 → 3）需要时生成完整报告并追问',
-      en: '1) Enter birth date for one tool → 2) Review day master / useful god & windows → 3) Upgrade to full report & ask when needed',
+      'zh-CN': '1）选场景或填生日跑单项 → 2）看日主/用神与窗口 → 3）需要时生成完整报告并追问',
+      en: '1) Pick a scene or run one tool with birth date → 2) Review day master / useful god & windows → 3) Upgrade to full report & ask when needed',
     }),
     startYearlyCta: pick(locale, {
       'zh-CN': '开始：年度主窗口',
@@ -240,14 +252,14 @@ export function toolsHubCopy(locale: SiteLocale) {
         }),
       },
       {
-        href: '/tools/career-role-fit',
+        href: '/analyze?intent=career&source=tools_hub_birth_quick',
         title: pick(locale, {
-          'zh-CN': '岗位匹配',
-          en: 'Role fit',
+          'zh-CN': '事业结构报告',
+          en: 'Career structure report',
         }),
         desc: pick(locale, {
-          'zh-CN': '事业方向与阶段动作',
-          en: 'Career direction & stage actions',
+          'zh-CN': '角色匹配与阶段动作',
+          en: 'Role fit and stage actions',
         }),
       },
       {
@@ -263,12 +275,12 @@ export function toolsHubCopy(locale: SiteLocale) {
       },
     ],
     scenesTitle: pick(locale, {
-      'zh-CN': '场景研判',
-      en: 'Scene judgment',
+      'zh-CN': '场景研判（十维度）',
+      en: 'Scene judgment (10 dimensions)',
     }),
     scenesDesc: pick(locale, {
-      'zh-CN': '运势、工作、投资等高频问题。',
-      en: 'Fortune, work, investing, and other frequent questions.',
+      'zh-CN': '运势、工作、投资等高频问题，结论可验证。',
+      en: 'Fortune, work, investing, and other frequent questions—with verifiable conclusions.',
     }),
     askTeachers: pick(locale, {
       'zh-CN': '问老师',
@@ -279,12 +291,16 @@ export function toolsHubCopy(locale: SiteLocale) {
       en: 'All',
     }),
     recommendedTools: pick(locale, {
-      'zh-CN': '推荐工具',
-      en: 'Recommended tools',
+      'zh-CN': '精选入口',
+      en: 'Featured entries',
     }),
     byTheme: pick(locale, {
-      'zh-CN': '按主题',
-      en: 'By theme',
+      'zh-CN': '按人生主题',
+      en: 'By life theme',
+    }),
+    byThemeDesc: pick(locale, {
+      'zh-CN': '事业、财富、关系、健康、迁移等专项列表。',
+      en: 'Career, wealth, relationship, health, migration, and more.',
     }),
     footerNote: pick(locale, {
       'zh-CN': '工具结论锚定引擎真值（日主/用神/大运）。需要细拆时，再到完整报告或请老师。',
@@ -292,25 +308,25 @@ export function toolsHubCopy(locale: SiteLocale) {
     }),
     seo: {
       title: pick(locale, {
-        'zh-CN': '工具中心｜流年窗口、今日一签与十维度入口',
-        en: 'Tools hub · Yearly window, daily sign & ten dimensions',
+        'zh-CN': '工具中心｜按问题匹配流年、合婚、起名、十维度',
+        en: 'Tools hub · Match yearly window, match, naming & 10 dimensions',
       }),
       description: pick(locale, {
         'zh-CN':
-          '高意图免费命理工具：2026 流年主窗口、今日一签、手相观察；并与十维度深度研判、完整八字报告、预测回访互通，适合快速验证与深度判断衔接。',
-        en: 'Free high-intent tools: yearly window, daily sign, palm reading; linked to ten dimensions, full Bazi reports, and prediction check-ins—from quick checks to deeper judgment.',
+          '按场景匹配最合适的命理工具：2026 流年主窗口、合婚双盘、起名、黄历、空间场；并与十维度深度研判、完整八字报告、预测回访互通。',
+        en: 'Match the right destiny tool: yearly window, compatibility, naming, almanac, space lab—linked to ten dimensions, full Bazi reports, and prediction check-ins.',
       }),
       keywords:
         locale === 'en'
           ? [
               'bazi tools',
               'yearly window',
-              'daily sign',
-              'palm reading',
+              'compatibility',
+              'naming',
               'ten dimensions',
               'free destiny tools',
             ]
-          : ['八字工具', '流年窗口', '今日一签', '手相观察', '十维度', '免费命理测试'],
+          : ['八字工具', '流年窗口', '合婚', '起名', '十维度', '免费命理测试'],
     },
     form: {
       title: pick(locale, {

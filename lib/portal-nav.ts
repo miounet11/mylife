@@ -5,30 +5,22 @@ export type PortalEntry = {
   cta?: string;
 };
 
+/**
+ * Featured tools for compact lists (footer / legacy grids).
+ * Full catalog lives in `TOOL_HUB_GROUPS` (`lib/portal-tools.ts`).
+ */
 export const TOOL_ENTRIES: PortalEntry[] = [
   {
-    href: '/dimensions',
-    title: '十维度深度研判',
-    description: '运势节奏、工作行业、投资理财等十个高频问题入口，结论带可验证预测。',
-    cta: '进入十维度',
+    href: '/tools/timing-yearly-window',
+    title: '2026 流年 / 年度主窗口',
+    description: '看今年事业、关系、财富的主窗口与节奏，不必先填完整报告。',
+    cta: '免费测年度窗口',
   },
   {
-    href: '/dimensions/fortune-rhythm',
-    title: '运势节奏研判',
-    description: '当前阶段、转折点与行动窗口（P0 推荐）。',
-    cta: '开始研判',
-  },
-  {
-    href: '/predictions',
-    title: '预测回访',
-    description: '查看即将到期与已到期预测，反馈命中情况。',
-    cta: '去回访',
-  },
-  {
-    href: '/events',
-    title: '事件日历',
-    description: '记录现实节点、标记应验，与报告预测闭环校准。',
-    cta: '记事件',
+    href: '/analyze',
+    title: '完整结构报告',
+    description: '八字排盘 + 人生K线 + 阶段动作，免费生成。',
+    cta: '去测算',
   },
   {
     href: '/hehun',
@@ -37,40 +29,10 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '双方生日对盘',
   },
   {
-    href: '/teachers',
-    title: '请老师',
-    description: '按问题选老师：事业、财务、关系、地理、实践等，结合报告与记录作答。',
-    cta: '选老师',
-  },
-  {
-    href: '/chat',
-    title: '继续对话',
-    description: '绑定报告后持续追问；也可先从「请老师」进入对应老师。',
-    cta: '去对话',
-  },
-  {
-    href: '/expert-crm',
-    title: '专业 CRM',
-    description: '从业者本机客户脚本与待回访队列（面谈要点、承诺、回访日）。',
-    cta: '打开 CRM',
-  },
-  {
-    href: '/tools/timing-yearly-window',
-    title: '2026 流年 / 年度主窗口',
-    description: '看今年事业、关系、财富的主窗口与节奏，不必先填完整报告。',
-    cta: '免费测年度窗口',
-  },
-  {
-    href: '/profile/foundation',
-    title: '人生数据底座',
-    description: '生辰八字 · 星座生肖 · 面相手相 · 生活问答 · 互动与工具信号，统一完整度。',
-    cta: '完善参数',
-  },
-  {
-    href: '/tools/zodiac',
-    title: '星座 · 生肖',
-    description: '由生日推导太阳星座与生肖，可选填月亮/上升并写入数据底座。',
-    cta: '推算星座',
+    href: '/dimensions',
+    title: '十维度深度研判',
+    description: '运势节奏、工作行业、投资理财等十个高频问题入口，结论带可验证预测。',
+    cta: '进入十维度',
   },
   {
     href: '/tools/naming',
@@ -79,40 +41,16 @@ export const TOOL_ENTRIES: PortalEntry[] = [
     cta: '开始起名',
   },
   {
-    href: '/tools/physiognomy',
-    title: '面相结构观察',
-    description: '上传面部照片，可选生辰交叉；照片私有存储，可授权脱敏线图。',
-    cta: '上传面相',
-  },
-  {
-    href: '/tools/palmistry',
-    title: '手相结构观察',
-    description: '上传手掌照片，掌纹结构观察（非医学诊断）；关联用户媒体库。',
-    cta: '上传手相',
-  },
-  {
-    href: '/tools/fengshui-space',
-    title: '空间场模拟工作台',
-    description: 'CAD 户型 · AI 美化 · 完整报表 · 人宅合参 · 热力 3D。',
-    cta: '打开工作台',
-  },
-  {
-    href: '/tools/fengshui-simulator',
-    title: '商铺风水模拟器',
-    description: '行业五行、大门方位、店名、色彩与开业择时的结构化分析（不说吉凶标签）。',
-    cta: '开始模拟',
-  },
-  {
     href: '/almanac',
     title: '今日黄历 · 万年历',
     description: '通书宜忌、十二时辰、个人日运匹配；撕页/全球对照多形态，每日独立 URL。',
     cta: '看今天',
   },
   {
-    href: '/astro',
-    title: '星座百科',
-    description: '十二星座 · 48星区 · 上升星座；生日查询，并桥接世界易与结构报告。',
-    cta: '打开星座',
+    href: '/tools/fengshui-space',
+    title: '空间场模拟工作台',
+    description: 'CAD 户型 · AI 美化 · 完整报表 · 人宅合参 · 热力 3D。',
+    cta: '打开工作台',
   },
   {
     href: '/tools/daily-sign',
