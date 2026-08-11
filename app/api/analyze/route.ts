@@ -538,6 +538,8 @@ async function executeAnalyze(
     data,
     timezone,
     finalResult,
+    lockedClockDate,
+    lockedClockTime,
   });
   const queuedUpgrade = enqueueReportUpgrade({
     report: savedReport,
@@ -661,17 +663,22 @@ function createSavedReportSnapshot(params: {
   data: AnalyzeInput;
   timezone: number;
   finalResult: Awaited<ReturnType<typeof generateVersionedReport>>['result'];
+  /** Prefer locked clock from calculationIdentity when present */
+  lockedClockDate?: string;
+  lockedClockTime?: string;
 }) {
   const sanitized = sanitizeRelationInput({
     relation: params.data.relation ?? null,
     relationLabel: params.data.relationLabel ?? null,
   });
+  const birthDate = params.lockedClockDate || params.data.birthDate;
+  const birthTime = params.lockedClockTime || params.data.birthTime;
   return {
     id: params.id,
     userId: params.userId,
     name: params.data.name,
-    birthDate: params.data.birthDate,
-    birthTime: params.data.birthTime,
+    birthDate,
+    birthTime,
     birthPlace: params.data.birthPlace || '北京',
     timezone: params.timezone,
     gender: (params.data.gender as 'male' | 'female') || 'male',

@@ -940,13 +940,26 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               <div className="fb-card overflow-hidden">
                 <ReportCover
                   userName={publicName}
-                  birthIso={canManage && result.basic && (result.basic as any).birthDate
-                    ? `${(result.basic as any).birthDate}${
-                        (result.basic as any).birthTime ? ' ' + (result.basic as any).birthTime : ''
-                      }`
-                    : rawFortuneData.birthDate
-                      ? `${rawFortuneData.birthDate}${rawFortuneData.birthTime ? ` ${rawFortuneData.birthTime}` : ''}`
-                    : undefined}
+                  birthIso={(() => {
+                    const date =
+                      (canManage && (result.basic as any)?.birthDate) ||
+                      rawFortuneData.birthDate ||
+                      (rawFortuneData as any).birth_date ||
+                      '';
+                    // Prefer locked chart identity clock (source of truth for 四柱)
+                    const locked =
+                      expertDeskView?.chartIdentity?.clockBirthTime ||
+                      (result.analysis as any)?.contextSignals?.calculationIdentity
+                        ?.clockBirthTime;
+                    const time =
+                      locked ||
+                      (canManage && (result.basic as any)?.birthTime) ||
+                      rawFortuneData.birthTime ||
+                      (rawFortuneData as any).birth_time ||
+                      '';
+                    if (!date) return undefined;
+                    return `${date}${time ? ` ${time}` : ''}`;
+                  })()}
                   birthLocation={
                     canManage
                       ? (result.basic as any)?.birthPlace || rawFortuneData.birthPlace || undefined

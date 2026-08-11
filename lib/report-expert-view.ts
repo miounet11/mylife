@@ -408,19 +408,27 @@ export function buildExpertDeskView(params: {
   pillars = buildPillarRows(result.basic?.pillars, result.basic, dayMaster, kongWang);
 
   const solar = buildSolarBlock({ birthDate, birthTime, birthPlace, timezone });
+  // Identity may live on analysis.contextSignals, top-level result.contextSignals,
+  // or params.contextSignals (result page packs all three — try in that order).
   const analysisBlob = (result as { analysis?: unknown }).analysis;
-  const identitySource =
+  const topSignals =
+    ((result as { contextSignals?: unknown }).contextSignals as Record<string, unknown> | undefined) ||
+    params.contextSignals ||
+    null;
+  const analysisSignals =
     analysisBlob && typeof analysisBlob === 'object'
-      ? {
-          ...(analysisBlob as Record<string, unknown>),
-          contextSignals:
-            ((analysisBlob as Record<string, unknown>).contextSignals as Record<string, unknown>) ||
-            params.contextSignals ||
-            {},
-        }
-      : params.contextSignals
-        ? { contextSignals: params.contextSignals }
-        : null;
+      ? ((analysisBlob as Record<string, unknown>).contextSignals as Record<string, unknown> | undefined)
+      : undefined;
+  const identitySource = {
+    ...(analysisBlob && typeof analysisBlob === 'object'
+      ? (analysisBlob as Record<string, unknown>)
+      : {}),
+    contextSignals: {
+      ...(topSignals || {}),
+      ...(analysisSignals || {}),
+      ...(params.contextSignals || {}),
+    },
+  };
   const chartIdentity = extractChartIdentityFromAnalysis(identitySource, birthTime);
   const fiveElements = buildFiveElements(result.fiveElements);
   const tenGods = {
@@ -473,7 +481,8 @@ export function buildExpertDeskView(params: {
     input: {
       name: presentReportText(name, 24) || '—',
       birthDate: birthDate || '—',
-      birthTime: birthTime || '—',
+      // Prefer locked clock time when present so desk header matches 四柱 source of truth
+      birthTime: chartIdentity?.clockBirthTime || birthTime || '—',
       birthPlace: birthPlace || '—',
       timezone,
       gender: gender === 'female' ? '女' : gender === 'male' ? '男' : gender || '—',

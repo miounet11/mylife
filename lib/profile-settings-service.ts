@@ -1,4 +1,8 @@
-import { extractChartIdentityFromAnalysis } from '@/lib/calculation-identity';
+import {
+  extractChartIdentityFromAnalysis,
+  pillarsToFingerprint,
+  readChartCalculationIdentity,
+} from '@/lib/calculation-identity';
 import { db, emailSubscriptionOperations, fortuneOperations, reportUpgradeJobOperations, userOperations } from '@/lib/database';
 import { buildFortuneContextInput } from '@/lib/fortune-context-builder';
 import {
@@ -91,11 +95,22 @@ function parseBaziSummary(bazi: string | Record<string, unknown> | undefined): s
   return dayMaster ? `日主 ${dayMaster}` : null;
 }
 
+function coerceAnalysisBlob(analysis: unknown): unknown {
+  if (typeof analysis === 'string') {
+    try {
+      return JSON.parse(analysis);
+    } catch {
+      return null;
+    }
+  }
+  return analysis;
+}
+
 function extractChartIdentity(
   analysis: unknown,
   storedBirthTime?: string | null,
 ): import('./profile-settings-types').ProfileChartIdentityView | null {
-  return extractChartIdentityFromAnalysis(analysis, storedBirthTime);
+  return extractChartIdentityFromAnalysis(coerceAnalysisBlob(analysis), storedBirthTime);
 }
 
 function resolveRelation(relation?: string | null) {
@@ -121,7 +136,13 @@ function mapFortuneView(
   supplements: ProfileSupplementView[],
   documents: ProfileDocumentView[],
 ): ProfileFortuneView {
-  const analysis = (row as FortuneLike & { analysis?: unknown }).analysis;
+  const analysis = coerceAnalysisBlob((row as FortuneLike & { analysis?: unknown }).analysis);
+  const chartIdentity = extractChartIdentity(analysis, row.birthTime);
+  // Prefer locked civil clock when identity exists so UI never shows drifted time.
+  const displayTime =
+    chartIdentity?.clockBirthTime ||
+    normalizeDisplayTime(row.birthTime) ||
+    row.birthTime;
   return {
     id: row.id,
     name: row.name,
@@ -129,7 +150,7 @@ function mapFortuneView(
     relationLabel: row.relationLabel || null,
     isPrimary: isPrimaryFortune(row),
     birthDate: row.birthDate,
-    birthTime: row.birthTime,
+    birthTime: displayTime,
     birthPlace: row.birthPlace || '北京',
     birthAccuracy: normalizeBirthAccuracy(row.birthAccuracy),
     gender: row.gender,
@@ -138,10 +159,18 @@ function mapFortuneView(
     birthSignature: row.birthSignature || null,
     reportId: row.id,
     pillarSummary: parseBaziSummary(row.bazi as any),
-    chartIdentity: extractChartIdentity(analysis, row.birthTime),
+    chartIdentity,
     completeness: row.profileCompleteness ?? computeProfileCompleteness(row, supplements, documents).overall,
     updatedAt: row.updatedAt || null,
   };
+}
+
+function normalizeDisplayTime(value?: string | null): string {
+  const raw = `${value || ''}`.trim();
+  if (!raw) return '';
+  const m = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (!m) return raw;
+  return `${String(Number(m[1])).padStart(2, '0')}:${m[2]}`;
 }
 
 function mapSupplementViews(
@@ -335,6 +364,8 @@ function buildMinimalFortunePayload(input: {
     birthAccuracy: input.birthAccuracy,
     gender: input.gender,
     name: input.name,
+    timezone: input.timezone,
+    useSeparateZiHour: false,
   });
 
   const birthSignature = buildBirthSignature({
@@ -345,17 +376,20 @@ function buildMinimalFortunePayload(input: {
     gender: input.gender,
   });
 
+  const pillars = rebuilt.truthInput.pillars || [];
+  const identity = rebuilt.calculationIdentity;
+
   return {
     id: input.fortuneId,
     userId: input.userId,
     name: input.name,
     birthDate: input.birthDate,
-    birthTime: input.birthTime,
+    birthTime: rebuilt.clockBirthTime || input.birthTime,
     birthPlace: input.birthPlace,
     timezone: input.timezone,
     gender: input.gender,
     bazi: {
-      pillars: rebuilt.truthInput.pillars,
+      pillars,
       dayMaster: rebuilt.reportRaw?.dayMaster,
     },
     fiveElements: rebuilt.signalsInput.elements || {},
@@ -382,6 +416,10 @@ function buildMinimalFortunePayload(input: {
       dayMaster: rebuilt.reportRaw?.dayMaster,
       birthAccuracy: input.birthAccuracy,
       createdFrom: 'profile_settings',
+      chartFingerprint: pillarsToFingerprint(pillars),
+      contextSignals: {
+        calculationIdentity: identity,
+      },
     },
     klineData: rebuilt.truthInput.kline,
     dayun: rebuilt.truthInput.dayun,
@@ -519,6 +557,9 @@ export function updateProfileFortune(
   let jobId: string | null = null;
 
   if (engineChanged) {
+    // Preserve late-Zi / solar choices from prior locked identity when user only edits civil fields.
+    const prevIdentity = readChartCalculationIdentity(fortune as any);
+    const nextTimezone = Number(updates.timezone ?? fortune.timezone ?? 8) || 8;
     const rebuilt = buildFortuneContextInput({
       birthDate: nextBirthDate,
       birthTime: nextBirthTime,
@@ -526,37 +567,55 @@ export function updateProfileFortune(
       birthAccuracy: nextBirthAccuracy,
       gender: nextGender,
       name: updates.name?.trim() || fortune.name,
+      timezone: nextTimezone,
+      longitude: prevIdentity?.longitude,
+      useTrueSolarTime:
+        typeof prevIdentity?.useSolarTime === 'boolean'
+          ? prevIdentity.useSolarTime
+          : undefined,
+      useSeparateZiHour: Boolean(prevIdentity?.useSeparateZiHour),
+      sect: prevIdentity?.sect || (prevIdentity?.useSeparateZiHour ? 1 : 2),
     });
+
+    const pillars = rebuilt.truthInput?.pillars || [];
+    const identity = rebuilt.calculationIdentity;
 
     fortuneUpdates.klineData = rebuilt.truthInput.kline;
     fortuneUpdates.dayun = rebuilt.truthInput.dayun;
+    // Always write locked clock time (normalized) so display never drifts from identity.
+    fortuneUpdates.birthTime = rebuilt.clockBirthTime || nextBirthTime;
     // Keep pillars in sync with birth fields — previously only kline/dayun updated, so
     // profile settings could show a new clock time with stale 四柱 (user-reported mismatch).
-    if (Array.isArray(rebuilt.truthInput?.pillars) && rebuilt.truthInput.pillars.length >= 4) {
+    if (Array.isArray(pillars) && pillars.length >= 4) {
       const prevBazi =
         fortune.bazi && typeof fortune.bazi === 'object' ? (fortune.bazi as Record<string, unknown>) : {};
       fortuneUpdates.bazi = {
         ...prevBazi,
         dayMaster:
           rebuilt.reportRaw?.dayMaster ||
-          rebuilt.truthInput.pillars[2]?.celestialStem ||
+          pillars[2]?.celestialStem ||
           (prevBazi as { dayMaster?: string }).dayMaster,
-        pillars: rebuilt.truthInput.pillars,
+        pillars,
       };
     }
+    const prevAnalysis =
+      fortune.analysis && typeof fortune.analysis === 'object'
+        ? (fortune.analysis as Record<string, unknown>)
+        : {};
+    const prevSignals =
+      prevAnalysis.contextSignals && typeof prevAnalysis.contextSignals === 'object'
+        ? (prevAnalysis.contextSignals as Record<string, unknown>)
+        : {};
     fortuneUpdates.analysis = {
-      ...(fortune.analysis || {}),
+      ...prevAnalysis,
       dayMaster: rebuilt.reportRaw?.dayMaster,
       birthAccuracy: nextBirthAccuracy,
       profileRecalcAt: new Date().toISOString(),
-      chartFingerprint: Array.isArray(rebuilt.truthInput?.pillars)
-        ? rebuilt.truthInput.pillars
-            .slice(0, 4)
-            .map((p: { celestialStem?: string; earthlyBranch?: string }) =>
-              `${p?.celestialStem || ''}${p?.earthlyBranch || ''}`,
-            )
-            .join(' ')
-        : undefined,
+      chartFingerprint: pillarsToFingerprint(pillars),
+      contextSignals: {
+        ...prevSignals,
+        calculationIdentity: identity,
+      },
     };
 
     const jobRecord = {

@@ -10,6 +10,14 @@ import type { CreateContextInput } from '@/lib/agentic-report/create-agentic-con
 import type { Pillar } from '@/lib/user-types';
 import { buildBirthSignature } from '@/lib/profile-birth-signature';
 import { getOrCreateProfile, updateProfile } from '@/lib/life-profile/store';
+import {
+  buildChartCalculationIdentity,
+  normalizeClockTime,
+  resolveEffectiveTiming,
+  type ChartCalculationIdentity,
+  type EffectiveTiming,
+} from '@/lib/calculation-identity';
+import { resolveCityLongitude } from '@/lib/geo/city-longitudes';
 
 export interface BirthInput {
   birthDate: string;
@@ -18,9 +26,26 @@ export interface BirthInput {
   birthAccuracy?: 'exact' | 'range' | 'unknown';
   gender?: 'male' | 'female';
   name?: string;
+  /** Civil timezone offset hours (default 8). */
+  timezone?: number;
+  /** Explicit longitude; falls back to place resolve then timezone*15. */
+  longitude?: number;
+  /**
+   * True solar correction. Default: true when accuracy is not `unknown` and a
+   * place/longitude can be resolved (aligned with analyze form).
+   */
+  useTrueSolarTime?: boolean;
+  /** Late-Zi next-day (sect 1). Default false (sect 2). */
+  useSeparateZiHour?: boolean;
+  sect?: 1 | 2;
 }
 
 function parseBirthDate(value: string): Date {
+  // Prefer local Y-M-D parse to avoid UTC shift for pure date strings.
+  const m = String(value || '').trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) {
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) {
     throw new Error('Invalid birthDate');
@@ -32,7 +57,53 @@ function resolveBirthTime(input: BirthInput): string {
   if (input.birthAccuracy === 'unknown' || !input.birthTime) {
     return '12:00';
   }
-  return input.birthTime;
+  return normalizeClockTime(input.birthTime) || input.birthTime;
+}
+
+function resolveStructureTiming(input: BirthInput): {
+  clockDate: string;
+  clockTime: string;
+  timezone: number;
+  longitude: number;
+  useSolar: boolean;
+  useSeparateZiHour: boolean;
+  sect: 1 | 2;
+  timing: EffectiveTiming;
+} {
+  const clockDate = String(input.birthDate || '').trim();
+  const clockTime = resolveBirthTime(input);
+  const timezone = Number.isFinite(input.timezone as number) ? Number(input.timezone) : 8;
+  const placeLon = resolveCityLongitude(input.birthPlace)?.longitude;
+  const longitude =
+    Number.isFinite(input.longitude as number)
+      ? Number(input.longitude)
+      : placeLon ?? timezone * 15;
+  const hasLon =
+    Number.isFinite(input.longitude as number) || placeLon != null || Boolean(input.birthPlace?.trim());
+  const useSolar =
+    typeof input.useTrueSolarTime === 'boolean'
+      ? input.useTrueSolarTime
+      : input.birthAccuracy !== 'unknown' && hasLon;
+  const useSeparateZiHour = Boolean(input.useSeparateZiHour);
+  const sect: 1 | 2 = input.sect || (useSeparateZiHour ? 1 : 2);
+  const timing = resolveEffectiveTiming({
+    birthDate: clockDate,
+    birthTime: clockTime,
+    timezone,
+    longitude,
+    useSolarTime: useSolar,
+    useSeparateZiHour,
+  });
+  return {
+    clockDate,
+    clockTime,
+    timezone,
+    longitude,
+    useSolar,
+    useSeparateZiHour,
+    sect,
+    timing,
+  };
 }
 
 function elementScoresFromPillars(pillars: Pillar[]): Record<string, number> {
@@ -113,28 +184,53 @@ function normalizeDayunResult(raw: DayunResult | (DayunResult & { dayuns?: Dayun
   };
 }
 
-export function buildFortuneContextInput(input: BirthInput): CreateContextInput {
-  const birthDate = parseBirthDate(input.birthDate);
-  const birthTime = resolveBirthTime(input);
+export type FortuneStructureBundle = CreateContextInput & {
+  /** Analyze-aligned timing + locked calculation identity for this recompute. */
+  timing: EffectiveTiming;
+  calculationIdentity: ChartCalculationIdentity;
+  clockBirthDate: string;
+  clockBirthTime: string;
+  sect: 1 | 2;
+};
+
+/**
+ * Build structural chart (pillars / dayun / kline) from civil birth fields.
+ * Timing path matches analyze: resolveEffectiveTiming once, then pillars on
+ * effective time with useTrueSolarTime=false (no double solar correction).
+ */
+export function buildFortuneContextInput(input: BirthInput): FortuneStructureBundle {
   const gender = input.gender || 'male';
   const birthPlace = input.birthPlace?.trim() || '北京';
+  const {
+    clockDate,
+    clockTime,
+    timezone,
+    sect,
+    timing,
+  } = resolveStructureTiming(input);
 
-  const pillars = calculateFourPillars(birthDate, birthTime, 8, {
+  // Display / signature stay on civil clock; pillars use effective timing only.
+  const pillarDate = timing.effectiveBirthDateObj;
+  const pillarTime = timing.effectiveBirthTime;
+  const civilDate = parseBirthDate(clockDate);
+
+  const pillars = calculateFourPillars(pillarDate, pillarTime, timezone, {
     birthPlace,
-    useTrueSolarTime: input.birthAccuracy !== 'unknown',
+    useTrueSolarTime: false,
+    sect,
   });
   const yongShen = inferYongShen(pillars);
   const dayun = normalizeDayunResult(calculateDayun(
-    birthDate,
-    birthTime,
+    civilDate,
+    clockTime,
     gender,
     pillars[0]?.celestialStem || '',
     { gan: pillars[1]?.celestialStem || '', zhi: pillars[1]?.earthlyBranch || '' },
     yongShen,
-    birthDate.getFullYear(),
+    civilDate.getFullYear(),
   ));
 
-  const kline = generateLifeKlineV6(birthDate, gender, pillars, yongShen, dayun, {
+  const kline = generateLifeKlineV6(civilDate, gender, pillars, yongShen, dayun, {
     fromBirth: true,
     lifeYears: 80,
   });
@@ -157,8 +253,8 @@ export function buildFortuneContextInput(input: BirthInput): CreateContextInput 
   }
 
   const birthSignature = buildBirthSignature({
-    birthDate: input.birthDate,
-    birthTime,
+    birthDate: clockDate,
+    birthTime: clockTime,
     birthPlace,
     birthAccuracy: input.birthAccuracy,
     gender,
@@ -178,9 +274,15 @@ export function buildFortuneContextInput(input: BirthInput): CreateContextInput 
     lifeProfile = null;
   }
 
+  const calculationIdentity = buildChartCalculationIdentity({
+    timing,
+    pillars,
+    sect,
+  });
+
   return {
     truthInput: {
-      birthDate,
+      birthDate: civilDate,
       pillars,
       yongShen,
       dayun,
@@ -191,19 +293,24 @@ export function buildFortuneContextInput(input: BirthInput): CreateContextInput 
       lifeProfile,
     },
     signalsInput: {
-      birthDate,
+      birthDate: civilDate,
       elements,
       birthPlace,
     },
     reportRaw: {
       birthAccuracy: input.birthAccuracy || 'range',
       gender,
-      birthTime: input.birthAccuracy === 'unknown' ? null : birthTime,
+      birthTime: input.birthAccuracy === 'unknown' ? null : clockTime,
       birthPlace,
       dayMaster: pillars[2]?.celestialStem,
       birthSignature,
       intent: null,
     },
     lifeProfile,
+    timing,
+    calculationIdentity,
+    clockBirthDate: clockDate,
+    clockBirthTime: clockTime,
+    sect,
   };
 }

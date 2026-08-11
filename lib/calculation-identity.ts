@@ -239,10 +239,20 @@ export function extractChartIdentityFromAnalysis(
 ): ChartIdentitySummary | null {
   if (!analysis || typeof analysis !== 'object') return null;
   const root = analysis as Record<string, unknown>;
-  const signals = (root.contextSignals || root) as Record<string, unknown>;
-  const identity = (signals.calculationIdentity || root.calculationIdentity) as
-    | Record<string, unknown>
-    | undefined;
+  const nestedAnalysis =
+    root.analysis && typeof root.analysis === 'object'
+      ? (root.analysis as Record<string, unknown>)
+      : null;
+  const signals = (
+    root.contextSignals ||
+    nestedAnalysis?.contextSignals ||
+    root
+  ) as Record<string, unknown>;
+  const identity = (
+    signals.calculationIdentity ||
+    root.calculationIdentity ||
+    nestedAnalysis?.calculationIdentity
+  ) as Record<string, unknown> | undefined;
   if (!identity || typeof identity !== 'object') return null;
   const clockBirthTime = normalizeClockTime(
     typeof identity.clockBirthTime === 'string' ? identity.clockBirthTime : null,

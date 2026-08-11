@@ -391,8 +391,38 @@ export async function regenerateReportFromRecord(record: FortuneRecord) {
   );
 
   // 继承并续写 calculation identity（升级不得丢失真太阳时参数）
-  const existingIdentity =
+  // 若历史盘无 identity：用锁定四柱 + 钟表时间补建，避免后续再次漂移。
+  let existingIdentity =
     regeneration.identity || readChartCalculationIdentity(record);
+  if (!existingIdentity) {
+    try {
+      const { buildFortuneContextInput } = await import('@/lib/fortune-context-builder');
+      const rebuilt = buildFortuneContextInput({
+        birthDate: record.birthDate,
+        birthTime: record.birthTime,
+        birthPlace: regeneration.birthPlace,
+        birthAccuracy:
+          (record as { birthAccuracy?: 'exact' | 'range' | 'unknown' }).birthAccuracy ||
+          'range',
+        gender: regeneration.gender,
+        timezone: regeneration.timezone,
+        useTrueSolarTime: regeneration.source === 'legacy-solar-replay',
+        useSeparateZiHour: regeneration.sect === 1,
+        sect: regeneration.sect,
+      });
+      // Prefer locked pillars' fingerprint over recompute when they diverge.
+      existingIdentity = {
+        ...rebuilt.calculationIdentity,
+        chartFingerprint:
+          regeneration.chartFingerprint || rebuilt.calculationIdentity.chartFingerprint,
+      };
+    } catch (err) {
+      console.warn(
+        `[report-pipeline] failed to backfill calculation identity for ${record.id}`,
+        err instanceof Error ? err.message : err,
+      );
+    }
+  }
   if (existingIdentity) {
     locked.result.analysis = attachChartCalculationIdentity(
       locked.result.analysis,

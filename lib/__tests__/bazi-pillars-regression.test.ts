@@ -4,7 +4,13 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { calculateFourPillars } from '@/lib/fortune-engine';
-import { resolveEffectiveTiming } from '@/lib/calculation-identity';
+import {
+  extractChartIdentityFromAnalysis,
+  normalizeClockTime,
+  pillarsToFingerprint,
+  resolveEffectiveTiming,
+} from '@/lib/calculation-identity';
+import { buildFortuneContextInput } from '@/lib/fortune-context-builder';
 
 function pillarStr(pillars: ReturnType<typeof calculateFourPillars>) {
   return pillars.map((p) => `${p.celestialStem}${p.earthlyBranch}`).join(' ');
@@ -49,5 +55,49 @@ describe('bazi pillars regression', () => {
     });
     assert.equal(timing.useSeparateZiHour, true);
     assert.equal(timing.clockBirthTime, '23:49');
+  });
+
+  it('buildFortuneContextInput locks civil clock + fingerprint for 1984-10-08 18:25 without solar', () => {
+    const rebuilt = buildFortuneContextInput({
+      birthDate: '1984-10-08',
+      birthTime: '18:25',
+      birthPlace: '台中',
+      birthAccuracy: 'exact',
+      gender: 'male',
+      timezone: 8,
+      useTrueSolarTime: false,
+      sect: 2,
+    });
+    assert.equal(rebuilt.clockBirthTime, '18:25');
+    assert.equal(
+      pillarsToFingerprint(rebuilt.truthInput.pillars),
+      '甲子 甲戌 乙亥 乙酉',
+    );
+    assert.equal(rebuilt.calculationIdentity.clockBirthTime, '18:25');
+    assert.equal(rebuilt.calculationIdentity.chartFingerprint, '甲子 甲戌 乙亥 乙酉');
+    assert.equal(rebuilt.calculationIdentity.useSolarTime, false);
+  });
+
+  it('extractChartIdentity reads nested analysis.contextSignals and detects mismatch', () => {
+    const summary = extractChartIdentityFromAnalysis(
+      {
+        analysis: {
+          contextSignals: {
+            calculationIdentity: {
+              clockBirthTime: '18:25',
+              effectiveBirthTime: '18:25',
+              chartFingerprint: '甲子 甲戌 乙亥 乙酉',
+              useSolarTime: false,
+              useSeparateZiHour: false,
+            },
+          },
+        },
+      },
+      '07:00',
+    );
+    assert.ok(summary);
+    assert.equal(summary?.clockBirthTime, '18:25');
+    assert.equal(summary?.timeMismatch, true);
+    assert.equal(normalizeClockTime('7:00'), '07:00');
   });
 });
