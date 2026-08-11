@@ -14,6 +14,10 @@ import type {
   TenGods,
 } from '@/lib/user-types';
 import { resolveBirthLocationProfile } from '@/lib/fortune-engine';
+import {
+  extractChartIdentityFromAnalysis,
+  type ChartIdentitySummary,
+} from '@/lib/calculation-identity';
 import { calculateTrueSolarTime, type TrueSolarTimeResult } from '@/lib/solar-time';
 import { localizeElementList, presentReportText } from '@/lib/report-presentation';
 import {
@@ -277,6 +281,8 @@ export interface ExpertDeskView {
     timezone: number;
     gender: string;
   };
+  /** Locked analyze identity — source of truth for which clock time built the chart */
+  chartIdentity: ChartIdentitySummary | null;
   solar: ExpertSolarBlock;
   pillars: ExpertPillarRow[];
   fiveElements: Array<{ key: string; label: string; strength: number; quality: string; description: string }>;
@@ -402,6 +408,20 @@ export function buildExpertDeskView(params: {
   pillars = buildPillarRows(result.basic?.pillars, result.basic, dayMaster, kongWang);
 
   const solar = buildSolarBlock({ birthDate, birthTime, birthPlace, timezone });
+  const analysisBlob = (result as { analysis?: unknown }).analysis;
+  const identitySource =
+    analysisBlob && typeof analysisBlob === 'object'
+      ? {
+          ...(analysisBlob as Record<string, unknown>),
+          contextSignals:
+            ((analysisBlob as Record<string, unknown>).contextSignals as Record<string, unknown>) ||
+            params.contextSignals ||
+            {},
+        }
+      : params.contextSignals
+        ? { contextSignals: params.contextSignals }
+        : null;
+  const chartIdentity = extractChartIdentityFromAnalysis(identitySource, birthTime);
   const fiveElements = buildFiveElements(result.fiveElements);
   const tenGods = {
     self: presentReportText(result.tenGods?.self, 8) || dayMaster,
@@ -458,6 +478,7 @@ export function buildExpertDeskView(params: {
       timezone,
       gender: gender === 'female' ? '女' : gender === 'male' ? '男' : gender || '—',
     },
+    chartIdentity,
     solar,
     pillars,
     fiveElements,

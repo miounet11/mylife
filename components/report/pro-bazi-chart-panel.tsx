@@ -22,6 +22,10 @@ export type ProBaziChartPanelProps = {
   className?: string;
   /** UI locale — English chrome when en; pillar ganZhi / gods stay as provided */
   locale?: string | null;
+  /** Optional locked clock time footnote (from calculationIdentity) */
+  lockedClockTime?: string | null;
+  lateZiNextDay?: boolean;
+  trueSolarApplied?: boolean;
 };
 
 /**
@@ -37,6 +41,9 @@ export function ProBaziChartPanel({
   nextWindow,
   className,
   locale,
+  lockedClockTime,
+  lateZiNextDay,
+  trueSolarApplied,
 }: ProBaziChartPanelProps) {
   const siteLocale: SiteLocale = normalizeSiteLocale(locale) || 'zh-CN';
   const copy = proBaziChartCopy(siteLocale);
@@ -163,6 +170,14 @@ export function ProBaziChartPanel({
           <MetaRow label={copy.currentDaYun} value={currentDaYun || '—'} emphasize />
           <MetaRow label={copy.nextWindow} value={nextWindow || '—'} />
         </div>
+
+        {(lockedClockTime || lateZiNextDay || trueSolarApplied) && (
+          <p className="text-[11px] leading-5 text-[color:var(--ink-4)]">
+            {lockedClockTime ? `排盘锁定 ${lockedClockTime}` : null}
+            {trueSolarApplied ? (lockedClockTime ? ' · 真太阳时已用' : '真太阳时已用') : null}
+            {lateZiNextDay ? (lockedClockTime || trueSolarApplied ? ' · 晚子换日' : '晚子换日') : null}
+          </p>
+        )}
       </div>
     </section>
   );

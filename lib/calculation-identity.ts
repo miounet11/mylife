@@ -211,6 +211,58 @@ export function pillarsToFingerprint(pillars: Pillar[] | undefined | null): stri
     .join(' ');
 }
 
+/** Normalize HH:mm or HH:mm:ss for comparisons / display. */
+export function normalizeClockTime(value?: string | null): string {
+  const raw = `${value || ''}`.trim();
+  if (!raw) return '';
+  const m = raw.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+  if (!m) return raw;
+  return `${String(Number(m[1])).padStart(2, '0')}:${m[2]}`;
+}
+
+export type ChartIdentitySummary = {
+  clockBirthTime: string | null;
+  effectiveBirthTime: string | null;
+  chartFingerprint: string | null;
+  useSolarTime: boolean;
+  useSeparateZiHour: boolean;
+  timeMismatch: boolean;
+};
+
+/**
+ * Read locked calculation identity from analyze analysis blob.
+ * Used by report desk + profile settings to show what time actually built the chart.
+ */
+export function extractChartIdentityFromAnalysis(
+  analysis: unknown,
+  storedBirthTime?: string | null,
+): ChartIdentitySummary | null {
+  if (!analysis || typeof analysis !== 'object') return null;
+  const root = analysis as Record<string, unknown>;
+  const signals = (root.contextSignals || root) as Record<string, unknown>;
+  const identity = (signals.calculationIdentity || root.calculationIdentity) as
+    | Record<string, unknown>
+    | undefined;
+  if (!identity || typeof identity !== 'object') return null;
+  const clockBirthTime = normalizeClockTime(
+    typeof identity.clockBirthTime === 'string' ? identity.clockBirthTime : null,
+  );
+  const effectiveBirthTime = normalizeClockTime(
+    typeof identity.effectiveBirthTime === 'string' ? identity.effectiveBirthTime : null,
+  );
+  const chartFingerprint =
+    typeof identity.chartFingerprint === 'string' ? identity.chartFingerprint.trim() : null;
+  const stored = normalizeClockTime(storedBirthTime);
+  return {
+    clockBirthTime: clockBirthTime || null,
+    effectiveBirthTime: effectiveBirthTime || null,
+    chartFingerprint: chartFingerprint || null,
+    useSolarTime: Boolean(identity.useSolarTime),
+    useSeparateZiHour: Boolean(identity.useSeparateZiHour),
+    timeMismatch: Boolean(clockBirthTime && stored && clockBirthTime !== stored),
+  };
+}
+
 export function extractPillarsFromBasic(
   basic: FortuneAnalysisResult['basic'] | FortuneRecord['bazi'] | undefined | null
 ): Pillar[] {

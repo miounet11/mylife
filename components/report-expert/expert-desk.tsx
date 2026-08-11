@@ -120,6 +120,43 @@ export default function ExpertDesk({
             <Row label="出生地" value={desk.input.birthPlace} />
             <Row label="时区" value={`UTC+${desk.input.timezone}`} mono />
           </dl>
+          {desk.chartIdentity ? (
+            <div className="mt-3 space-y-1 rounded-md border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/50 px-3 py-2 text-[11px] leading-5 text-[color:var(--ink-3)]">
+              {desk.chartIdentity.clockBirthTime ? (
+                <div>
+                  排盘锁定时间：
+                  <span className="font-mono font-semibold text-[color:var(--ink-1)]">
+                    {desk.chartIdentity.clockBirthTime}
+                  </span>
+                  {desk.chartIdentity.effectiveBirthTime &&
+                  desk.chartIdentity.effectiveBirthTime !== desk.chartIdentity.clockBirthTime
+                    ? ` · 有效时间 ${desk.chartIdentity.effectiveBirthTime}`
+                    : null}
+                </div>
+              ) : null}
+              {desk.chartIdentity.chartFingerprint ? (
+                <div>
+                  四柱指纹：
+                  <span className="font-mono text-[color:var(--ink-2)]">
+                    {desk.chartIdentity.chartFingerprint}
+                  </span>
+                </div>
+              ) : null}
+              <div className="flex flex-wrap gap-2 text-[color:var(--ink-4)]">
+                {desk.chartIdentity.useSolarTime ? <span>真太阳时：已用</span> : <span>真太阳时：未用</span>}
+                {desk.chartIdentity.useSeparateZiHour ? (
+                  <span>晚子换日：开</span>
+                ) : (
+                  <span>晚子换日：关（默认）</span>
+                )}
+              </div>
+              {desk.chartIdentity.timeMismatch ? (
+                <div className="font-medium text-amber-800">
+                  资料时间与排盘锁定时间不一致，四柱以锁定时间为准。请在资料设置确认重算或重新测算。
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </section>
 
         <section id="ex-solar" className="scroll-mt-header rounded-[10px] border border-[color:var(--hairline)] bg-white p-4">
