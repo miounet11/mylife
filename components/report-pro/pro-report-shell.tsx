@@ -5,6 +5,7 @@ import { buildDecisionSheet } from '@/lib/report-decision-sheet';
 import { buildDecisionPacks } from '@/lib/decision-packs';
 import { buildHehunHref, personFromProView } from '@/lib/hehun-prefill';
 import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
+import { buildEngineSurfaceFromProView } from '@/lib/engine-surface';
 import ProPillarsBar from '@/components/report-pro/pro-pillars-bar';
 import ProOverviewCard from '@/components/report-pro/pro-overview-card';
 import ProOutlookPair from '@/components/report-pro/pro-outlook-pair';
@@ -30,6 +31,8 @@ import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
 import { ReportToolsStrip } from '@/components/report/report-tools-strip';
 import { ReportFoundationStrip } from '@/components/report/report-foundation-strip';
 import ReportEmailCapture from '@/components/report/report-email-capture';
+import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
+import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
 
 /**
  * 正常用户主报告（默认阅读）：
@@ -52,6 +55,14 @@ export default function ProReportShell({
   locale,
   dayun,
   calibrationMarkers,
+  birthDate,
+  birthTime,
+  birthPlace,
+  gender,
+  analysis,
+  fiveElements,
+  tenGods,
+  shenSha,
 }: {
   view: ProReportView;
   klineData?: FortuneAnalysisResult['klineData'] | null;
@@ -82,6 +93,15 @@ export default function ProReportShell({
   dayun?: FortuneAnalysisResult['dayun'] | unknown;
   /** 用户校准节点 → K 线标注 */
   calibrationMarkers?: KlineCalibrationMarker[] | null;
+  /** 出生公历日（引擎身份 / 结构台） */
+  birthDate?: string | null;
+  birthTime?: string | null;
+  birthPlace?: string | null;
+  gender?: string | null;
+  analysis?: unknown;
+  fiveElements?: unknown;
+  tenGods?: unknown;
+  shenSha?: unknown;
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
@@ -97,6 +117,21 @@ export default function ProReportShell({
       currentDaYunText: currentDaYunText || view.subtitle,
       currentDayun,
     }),
+  });
+
+  const enginePack = buildEngineSurfaceFromProView({
+    view,
+    reportId,
+    klineData,
+    dayun,
+    birthDate,
+    birthTime,
+    birthPlace,
+    gender,
+    analysis,
+    fiveElements,
+    tenGods,
+    shenSha,
   });
 
   return (
@@ -146,6 +181,9 @@ export default function ProReportShell({
             </a>
             <a href="#pro-risks" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
               避险
+            </a>
+            <a href="#engine-surface" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              引擎结构
             </a>
             <Link
               href={`/predictions?reportId=${encodeURIComponent(reportId)}`}
@@ -211,22 +249,33 @@ export default function ProReportShell({
             </a>
           </li>
           <li>
+            <a href="#engine-surface" className="underline-offset-2 hover:underline">
+              ⑨ 引擎结构台
+            </a>
+          </li>
+          <li>
             <a href="#pro-topics" className="underline-offset-2 hover:underline">
-              ⑨ 议题 · 继续问
+              ⑩ 议题 · 继续问
             </a>
           </li>
           <li>
             <a href="#pro-teachers" className="underline-offset-2 hover:underline">
-              ⑩ 问老师
+              ⑪ 问老师
             </a>
           </li>
           <li>
             <a href="#pro-learn" className="underline-offset-2 hover:underline">
-              ⑪ 相关阅读
+              ⑫ 相关阅读
             </a>
           </li>
         </ol>
       </section>
+
+      <EngineSurfaceCite
+        pack={enginePack}
+        modules={['pillars', 'yongji', 'kline', 'months', 'dayun', 'almanac']}
+        label="决策与叙事都挂在同一套引擎结构上"
+      />
 
       <ReportIllustrationCite
         keys={['cover', 'reading-path']}
@@ -318,6 +367,13 @@ export default function ProReportShell({
         <ReportIllustrationCite keys={['boundary']} title="判断边界" limit={1} />
         <ProRiskAlerts alerts={view.riskAlerts} reportId={reportId} canManage={canManage} />
       </div>
+
+      {/* 引擎结构台：四柱/用忌/大运/K线/近月/通书 — 与叙事同盘可引用 */}
+      <EngineSurfaceMount
+        pack={enginePack}
+        prefer={['pillars', 'yongji', 'kline', 'months', 'dayun', 'almanac', 'risks']}
+        title="引擎结构台"
+      />
 
       <div id="pro-outlook" className="scroll-mt-header">
         <ProOutlookPair month={view.month} year={view.year} />

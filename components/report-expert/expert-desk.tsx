@@ -14,9 +14,12 @@ import ExpertDayunYearGrid from '@/components/report-expert/expert-dayun-year-gr
 import KnowledgeBaseStamp from '@/components/knowledge-base-stamp';
 import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
 import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
+import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
+import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
 import { buildExpertClientPack } from '@/lib/report-expert-client-pack';
 import { buildExpertPrintSheet } from '@/lib/expert-print-sheet';
 import { buildDayunYearGrid } from '@/lib/dayun-year-grid';
+import { buildEngineSurfaceFromExpertDesk } from '@/lib/engine-surface';
 
 const FortuneChart = NextDynamic(() => import('@/components/fortune-kline-chart'), {
   loading: () => <div className="h-56 animate-pulse rounded bg-[#e2e8f0]" />,
@@ -44,6 +47,11 @@ export default function ExpertDesk({
     yongShen: desk.yongJi.yongShen,
     jiShen: desk.yongJi.jiShen,
     steps: 2,
+  });
+  const enginePack = buildEngineSurfaceFromExpertDesk({
+    desk,
+    reportId,
+    klineData,
   });
 
   return (
@@ -98,6 +106,9 @@ export default function ExpertDesk({
           <a href="#ex-glossary" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
             速查
           </a>
+          <a href="#engine-surface-expert" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+            引擎台
+          </a>
           <a href="/hehun" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
             合婚
           </a>
@@ -106,6 +117,12 @@ export default function ExpertDesk({
 
       <div className="no-print space-y-3">
         <ReportIllustrationCite keys={['structure', 'cover']} title="四柱结构（教学）" limit={1} />
+        <EngineSurfaceCite
+          pack={enginePack}
+          href="#engine-surface-expert"
+          modules={['identity', 'pillars', 'yongji', 'dayun', 'tenGods', 'shenSha', 'kline', 'almanac']}
+          label="专业版与大众版共用同一引擎结构模块"
+        />
       </div>
 
       {/* 输入 + 真太阳时 */}
@@ -636,6 +653,17 @@ export default function ExpertDesk({
           </div>
         </section>
       ) : null}
+
+      {/* 引擎结构台：与大众版同一 pack，专业侧 denser 默认全开 */}
+      <div className="no-print">
+        <EngineSurfaceMount
+          id="engine-surface-expert"
+          pack={enginePack}
+          dense
+          prefer={['identity', 'pillars', 'yongji', 'dayun', 'tenGods', 'shenSha', 'kline', 'months', 'almanac']}
+          title="引擎结构台 · 专业对照"
+        />
+      </div>
 
       <ExpertPrintBar sheetOnlyHint reportId={reportId} />
     </div>

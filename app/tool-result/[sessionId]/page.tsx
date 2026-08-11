@@ -28,6 +28,12 @@ import { buildToolPremiumOffer, getToolBundleForSlug, getToolDefinition, getTool
 import { getCurrentUserId } from '@/lib/user-utils';
 import { buildToolOpeningChatHref } from '@/lib/chat-entry';
 import { buildSourceCtaStrategy, buildSourceJourneyCopy, getSourceContext } from '@/lib/source-context';
+import {
+  buildEngineSurfaceFromFortuneLike,
+  buildEngineSurfacePack,
+} from '@/lib/engine-surface';
+import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
+import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
 
 export default async function ToolResultPage({
   params,
@@ -97,10 +103,70 @@ export default async function ToolResultPage({
     ? `/result/${encodeURIComponent(report.id)}${entrySource ? `?source=${encodeURIComponent(entrySource)}` : ''}`
     : '/profile';
 
+  // Engine Surface: load structured pack from bound report or birth-only tool result
+  const enginePack = (() => {
+    if (report) {
+      const r = report as Record<string, unknown>;
+      const analysis = (r.analysis || r.result || r) as Record<string, unknown>;
+      return buildEngineSurfaceFromFortuneLike({
+        id: String(r.id || session.reportId || ''),
+        name: (r.name as string) || undefined,
+        gender: (r.gender as string) || undefined,
+        birthDate: (r.birthDate as string) || (r.birth_date as string) || undefined,
+        birthTime: (r.birthTime as string) || (r.birth_time as string) || undefined,
+        birthPlace: (r.birthPlace as string) || (r.birth_place as string) || undefined,
+        analysis: analysis.analysis || analysis,
+        bazi: analysis.bazi || analysis.basic || r.bazi,
+        fiveElements: analysis.fiveElements || r.fiveElements,
+        tenGods: analysis.tenGods || r.tenGods,
+        shenSha: analysis.shenSha || r.shenSha,
+        pattern: analysis.pattern || r.pattern,
+        advice: (analysis.advice || r.advice) as {
+          yongShen?: string[];
+          jiShen?: string[];
+          xiShen?: string[];
+        } | null,
+        dayun: analysis.dayun || r.dayun,
+        klineData: analysis.klineData || r.klineData,
+      });
+    }
+    // birth-only / tool-native structure
+    return buildEngineSurfacePack({
+      source: birthOnly ? 'birth' : 'tool',
+      reportId: session.reportId || sessionId,
+      dayMaster:
+        sessionMeta.dayMaster ||
+        (result.dayMaster as string) ||
+        null,
+      pattern: (result.pattern as string) || null,
+      birthDate: (sessionInput.birthDate as string) || null,
+      birthTime: (sessionInput.birthTime as string) || null,
+      birthPlace: (sessionInput.birthPlace as string) || null,
+      gender: (sessionInput.gender as string) || null,
+      bazi: result.bazi || result.basic,
+      basic: result.basic || result.bazi,
+      fiveElements: result.fiveElements,
+      tenGods: result.tenGods,
+      shenSha: result.shenSha as unknown,
+      advice: (result.advice as {
+        yongShen?: string[];
+        jiShen?: string[];
+        xiShen?: string[];
+      }) || null,
+      yongShen: result.yongShen || result.advice,
+      dayun: result.dayun,
+      klineData: result.klineData,
+      risks: [
+        typeof result.riskReminder === 'string' ? result.riskReminder : '',
+      ].filter(Boolean),
+    });
+  })();
+
   // v5-D60 timeline 锚点
   const railItems: ReportAnchorRailItem[] = [
     { id: 'tr-cockpit', label: '结果总览', icon: Sparkles },
     { id: 'tr-summary', label: '免费摘要', icon: ScrollText },
+    { id: 'tr-engine', label: '引擎结构', icon: Layers },
     { id: 'tr-next', label: '下一步承接', icon: Target },
     { id: 'tr-growth', label: '深测路径', icon: LockKeyhole },
     { id: 'tr-deep', label: '更多结果层', icon: Layers },
@@ -175,6 +241,15 @@ export default async function ToolResultPage({
                   使用方法
                 </Link>
               </div>
+
+              <div className="mt-4">
+                <EngineSurfaceCite
+                  pack={enginePack}
+                  href="#tr-engine"
+                  modules={['pillars', 'yongji', 'kline', 'dayun', 'almanac']}
+                  label="工具结论挂在同一套引擎结构上"
+                />
+              </div>
             </section>
 
             <section
@@ -203,6 +278,15 @@ export default async function ToolResultPage({
                   本次结果以驾驶舱卡片为主；可点击「继续深问」把判断拆成可执行动作。
                 </p>
               ) : null}
+            </section>
+
+            <section id="tr-engine" className="scroll-mt-header">
+              <EngineSurfaceMount
+                id="engine-surface"
+                pack={enginePack}
+                prefer={['pillars', 'yongji', 'kline', 'dayun', 'months', 'almanac', 'risks']}
+                title="引擎结构台 · 工具结果"
+              />
             </section>
 
             <section

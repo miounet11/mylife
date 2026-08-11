@@ -948,6 +948,33 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                       if (certainty === 'low' || certainty === 'unknown') return true;
                       return false;
                     })()}
+                    birthDate={
+                      (rawFortuneData as any).birthDate ||
+                      (rawFortuneData as any).birth_date ||
+                      (result.basic as any)?.birthDate ||
+                      null
+                    }
+                    birthTime={
+                      (rawFortuneData as any).birthTime ||
+                      (rawFortuneData as any).birth_time ||
+                      (result.basic as any)?.birthTime ||
+                      null
+                    }
+                    birthPlace={
+                      (rawFortuneData as any).birthPlace ||
+                      (rawFortuneData as any).birth_place ||
+                      (result.basic as any)?.birthPlace ||
+                      null
+                    }
+                    gender={
+                      (rawFortuneData as any).gender ||
+                      (result.basic as any)?.gender ||
+                      null
+                    }
+                    analysis={(result as any).analysis || (rawFortuneData as any).analysis}
+                    fiveElements={(result as any).fiveElements}
+                    tenGods={(result as any).tenGods}
+                    shenSha={(result as any).shenSha}
                   />
                   <ProUserCalibration
                     reportId={id}
