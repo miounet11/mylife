@@ -242,6 +242,10 @@ export default function FortuneKLineChart(props: {
             selected.yearNum >= b.startYear && selected.yearNum <= b.endYear,
         ) || null
       : null;
+  const selectedCalib =
+    selected && !isMonth
+      ? calibMarkers.find((m) => m.year === selected.yearNum) || null
+      : null;
 
   return (
     <section className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 md:p-4">
@@ -538,7 +542,20 @@ export default function FortuneKLineChart(props: {
             {selectedBand?.description ? (
               <p className="text-[color:var(--ink-4)]">{selectedBand.description}</p>
             ) : null}
-            {!selected.drivers?.length && !selected.risks?.length ? (
+            {selectedCalib ? (
+              <p
+                className={
+                  selectedCalib.kind === 'confirmed'
+                    ? 'font-medium text-[color:var(--data-up)]'
+                    : 'font-medium text-[color:var(--signal-strong)]'
+                }
+              >
+                {selectedCalib.kind === 'confirmed' ? '✓ 你确认发生过' : '× 你标记为未发生'}
+                {selectedCalib.title ? ` · ${selectedCalib.title}` : ''}
+                {selectedCalib.note ? `（${selectedCalib.note}）` : ''}
+              </p>
+            ) : null}
+            {!selected.drivers?.length && !selected.risks?.length && !selectedCalib ? (
               <p className="text-[color:var(--ink-5)]">
                 该点证据较少；可结合大运色带与综合线判断阶段，勿单点定论。
               </p>

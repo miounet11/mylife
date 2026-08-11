@@ -7,6 +7,7 @@ import {
   LIFE_KLINE_PRODUCT,
   type KlineShowcaseSample,
 } from '@/lib/kline-showcase';
+import { DownloadShareImageButton } from '@/components/share/download-share-image';
 
 const FortuneChart = NextDynamic(() => import('@/components/fortune-kline-chart'), {
   loading: () => (
@@ -42,6 +43,17 @@ export default function LifeKlineShowcase({
   );
 
   if (!safe.length) return null;
+
+  const sparkline = useMemo(
+    () => (active?.series || []).map((p) => p.score || 0).filter((n) => n > 0),
+    [active],
+  );
+  const sparkHere = useMemo(() => {
+    if (!active?.series?.length) return undefined;
+    const y = new Date().getFullYear();
+    const idx = active.series.findIndex((p) => p.year === y);
+    return idx >= 0 ? idx : Math.min(active.series.length - 1, Math.floor(active.series.length * 0.7));
+  }, [active]);
 
   const chartData = (active?.series || []).map((p) => ({
     year: p.year,
@@ -165,7 +177,42 @@ export default function LifeKlineShowcase({
               height={compact ? 260 : 300}
               title={`${active.label} · 人生 K 线示例`}
               subtitle="可切换 综合 / 事业 / 财富 / 关系 / 健康"
+              birthYear={
+                active.series[0]?.year && active.series[0].year > 1900
+                  ? active.series[0].year
+                  : undefined
+              }
+              defaultDims={{
+                overall: true,
+                career: false,
+                wealth: false,
+                marriage: false,
+                health: false,
+              }}
+              emphasizeYouAreHere
             />
+
+            {!compact ? (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-3 py-2">
+                <p className="text-[12px] text-[color:var(--ink-4)]">
+                  示例也可导出分享图（真实引擎曲线剪影，非真人档案）
+                </p>
+                <DownloadShareImageButton
+                  title={`${active.label} · ${active.teach.slice(0, 28)}`}
+                  lines={[
+                    LIFE_KLINE_PRODUCT.oneLiner,
+                    active.persona,
+                    active.peakYear
+                      ? `高点参考 ${active.peakYear} · 低谷 ${active.troughYear ?? '—'}`
+                      : 'V6 引擎示例',
+                  ]}
+                  sparkline={sparkline}
+                  sparklineHereIndex={sparkHere}
+                  pageUrl="https://www.life-kline.com/#life-kline-showcase"
+                  label="下载示例分享图"
+                />
+              </div>
+            ) : null}
           </div>
         ) : null}
       </div>

@@ -23,6 +23,7 @@ export default function PersonalKlineHero({
 }) {
   const tone = highlight?.tone;
   const toneLabel = tone ? TONE_LABEL[tone] : null;
+  const calCount = highlight?.calibrationCount || 0;
 
   return (
     <section
@@ -39,6 +40,11 @@ export default function PersonalKlineHero({
               <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--ink-3)]">
                 阶段 {toneLabel}
                 {highlight?.age != null ? ` · ${highlight.age} 岁` : ''}
+              </span>
+            ) : null}
+            {calCount > 0 ? (
+              <span className="rounded-full border border-[color:var(--data-up)]/30 bg-[rgba(47,125,82,0.08)] px-2 py-0.5 text-[11px] font-semibold text-[color:var(--data-up)]">
+                已校准 {calCount} 点
               </span>
             ) : null}
           </div>
@@ -100,6 +106,14 @@ export default function PersonalKlineHero({
             {highlight.stageAction}
           </p>
         </div>
+      ) : null}
+
+      {highlight?.calibrationNote ? (
+        <p className="mt-2 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+          <span className="font-semibold text-[color:var(--data-up)]">校准对照</span>
+          {' · '}
+          {highlight.calibrationNote}
+        </p>
       ) : null}
 
       {highlight?.readingTips?.length && !highlight.stageAction ? (

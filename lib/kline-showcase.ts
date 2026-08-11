@@ -214,6 +214,9 @@ export type PersonalKlineHighlight = {
   stageAction: string | null;
   age: number | null;
   tone: 'rising' | 'steady' | 'pressure' | 'mixed' | null;
+  /** 校准软提示（不改分） */
+  calibrationNote: string | null;
+  calibrationCount: number;
 };
 
 /** 从用户报告 klineData 提炼「结果页首屏可读」摘要。 */
@@ -232,11 +235,17 @@ export function buildPersonalKlineHighlight(
       risks?: string[];
     };
   }> | null,
-  opts?: { birthYear?: number },
+  opts?: {
+    birthYear?: number;
+    calibrationMarkers?: Array<{ year: number; kind: 'confirmed' | 'denied'; title?: string }> | null;
+  },
 ): PersonalKlineHighlight | null {
   if (!Array.isArray(klineData) || klineData.length < 3) return null;
 
-  const stage = buildKlineStageNarrative(klineData, { birthYear: opts?.birthYear });
+  const stage = buildKlineStageNarrative(klineData, {
+    birthYear: opts?.birthYear,
+    calibrationMarkers: opts?.calibrationMarkers,
+  });
 
   const points = klineData
     .map((p) => {
@@ -300,5 +309,9 @@ export function buildPersonalKlineHighlight(
     stageAction: stage?.actionHint ?? null,
     age: stage?.age ?? null,
     tone: stage?.tone ?? null,
+    calibrationNote: stage?.calibrationNote ?? null,
+    calibrationCount: Array.isArray(opts?.calibrationMarkers)
+      ? opts!.calibrationMarkers!.length
+      : 0,
   };
 }

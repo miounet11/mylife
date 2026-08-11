@@ -20,6 +20,12 @@ export type KlinePointLike = {
 
 export type KlineStageTone = 'rising' | 'steady' | 'pressure' | 'mixed';
 
+export type KlineStageCalibrationHint = {
+  year: number;
+  kind: 'confirmed' | 'denied';
+  title?: string;
+};
+
 export type KlineStageNarrative = {
   /** 一句主结论（结果页最大字） */
   headline: string;
@@ -43,6 +49,8 @@ export type KlineStageNarrative = {
   trough: { year: number; score: number; age: number | null; reason: string | null } | null;
   nextInflection: { year: number; kind: 'peak' | 'trough' | 'turn'; score: number } | null;
   actionHint: string;
+  /** 校准软影响文案（不改分数） */
+  calibrationNote: string | null;
 };
 
 function overallOf(p: KlinePointLike): number {
@@ -130,12 +138,45 @@ function actionFor(tone: KlineStageTone, strongest: string | null, weakest: stri
     : '分板块推进：强的做、弱的守。';
 }
 
+/** Soft narrative only — never mutates engine scores. */
+export function buildCalibrationNarrativeNote(
+  markers: KlineStageCalibrationHint[] | null | undefined,
+  peakYear: number | null,
+  troughYear: number | null,
+): string | null {
+  if (!Array.isArray(markers) || !markers.length) return null;
+  const conf = markers.filter((m) => m.kind === 'confirmed');
+  const den = markers.filter((m) => m.kind === 'denied');
+  const bits: string[] = [];
+
+  if (peakYear != null && conf.some((m) => Math.abs(m.year - peakYear) <= 2)) {
+    bits.push(`你确认的经历落在高点附近（约 ${peakYear}），该段「宜推进」更值得当真`);
+  }
+  if (troughYear != null && conf.some((m) => Math.abs(m.year - troughYear) <= 2)) {
+    bits.push(`你确认的经历靠近低谷年（约 ${troughYear}），防守窗口应更重视`);
+  }
+  if (den.length) {
+    bits.push(`有 ${den.length} 个节点你标为未发生，对应年份只作对照、不强化`);
+  }
+  if (!bits.length && conf.length) {
+    bits.push(
+      `已对照 ${conf.length} 个真实节点（图上 ✓）；分数未改写，读图时优先看带校准的年份`,
+    );
+  }
+  if (!bits.length) return null;
+  return `${bits.join('。')}。`;
+}
+
 /**
  * 从 kline 点列生成阶段叙事（人话 + 结构化字段）。
  */
 export function buildKlineStageNarrative(
   klineData?: KlinePointLike[] | null,
-  opts?: { birthYear?: number; now?: Date },
+  opts?: {
+    birthYear?: number;
+    now?: Date;
+    calibrationMarkers?: KlineStageCalibrationHint[] | null;
+  },
 ): KlineStageNarrative | null {
   if (!Array.isArray(klineData) || klineData.length < 3) return null;
 
@@ -258,9 +299,19 @@ export function buildKlineStageNarrative(
     birthYear ? `（约 ${peak.year - birthYear} 岁）` : ''
   }，低谷参考 ${trough.year}${birthYear ? `（约 ${trough.year - birthYear} 岁）` : ''}。`;
 
+  const calibrationNote = buildCalibrationNarrativeNote(
+    opts?.calibrationMarkers,
+    peak.year,
+    trough.year,
+  );
+  let actionHint = actionFor(tone, strongest?.label || null, weakest?.label || null);
+  if (calibrationNote && confNearPressure(opts?.calibrationMarkers, trough.year)) {
+    actionHint = `${actionHint} 结合你确认的低谷经历，先完成防守清单再谈扩张。`;
+  }
+
   return {
     headline,
-    support,
+    support: calibrationNote ? `${support}${calibrationNote}` : support,
     tone,
     age,
     currentYear: currentPt.year,
@@ -283,6 +334,17 @@ export function buildKlineStageNarrative(
       reason: troughReason,
     },
     nextInflection,
-    actionHint: actionFor(tone, strongest?.label || null, weakest?.label || null),
+    actionHint,
+    calibrationNote,
   };
+}
+
+function confNearPressure(
+  markers: KlineStageCalibrationHint[] | null | undefined,
+  troughYear: number | null,
+): boolean {
+  if (!markers?.length || troughYear == null) return false;
+  return markers.some(
+    (m) => m.kind === 'confirmed' && Math.abs(m.year - troughYear) <= 2,
+  );
 }

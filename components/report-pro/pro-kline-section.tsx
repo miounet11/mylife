@@ -76,8 +76,12 @@ export default function ProKlineSection({
   }, [dayun, series]);
 
   const shareHighlight = useMemo(
-    () => buildPersonalKlineHighlight(raw as any, { birthYear }),
-    [raw, birthYear],
+    () =>
+      buildPersonalKlineHighlight(raw as any, {
+        birthYear,
+        calibrationMarkers,
+      }),
+    [raw, birthYear, calibrationMarkers],
   );
 
   if (!raw.length && !series.length) return null;

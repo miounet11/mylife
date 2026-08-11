@@ -37,6 +37,26 @@ describe('kline stage + focus window', () => {
     assert.ok(stage!.actionHint.length > 8);
     assert.ok(stage!.peak);
     assert.ok(stage!.trough);
+    assert.equal(stage!.calibrationNote, null);
+  });
+
+  it('soft-appends calibration note without changing scores', () => {
+    const base = buildKlineStageNarrative(sampleLife(), {
+      birthYear: 1990,
+      now: new Date('2026-06-01'),
+    });
+    assert.ok(base?.peak);
+    const withCal = buildKlineStageNarrative(sampleLife(), {
+      birthYear: 1990,
+      now: new Date('2026-06-01'),
+      calibrationMarkers: [
+        { year: base!.peak!.year, kind: 'confirmed', title: '升职' },
+        { year: 2012, kind: 'denied', title: '未发生节点' },
+      ],
+    });
+    assert.ok(withCal?.calibrationNote);
+    assert.ok(withCal!.support.includes('确认') || withCal!.calibrationNote!.includes('高点'));
+    assert.equal(withCal!.currentScore, base!.currentScore);
   });
 
   it('focus window is shorter than life80 and includes now+horizon', () => {
