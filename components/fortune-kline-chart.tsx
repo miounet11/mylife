@@ -157,6 +157,10 @@ export default function FortuneKLineChart(props: {
   dayunBands?: KlineDayunBand[] | null;
   /** 用户校准节点（确认/未发生） */
   calibrationMarkers?: KlineCalibrationMarker[] | null;
+  /** 点年回调（父级展开引擎全量台） */
+  onYearSelect?: (year: number) => void;
+  /** 受控选中年 */
+  selectedYear?: number | null;
   /** 兼容旧 props，忽略 */
   source?: string;
   ctaStrategyKey?: string;
@@ -348,7 +352,12 @@ export default function FortuneKLineChart(props: {
             margin={{ top: 8, right: 12, left: 0, bottom: 4 }}
             onClick={(state: any) => {
               const payload = state?.activePayload?.[0]?.payload;
-              if (payload) setSelected(payload);
+              if (payload) {
+                setSelected(payload);
+                if (!isMonth && payload.yearNum) {
+                  props.onYearSelect?.(payload.yearNum);
+                }
+              }
             }}
             style={{ cursor: isMonth ? 'default' : 'pointer' }}
           >
@@ -410,9 +419,9 @@ export default function FortuneKLineChart(props: {
                 }}
               />
             ) : null}
-            {selected && !isMonth ? (
+            {(selected && !isMonth) || (props.selectedYear && !isMonth) ? (
               <ReferenceLine
-                x={selected.year}
+                x={selected?.year ?? props.selectedYear ?? undefined}
                 stroke="#0f172a"
                 strokeDasharray="3 3"
                 strokeOpacity={0.35}

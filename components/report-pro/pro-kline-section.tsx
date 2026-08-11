@@ -15,6 +15,7 @@ import { buildPersonalKlineHighlight } from '@/lib/kline-showcase';
 import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
 import { calibrationSummaryLine } from '@/lib/kline-calibration';
 import KlineShareStrip from '@/components/kline/kline-share-strip';
+import KlineEngineDesk from '@/components/kline/kline-engine-desk';
 
 const FortuneChart = NextDynamic(() => import('@/components/fortune-kline-chart'), {
   loading: () => (
@@ -54,6 +55,7 @@ export default function ProKlineSection({
 }) {
   const raw = Array.isArray(klineData) ? klineData : [];
   const [mode, setMode] = useState<KlineViewMode>('focus');
+  const [deskYear, setDeskYear] = useState<number>(() => new Date().getFullYear());
 
   const series = useMemo(
     () =>
@@ -87,20 +89,34 @@ export default function ProKlineSection({
   if (!raw.length && !series.length) return null;
 
   const meta = KLINE_VIEW_META[mode];
-  const chartData = series.map((p) => ({
-    year: p.month ? p.key : p.year,
-    career: p.career,
-    wealth: p.wealth,
-    marriage: p.marriage,
-    health: p.health,
-    score: p.overall,
-    evidence: {
-      ganZhi: p.ganZhi,
-      drivers: p.drivers,
-      risks: p.risks,
-    },
-    _isMonth: Boolean(p.month),
-  }));
+  const chartData = series.map((p) => {
+    // Prefer full evidence from raw engine points when year matches
+    const rawPt = Array.isArray(raw)
+      ? (raw as Array<{ year?: number; evidence?: unknown }>).find(
+          (r) => Number(r.year) === p.year,
+        )
+      : null;
+    const fullEv = (rawPt?.evidence || {}) as Record<string, unknown>;
+    return {
+      year: p.month ? p.key : p.year,
+      career: p.career,
+      wealth: p.wealth,
+      marriage: p.marriage,
+      health: p.health,
+      score: p.overall,
+      evidence: {
+        ganZhi: p.ganZhi || (fullEv.ganZhi as string),
+        drivers: p.drivers || (fullEv.drivers as string[]),
+        risks: p.risks || (fullEv.risks as string[]),
+        dayunGanZhi: fullEv.dayunGanZhi as string | null | undefined,
+        natal: fullEv.natal,
+        dayun: fullEv.dayun,
+        liunian: fullEv.liunian,
+        elementBreakdown: fullEv.elementBreakdown,
+      },
+      _isMonth: Boolean(p.month),
+    };
+  });
 
   const isYearMode = mode === 'focus' || mode === 'life80';
   const currentYear = new Date().getFullYear();
@@ -116,7 +132,7 @@ export default function ProKlineSection({
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0 max-w-2xl">
           <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[color:var(--brand-strong)]">
-            核心功能 · Life K-Line
+            核心功能 · Life K-Line · 引擎全量
           </p>
           <h2
             id="pro-kline-heading"
@@ -125,8 +141,8 @@ export default function ProKlineSection({
             人生 K 线
           </h2>
           <p className="mt-1 text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-            默认看<strong className="font-semibold text-[color:var(--ink-2)]">人生焦点</strong>
-            （出生到未来十年）与综合线；需要时再展开 80 年或按月细看。
+            <strong className="font-semibold text-[color:var(--ink-2)]">引擎确定性输出</strong>
+            （非 LLM 画线）。点年查看原局/大运/流年证据 + 12 月节奏，并可跳转万年历。
             {meta.description}
           </p>
         </div>
@@ -158,7 +174,9 @@ export default function ProKlineSection({
       </div>
       <p className="mt-1.5 text-[11px] text-[color:var(--ink-5)]">
         {meta.label} · {series.length} 个点
-        {isYearMode ? ' · 年粒度 · 默认只亮综合线' : ' · 月粒度（公历月近似）'}
+        {isYearMode
+          ? ' · 年粒度 · 点年展开引擎全量 + 12 月 + 万年历'
+          : ' · 月粒度（公历月近似）'}
         {calibNote ? ` · ${calibNote}` : ''}
       </p>
 
@@ -179,8 +197,8 @@ export default function ProKlineSection({
             subtitle={
               mode === 'focus'
                 ? birthYear
-                  ? `出生 ${birthYear} → 未来十年 · 综合主线${dayunBands.length ? ' · 底色为大运段' : ''}`
-                  : `出生到未来十年 · 综合主线${dayunBands.length ? ' · 底色为大运段' : ''}`
+                  ? `出生 ${birthYear} → 未来十年 · 综合主线${dayunBands.length ? ' · 底色为大运段' : ''} · 点年看全量`
+                  : `出生到未来十年 · 点年看引擎全量`
                 : mode === 'life80'
                   ? peak
                     ? `巅峰参考 · ${peak.year}年`
@@ -197,9 +215,23 @@ export default function ProKlineSection({
             emphasizeYouAreHere
             dayunBands={isYearMode ? dayunBands : undefined}
             calibrationMarkers={isYearMode ? calibrationMarkers : undefined}
+            selectedYear={isYearMode ? deskYear : null}
+            onYearSelect={(y) => setDeskYear(y)}
           />
         </Suspense>
       </div>
+
+      {isYearMode ? (
+        <KlineEngineDesk
+          year={deskYear}
+          klineData={raw}
+          yongShen={yongShen}
+          jiShen={jiShen}
+          dayunBands={dayunBands}
+          calibrationMarkers={calibrationMarkers}
+          onSelectYear={setDeskYear}
+        />
+      ) : null}
 
       <div className="mt-3">
         <KlineShareStrip
