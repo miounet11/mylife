@@ -23,6 +23,32 @@ const PRIMARY_CTAS = [
   },
 ] as const;
 
+/** Growth rail under primary CTAs — free chart + low-friction account */
+function HomeGrowthRail() {
+  return (
+    <div className="mt-2 flex flex-col gap-2 rounded-xl border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/60 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between">
+      <p className="text-[12px] leading-relaxed text-[color:var(--ink-3)]">
+        <span className="font-semibold text-[color:var(--ink-1)]">免费排盘</span>
+        ，先看人生 K 线与下一步 · 账号密码 / Google 可长期登录，邮箱可选绑定订阅
+      </p>
+      <div className="flex shrink-0 flex-wrap gap-2">
+        <Link
+          href="#analyze-workspace"
+          className="inline-flex h-8 items-center rounded-full bg-[color:var(--ink-1)] px-3 text-[12px] font-semibold text-white no-underline hover:no-underline"
+        >
+          开始测算
+        </Link>
+        <Link
+          href="/login?source=home_growth_rail&next=%2Fprofile"
+          className="inline-flex h-8 items-center rounded-full border border-[color:var(--hairline-strong)] bg-white px-3 text-[12px] font-medium text-[color:var(--ink-2)] no-underline hover:no-underline"
+        >
+          注册 / 登录
+        </Link>
+      </div>
+    </div>
+  );
+}
+
 const FEATURES = [
   {
     href: '/analyze?source=home_featured_strip',
@@ -82,7 +108,8 @@ export function FeaturedToolsStrip() {
       aria-label="重点工具"
     >
       <div className="page-content-wide">
-        <div className="grid gap-2 sm:grid-cols-2">
+        <HomeGrowthRail />
+        <div className="mt-2 grid gap-2 sm:grid-cols-2">
           {PRIMARY_CTAS.map((f) => (
             <Link
               key={f.href}

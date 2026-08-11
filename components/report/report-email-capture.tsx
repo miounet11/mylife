@@ -115,15 +115,15 @@ function pick(locale: ReportEmailCaptureLocale | undefined) {
     };
   }
   return {
-    eyebrow: '绑定邮箱 · 保存本报告',
-    title: '关掉标签页前，用验证码绑定',
-    body: '一封验证码即可完成绑定：保存本报告、跨设备回看，并方便后续召回。无需密码。',
-    benefits: ['保存本报告', '跨设备找回', '保持持续关系'],
+    eyebrow: '绑定邮箱 · 订阅提醒',
+    title: '想收节点提醒？绑定邮箱',
+    body: '验证码绑定邮箱：订阅内容、节点提醒与跨设备找回。也可用上方账号密码 / Google 先保存报告。',
+    benefits: ['订阅提醒', '跨设备找回', '持续关系'],
     placeholder: 'you@email.com',
     cta: '发送验证码',
     ctaBusy: '发送中…',
-    expand: '绑定邮箱保存',
-    free: '免费 · 无需密码 · 约 1 分钟',
+    expand: '绑定邮箱订阅',
+    free: '免费 · 约 1 分钟 · 也可账号密码登录',
     trust: '仅用于保存/登录与你勾选的提醒，不会当成广告清单。',
     codeLabel: '6 位验证码',
     codeSentPrefix: '验证码已发送至',

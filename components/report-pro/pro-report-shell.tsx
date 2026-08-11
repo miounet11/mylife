@@ -31,6 +31,7 @@ import ProAnalyticsBeacon from '@/components/report-pro/pro-analytics-beacon';
 import { ReportToolsStrip } from '@/components/report/report-tools-strip';
 import { ReportFoundationStrip } from '@/components/report/report-foundation-strip';
 import ReportEmailCapture from '@/components/report/report-email-capture';
+import AccountSavePanel from '@/components/auth/account-save-panel';
 import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
 import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
 
@@ -137,7 +138,12 @@ export default function ProReportShell({
   return (
     <div id="pro-reading" className="scroll-mt-header space-y-4 md:space-y-5">
       <ProAnalyticsBeacon reportId={reportId} surface="mass" />
-      {/* 邮箱软捕获：首屏可见，降低 guest 丢失 */}
+      {/* 账号保存优先（密码/Google），再邮箱订阅 — 降低 guest 流失 */}
+      <AccountSavePanel
+        reportId={reportId}
+        source="pro_report_shell_top"
+        nextHref={`/result/${reportId}`}
+      />
       <ReportEmailCapture
         reportId={reportId}
         surfaceKey="pro_report_shell_top"

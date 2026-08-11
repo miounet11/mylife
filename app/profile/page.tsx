@@ -13,6 +13,7 @@ import { StatGrid } from '@/components/layout/stat-grid';
 import { StatusTile } from '@/components/layout/status-tile';
 import { ProfileRailRight } from '@/components/profile/profile-rail';
 import FreeMembershipClaimBanner from '@/components/membership/free-membership-claim-banner';
+import AccountSecurityCard from '@/components/auth/account-security-card';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import PersonalJourneyHub from '@/components/personal-journey-hub';
 import PriorityDisclosure from '@/components/priority-disclosure';
@@ -341,6 +342,7 @@ export default function ProfilePage() {
             {displayError ? <AlertBanner>{displayError}</AlertBanner> : null}
 
             <FreeMembershipClaimBanner source="profile_page" />
+            <AccountSecurityCard />
 
             {!loading ? (
             <RetentionResumePanel
