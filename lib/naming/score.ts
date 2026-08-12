@@ -1,4 +1,5 @@
 import { charElement, getCharEntry } from './char-db';
+import { toElementCn } from '@/lib/wuxing-normalize';
 import type {
   NameCandidate,
   NameScoreBreakdown,
@@ -130,16 +131,9 @@ export function scoreName(input: NamingScoreInput): NameCandidate {
 }
 
 function normalizeEl(s: string): Wuxing | null {
-  const t = s.trim();
-  if (t === '木' || t === '火' || t === '土' || t === '金' || t === '水') return t;
-  const map: Record<string, Wuxing> = {
-    wood: '木',
-    fire: '火',
-    earth: '土',
-    metal: '金',
-    water: '水',
-  };
-  return map[t.toLowerCase()] || null;
+  const cn = toElementCn(s);
+  if (cn === '木' || cn === '火' || cn === '土' || cn === '金' || cn === '水') return cn;
+  return null;
 }
 
 function clamp(n: number, a: number, b: number) {

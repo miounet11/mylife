@@ -27,6 +27,7 @@ const PUBLIC_CONTENT_ALLOW = [
   '/world-yi/',
   '/insights/',
   '/docs/',
+  '/engines',
   '/community/',
   '/questions/',
   '/analyze',

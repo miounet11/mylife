@@ -25,6 +25,7 @@ const primaryLinks: RailLink[] = [
   { href: '/chat?mode=opening&teacher=overview&source=portal_rail', label: '对话开场' },
   { href: '/profile', label: '资料' },
   { href: '/docs', label: '说明' },
+  { href: '/engines', label: '引擎' },
 ];
 
 const exploreLinks: RailLink[] = [

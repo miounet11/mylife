@@ -21,6 +21,13 @@ describe('naming lab', () => {
     assert.ok(r.candidates[0].score >= r.candidates[r.candidates.length - 1].score);
   });
 
+  it('accepts English 用神 keys the same as 中文', () => {
+    const cn = scoreName({ mode: 'person', surname: '王', name: '林', yongShen: ['木'] });
+    const en = scoreName({ mode: 'person', surname: '王', name: '林', yongShen: ['wood'] });
+    assert.equal(en.score, cn.score);
+    assert.ok(en.score > 50);
+  });
+
   it('scores company names with brandability', () => {
     const c = scoreName({ mode: 'company', name: '云启', industry: '科技' });
     assert.ok(c.score > 0);

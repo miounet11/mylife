@@ -11,6 +11,7 @@
 import type { KlinePointV6, KlineAnchorV6 } from '@/lib/kline-v6';
 import type { YongShenResult } from '@/lib/bazi-analyzer';
 import type { Pillar } from '@/lib/user-types';
+import { listHasElement } from '@/lib/wuxing-normalize';
 
 export interface DashboardData {
   version: 'dashboard-v6';
@@ -163,9 +164,9 @@ export function buildDashboard(input: DashboardInput): DashboardData {
       strengths: sortedElements.map(([, v]) => v.strength || 0),
       yongShenPreference: sortedElements.map(([k]) => {
         const cn = mapElementCn(k);
-        if (pubYsDash?.yongShen?.includes(cn)) return 85;
-        if (pubYsDash?.xiShen?.includes(cn)) return 65;
-        if (pubYsDash?.jiShen?.includes(cn)) return 25;
+        if (listHasElement(pubYsDash?.yongShen, cn) || listHasElement(yongShen?.yongShen, cn)) return 85;
+        if (listHasElement(pubYsDash?.xiShen, cn) || listHasElement(yongShen?.xiShen, cn)) return 65;
+        if (listHasElement(pubYsDash?.jiShen, cn) || listHasElement(yongShen?.jiShen, cn)) return 25;
         return 50;
       }),
     },
@@ -282,8 +283,8 @@ function buildElementInsight(top: string, bottom: string, yongShen: YongShenResu
   const pub = formatYongShenPublic(yongShen);
   const topCn = mapElementCn(top);
   const bottomCn = mapElementCn(bottom);
-  const isTopYong = Boolean(pub?.yongShen?.includes(topCn) || yongShen?.yongShen?.includes(top) || yongShen?.yongShen?.includes(topCn));
-  const isBottomJi = Boolean(pub?.jiShen?.includes(bottomCn) || yongShen?.jiShen?.includes(bottom) || yongShen?.jiShen?.includes(bottomCn));
+  const isTopYong = Boolean(listHasElement(pub?.yongShen, topCn) || listHasElement(yongShen?.yongShen, top));
+  const isBottomJi = Boolean(listHasElement(pub?.jiShen, bottomCn) || listHasElement(yongShen?.jiShen, bottom));
   if (isTopYong && isBottomJi) return `${topCn}旺且为主用神，这是核心优势；${bottomCn}弱且为忌神，不需要刻意补。`;
   if (isTopYong) return `${topCn}旺且为主用神，应充分发挥优势。`;
   return `优先补齐${bottomCn}的短板，同时发挥${topCn}的优势；取舍时对照扶抑主用神。`;
@@ -297,8 +298,8 @@ function buildMonthlyOutlook(yearPoint: KlinePointV6 | undefined, yongShen: Yong
   const base = yearPoint ? Math.round(average([yearPoint.career, yearPoint.wealth, yearPoint.marriage, yearPoint.health])) : 60;
 
   return elementByMonth.map((el, i) => {
-    const isYong = Boolean(pub?.yongShen?.includes(el) || yongShen?.yongShen?.includes(el));
-    const isJi = Boolean(pub?.jiShen?.includes(el) || yongShen?.jiShen?.includes(el));
+    const isYong = Boolean(listHasElement(pub?.yongShen, el) || listHasElement(yongShen?.yongShen, el));
+    const isJi = Boolean(listHasElement(pub?.jiShen, el) || listHasElement(yongShen?.jiShen, el));
     const score = Math.max(30, Math.min(95, base + (isYong ? 8 : 0) + (isJi ? -8 : 0)));
     return {
       month: i + 1,

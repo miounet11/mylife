@@ -122,6 +122,7 @@ const ANALYZE: PageSeoGeoPack = {
     { href: '/hehun', label: '合婚双盘' },
     { href: '/tools/timing-yearly-window', label: '流年窗口工具' },
     { href: '/docs/read-first-report', label: '如何读第一份报告' },
+    { href: '/engines', label: '系统引擎' },
   ],
   breadcrumbs: [
     { name: '首页', path: '/' },
@@ -324,6 +325,7 @@ const DOCS: PageSeoGeoPack = {
     { href: '/docs/true-solar-time', label: '真太阳时' },
     { href: '/docs/read-first-report', label: '读第一份报告' },
     { href: '/analyze', label: '开始测算' },
+    { href: '/engines', label: '系统引擎' },
   ],
   breadcrumbs: [
     { name: '首页', path: '/' },
@@ -815,6 +817,41 @@ const ALMANAC: PageSeoGeoPack = {
   ],
 };
 
+const ENGINES: PageSeoGeoPack = {
+  path: '/engines',
+  slug: 'engines',
+  name: '系统命理引擎',
+  title: '系统引擎｜15 套命理计算能力｜人生K线',
+  description:
+    '人生K线系统能力：四柱排盘、用神、大运、人生K线、神煞、合婚、起名、风水、通书、十维等 15 套计算引擎。',
+  keywords: ['命理引擎', '八字排盘引擎', '用神算法', '大运', '人生K线', '合婚引擎'],
+  answerSummary:
+    '人生K线把测算做成 15 套可复核引擎：命盘主链负责四柱、用神、大运与K线；专项工具覆盖合婚、起名、风水、相学、紫微与十维；时间层覆盖通书日运与星座周期。报告与对话只表达这些引擎的结果，不另起一套算法。',
+  searchIntents: ['人生K线有哪些引擎', '八字用神怎么算', '大运K线算法', '合婚起名通书同一套盘'],
+  entityKeywords: ['四柱', '用神', '大运', '人生K线', '神煞', '合婚', '起名', '通书', '十维', '系统能力'],
+  howTo: [
+    { step: '先看命盘主链', body: '四柱 → 用神 → 大运 → K线，是报告的计算主干。' },
+    { step: '再进专项', body: '合婚、起名、风水、十维共用同一出生输入，不另起盘。' },
+    { step: '用时间层复核', body: '通书日运与星座周期权重低于命盘，只作当日/当周对照。' },
+  ],
+  faqs: [
+    { question: '一共多少个引擎？', answer: '15 套：命盘主链 7、专项工具 6、时间层 2。六爻教学排卦与真太阳时校正是辅助模块，不另计。' },
+    { question: '用神和大运会不会各算各的？', answer: '不会。大运、K线、合婚、起名、通书都对照同一套用神列表，并已统一中英文五行键。' },
+    { question: 'K线是怎么画的？', answer: '原局基线 + 大运加权 + 流年加权，不用正弦人造周期。' },
+    { question: '对话会改引擎结论吗？', answer: '不会。对话只解释与落到动作，不覆盖排盘与用神。' },
+  ],
+  related: [
+    { href: '/analyze', label: '测算工作台' },
+    { href: '/docs', label: '使用文档' },
+    { href: '/tools', label: '工具中心' },
+    { href: '/dimensions', label: '十维度' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '系统引擎', path: '/engines' },
+  ],
+};
+
 const HEHUN: PageSeoGeoPack = {
   path: '/hehun',
   slug: 'hehun',
@@ -879,6 +916,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/almanac': ALMANAC,
   astro: ASTRO,
   '/astro': ASTRO,
+  engines: ENGINES,
+  '/engines': ENGINES,
   hehun: HEHUN,
   '/hehun': HEHUN,
   learn: LEARN,

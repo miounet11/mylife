@@ -26,6 +26,7 @@ const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: strin
   { href: '/learn', labelKey: 'navLearn' },
   { href: '/membership', labelKey: 'navMembership' },
   { href: '/docs', labelKey: 'navDocs' },
+  { href: '/engines', labelKey: 'navEngines', labelFallback: '引擎' },
 ];
 
 export default function SiteFooter() {

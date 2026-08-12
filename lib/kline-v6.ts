@@ -9,9 +9,10 @@
  * 输出与旧版 v1 接口兼容（FortuneAnalysisResult['klineData']）。
  */
 
-import type { DayunResult } from '@/lib/dayun-calculator';
+import { resolveDayunList, type DayunInfo, type DayunResult } from '@/lib/dayun-calculator';
 import type { FortuneAnalysisResult, Pillar } from '@/lib/user-types';
 import type { YongShenResult } from '@/lib/bazi-analyzer';
+import { listHasElement } from '@/lib/wuxing-normalize';
 import {
   GAN_TO_WUXING,
   GAN_HE, GAN_CHONG,
@@ -55,7 +56,7 @@ function computeNatalBaseline(
 
   // 用神通根
   const yongRootCount = pillars.reduce((sum, p) =>
-    sum + p.hiddenStems.filter(s => yongElements.includes(GAN_TO_WUXING[s])).length, 0);
+    sum + p.hiddenStems.filter(s => listHasElement(yongElements, GAN_TO_WUXING[s])).length, 0);
 
   // 合冲刑害
   const allZhi = pillars.map(p => p.earthlyBranch);
@@ -103,7 +104,7 @@ function clampNatal(val: number): number {
 
 // ── 大运加权 ──
 function dayunWeight(
-  activeDayun: DayunResult['dayunList'][number] | null,
+  activeDayun: DayunInfo | null,
   yongShen: YongShenResult | null,
 ): number {
   if (!activeDayun || !yongShen) return 0;
@@ -113,14 +114,14 @@ function dayunWeight(
 
   // 天干匹配
   if (activeDayun.ganWuxing) {
-    if (yongElements.includes(activeDayun.ganWuxing)) weight += 8;
-    else if (jiElements.includes(activeDayun.ganWuxing)) weight -= 7;
+    if (listHasElement(yongElements, activeDayun.ganWuxing)) weight += 8;
+    else if (listHasElement(jiElements, activeDayun.ganWuxing)) weight -= 7;
   }
 
   // 地支匹配
   if (activeDayun.zhiWuxing) {
-    if (yongElements.includes(activeDayun.zhiWuxing)) weight += 6;
-    else if (jiElements.includes(activeDayun.zhiWuxing)) weight -= 5;
+    if (listHasElement(yongElements, activeDayun.zhiWuxing)) weight += 6;
+    else if (listHasElement(jiElements, activeDayun.zhiWuxing)) weight -= 5;
   }
 
   // quality 修正
@@ -147,9 +148,9 @@ function liunianWeight(
   const xiElements = yongShen.xiShen;
 
   let score = 0;
-  if (yongElements.includes(element)) score += 10;
-  else if (xiElements.includes(element)) score += 5;
-  else if (jiElements.includes(element)) score -= 8;
+  if (listHasElement(yongElements, element)) score += 10;
+  else if (listHasElement(xiElements, element)) score += 5;
+  else if (listHasElement(jiElements, element)) score -= 8;
 
   // 地支与原局合冲刑害
   const allZhi = pillars.map(p => p.earthlyBranch);
@@ -258,7 +259,7 @@ function healthDecayByElement(age: number, dayMaster: string, yongShen: YongShen
   if (age <= 0) return 0;
 
   const element = resolveDayMasterElement(dayMaster, yongShen);
-  const jiPenalty = yongShen?.jiShen?.includes(element) ? 0.15 : 0;
+  const jiPenalty = listHasElement(yongShen?.jiShen, element) ? 0.15 : 0;
 
   switch (element) {
     case 'water': {
@@ -376,10 +377,7 @@ export function generateLifeKlineV6(
     const age = year - birthYear;
     const liuNianGanZhi = getYearGanZhi(year);
     const liuNian = liunianWeight(liuNianGanZhi, dayMaster, yongShen, pillars);
-    const rawDayunList = dayunResult?.dayunList
-      ?? (dayunResult as { dayuns?: typeof dayunResult.dayunList } | null | undefined)?.dayuns
-      ?? [];
-    const dayunList = Array.isArray(rawDayunList) ? rawDayunList : [];
+    const dayunList = resolveDayunList(dayunResult);
     const activeDayun = dayunList.find((d) => year >= d.startYear && year <= d.endYear) || null;
     const dayunW = dayunWeight(activeDayun, yongShen);
     const ageHealth = healthDecayByElement(age, dayMaster, yongShen);
@@ -413,7 +411,7 @@ export function generateLifeKlineV6(
         activeDayun ? `${activeDayun.ganZhi}大运${yongShenMatch === 'strong' ? '加持' : '均衡'}流年` : '',
       ].filter(Boolean),
       risks: [
-        yongShen?.jiShen?.includes(liuNianElement) ? `流年${liuNianElement}落忌神` : '',
+        listHasElement(yongShen?.jiShen, liuNianElement) ? `流年${liuNianElement}落忌神` : '',
         activeDayun?.yongShenMatch === 'bad' ? `大运${activeDayun.ganZhi}与用神相逆` : '',
       ].filter(Boolean),
       ganZhi: liuNianGanZhi,
@@ -535,11 +533,11 @@ function monthStemDelta(monthGanZhi: string, yongShen: YongShenResult | null): n
   const yong = yongShen.yongShen || [];
   const xi = yongShen.xiShen || [];
   const ji = yongShen.jiShen || [];
-  if (yong.includes(ganEl)) d += 4;
-  else if (xi.includes(ganEl)) d += 2.5;
-  else if (ji.includes(ganEl)) d -= 3.5;
-  if (yong.includes(zhiEl)) d += 2;
-  else if (ji.includes(zhiEl)) d -= 2;
+  if (listHasElement(yong, ganEl)) d += 4;
+  else if (listHasElement(xi, ganEl)) d += 2.5;
+  else if (listHasElement(ji, ganEl)) d -= 3.5;
+  if (listHasElement(yong, zhiEl)) d += 2;
+  else if (listHasElement(ji, zhiEl)) d -= 2;
   return Math.max(-8, Math.min(8, d));
 }
 
@@ -549,10 +547,10 @@ function clampScore(val: number): number {
 
 function resolveYongShenMatch(element: string, yongShen: YongShenResult | null): KlineEvidenceV6['elementBreakdown']['yongShenMatch'] {
   if (!yongShen) return 'neutral';
-  if (yongShen.yongShen.includes(element)) return 'strong';
-  if (yongShen.xiShen.includes(element)) return 'good';
-  if (yongShen.jiShen.includes(element)) return 'conflict';
-  if (yongShen.qiuShen?.includes(element)) return 'bad';
+  if (listHasElement(yongShen.yongShen, element)) return 'strong';
+  if (listHasElement(yongShen.xiShen, element)) return 'good';
+  if (listHasElement(yongShen.jiShen, element)) return 'conflict';
+  if (listHasElement(yongShen.qiuShen, element)) return 'bad';
   return 'neutral';
 }
 

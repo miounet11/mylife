@@ -4,6 +4,7 @@
 
 import type { NameCandidate, Wuxing } from './types';
 import { analyzeNameChars, computeWuge, formatCharBreakdown } from './kangxi-engine';
+import { toElementCn } from '@/lib/wuxing-normalize';
 
 export type NamingMethodId =
   | 'yongshen' // 八字用神补益
@@ -62,8 +63,8 @@ export function scoreMethods(
   ctx: MultiDimContext,
 ): MethodScore[] {
   const chars = analyzeNameChars(givenOrBrand || fullName);
-  const yong = new Set((ctx.yongShen || []).filter(Boolean));
-  const ji = new Set((ctx.jiShen || []).filter(Boolean));
+  const yong = new Set((ctx.yongShen || []).map((x) => toElementCn(x)).filter(Boolean));
+  const ji = new Set((ctx.jiShen || []).map((x) => toElementCn(x)).filter(Boolean));
 
   // 用神
   let yongScore = 50;

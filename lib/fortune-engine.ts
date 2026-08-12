@@ -17,6 +17,7 @@ import {
   jiPhrase,
   yongPhrase,
 } from './yongshen-presentation';
+import { listHasElement } from './wuxing-normalize';
 import { calculateTrueSolarTimeOffset } from './solar-time';
 import { generateLifeKlineV6 } from './kline-v6';
 
@@ -1280,10 +1281,11 @@ const buildShenShaSignals = (shenSha?: ShenShaResult | null): EngineEvidencePack
 };
 
 const resolveElementRole = (element: string, ys: YongShenResult | null): EngineEvidencePack['fiveElementRanking'][number]['role'] => {
-  if (ys?.yongShen?.includes(element)) return '用神';
-  if (ys?.xiShen?.includes(element)) return '喜神';
-  if (ys?.jiShen?.includes(element)) return '忌神';
-  if (ys?.qiuShen?.includes(element)) return '仇神';
+  if (!ys) return '闲神';
+  if (listHasElement(ys.yongShen, element)) return '用神';
+  if (listHasElement(ys.xiShen, element)) return '喜神';
+  if (listHasElement(ys.jiShen, element)) return '忌神';
+  if (listHasElement(ys.qiuShen, element)) return '仇神';
   return '闲神';
 };
 
@@ -1484,10 +1486,10 @@ const resolveKlineElementImpact = (
   if (!yongShen) return 0;
   const scoreOne = (element?: string) => {
     if (!element) return 0;
-    if (yongShen.yongShen.includes(element)) return 10;
-    if (yongShen.xiShen.includes(element)) return 6;
-    if (yongShen.jiShen.includes(element)) return -8;
-    if (yongShen.qiuShen.includes(element)) return -10;
+    if (listHasElement(yongShen.yongShen, element)) return 10;
+    if (listHasElement(yongShen.xiShen, element)) return 6;
+    if (listHasElement(yongShen.jiShen, element)) return -8;
+    if (listHasElement(yongShen.qiuShen, element)) return -10;
     return 0;
   };
   return scoreOne(primaryElement) + scoreOne(secondaryElement) * 0.7;
@@ -1498,7 +1500,7 @@ const buildNatalKlineDrivers = (pillars: Pillar[], yongShen: ReturnType<typeof d
   const dayElement = GAN_TO_WUXING[pillars[2]?.celestialStem] || '';
   const rootCount = pillars.reduce((sum, pillar) => sum + (pillar.hiddenStems.some((stem) => GAN_TO_WUXING[stem] === dayElement) ? 1 : 0), 0);
   const yongRootCount = yongShen?.yongShen?.length
-    ? pillars.reduce((sum, pillar) => sum + pillar.hiddenStems.filter((stem) => yongShen.yongShen.includes(GAN_TO_WUXING[stem])).length, 0)
+    ? pillars.reduce((sum, pillar) => sum + pillar.hiddenStems.filter((stem) => listHasElement(yongShen.yongShen, GAN_TO_WUXING[stem])).length, 0)
     : 0;
   const clashPressure = relationDetail.branchClashes.length * 2 + relationDetail.branchPenalties.length + relationDetail.branchHarms.length;
   const harmonySupport = relationDetail.branchCombinations.length + relationDetail.branchTrines.length * 2 + relationDetail.branchHalfTrines.length;

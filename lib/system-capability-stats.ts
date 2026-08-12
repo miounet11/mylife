@@ -4,6 +4,8 @@ import { listPublishedManagedContentEntriesByType } from '@/lib/content-store';
 import { db, forumQuestionOperations } from '@/lib/database';
 import { getMasterPhraseCount } from '@/lib/master-phrase-stats';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
+import { SYSTEM_ENGINE_COUNT, getSystemEngineCatalog } from '@/lib/system-engines';
+import { YONGSHEN_ENGINE_VERSION } from '@/lib/yongshen-engine-version';
 
 export interface SystemCapabilityStats {
   publishedCaseCount: number;
@@ -31,6 +33,11 @@ export interface SystemCapabilityStats {
   fortuneProfiles: number;
   /** Recent 15-min raw analytics events (debug / internal). */
   recentActivityEvents: number;
+  /** Count of registered calculation engines */
+  engineCount: number;
+  /** Live 用神 engine stamp */
+  yongShenEngineVersion: string;
+  engineFamilies: { natal: number; tool: number; time: number };
   generatedAt: string;
 }
 
@@ -157,6 +164,7 @@ function computePopularitySlice() {
 function computeSystemCapabilityStats(): SystemCapabilityStats {
   const worldYiStats = getWorldYiPublicStats();
   const popularity = computePopularitySlice();
+  const engines = getSystemEngineCatalog();
 
   return {
     publishedCaseCount: listPublishedManagedContentEntriesByType('case').length,
@@ -172,6 +180,13 @@ function computeSystemCapabilityStats(): SystemCapabilityStats {
       + worldYiStats.publicKnowledgeCount
       + worldYiStats.publicInsightCount,
     ...popularity,
+    engineCount: engines.count || SYSTEM_ENGINE_COUNT,
+    yongShenEngineVersion: engines.yongShenVersion || YONGSHEN_ENGINE_VERSION,
+    engineFamilies: {
+      natal: engines.natal,
+      tool: engines.tool,
+      time: engines.time,
+    },
     generatedAt: new Date().toISOString(),
   };
 }
@@ -211,6 +226,13 @@ export function emptySystemCapabilityStats(): SystemCapabilityStats {
     emailSubscribers: 0,
     fortuneProfiles: 0,
     recentActivityEvents: 0,
+    engineCount: SYSTEM_ENGINE_COUNT,
+    yongShenEngineVersion: YONGSHEN_ENGINE_VERSION,
+    engineFamilies: {
+      natal: getSystemEngineCatalog().natal,
+      tool: getSystemEngineCatalog().tool,
+      time: getSystemEngineCatalog().time,
+    },
     generatedAt: new Date(0).toISOString(),
   };
 }

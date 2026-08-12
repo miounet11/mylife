@@ -6,6 +6,7 @@
 import { Solar, Lunar } from 'lunar-javascript';
 import { GAN_TO_WUXING } from './bazi-constants';
 import type { YongShenResult } from './bazi-analyzer';
+import { listHasElement } from './wuxing-normalize';
 
 // 天干顺序
 const GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'];
@@ -32,8 +33,22 @@ export interface DayunInfo {
 export interface DayunResult {
   startAge: number;       // 起运年龄
   dayuns: DayunInfo[];    // 10个大运
+  /** Alias used by kline / fortune-context-builder */
+  dayunList: DayunInfo[];
   currentDayun: DayunInfo | null; // 当前大运
   currentDayunYear: number; // 当前大运第几年（1-10）
+  currentDayunIndex?: number;
+}
+
+export function resolveDayunList(
+  raw: { dayuns?: DayunInfo[]; dayunList?: DayunInfo[] } | null | undefined,
+): DayunInfo[] {
+  if (!raw) return [];
+  const a = Array.isArray(raw.dayuns) ? raw.dayuns : null;
+  const b = Array.isArray(raw.dayunList) ? raw.dayunList : null;
+  if (a && a.length) return a;
+  if (b && b.length) return b;
+  return a || b || [];
 }
 
 // 地支五行映射
@@ -119,7 +134,14 @@ export function calculateDayun(
     ? currentAge - currentDayun.startAge + 1
     : 0;
 
-  return { startAge, dayuns, currentDayun, currentDayunYear };
+  return {
+    startAge,
+    dayuns,
+    dayunList: dayuns,
+    currentDayun,
+    currentDayunYear,
+    currentDayunIndex: currentDayun?.index ?? 0,
+  };
 }
 
 /**
@@ -148,10 +170,20 @@ function calculateStartAge(birthDate: Date, hour: number, minute: number, shunPa
 
     // 计算天数差
     const birthMs = new Date(year, month - 1, day, hour, minute).getTime();
+    const jieHour =
+      typeof (jieQiSolar as { getHour?: () => number }).getHour === 'function'
+        ? Number((jieQiSolar as { getHour: () => number }).getHour()) || 0
+        : 0;
+    const jieMinute =
+      typeof (jieQiSolar as { getMinute?: () => number }).getMinute === 'function'
+        ? Number((jieQiSolar as { getMinute: () => number }).getMinute()) || 0
+        : 0;
     const jieQiMs = new Date(
       jieQiSolar.getYear(),
       jieQiSolar.getMonth() - 1,
-      jieQiSolar.getDay()
+      jieQiSolar.getDay(),
+      jieHour,
+      jieMinute,
     ).getTime();
 
     const diffDays = Math.abs(jieQiMs - birthMs) / (1000 * 60 * 60 * 24);
@@ -203,13 +235,13 @@ function evaluateYongShenMatch(
 
   let score = 0;
   // 天干权重 0.6，地支权重 0.4
-  if (ys.includes(ganWuxing)) score += 3;
-  else if (xiShen.includes(ganWuxing)) score += 1;
-  else if (jiShen.includes(ganWuxing)) score -= 2;
+  if (listHasElement(ys, ganWuxing)) score += 3;
+  else if (listHasElement(xiShen, ganWuxing)) score += 1;
+  else if (listHasElement(jiShen, ganWuxing)) score -= 2;
 
-  if (ys.includes(zhiWuxing)) score += 2;
-  else if (xiShen.includes(zhiWuxing)) score += 1;
-  else if (jiShen.includes(zhiWuxing)) score -= 1;
+  if (listHasElement(ys, zhiWuxing)) score += 2;
+  else if (listHasElement(xiShen, zhiWuxing)) score += 1;
+  else if (listHasElement(jiShen, zhiWuxing)) score -= 1;
 
   if (score >= 3) return 'good';
   if (score <= -2) return 'bad';
@@ -227,10 +259,10 @@ function determineQuality(
 ): DayunInfo['quality'] {
   if (!yongShen) return 'neutral';
 
-  const isGanYong = yongShen.yongShen.includes(ganWuxing);
-  const isZhiYong = yongShen.yongShen.includes(zhiWuxing);
-  const isGanJi = yongShen.jiShen.includes(ganWuxing);
-  const isZhiJi = yongShen.jiShen.includes(zhiWuxing);
+  const isGanYong = listHasElement(yongShen.yongShen, ganWuxing);
+  const isZhiYong = listHasElement(yongShen.yongShen, zhiWuxing);
+  const isGanJi = listHasElement(yongShen.jiShen, ganWuxing);
+  const isZhiJi = listHasElement(yongShen.jiShen, zhiWuxing);
 
   if (isGanYong && isZhiYong) return 'excellent';
   if (yongShenMatch === 'good') return 'good';

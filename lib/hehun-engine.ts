@@ -19,6 +19,7 @@ import {
   buildGroundTruthPackFromReport,
 } from '@/lib/ground-truth/pack';
 import type { BirthInput } from '@/lib/fortune-context-builder';
+import { normalizeElementList } from '@/lib/wuxing-normalize';
 
 const WX_CN: Record<string, string> = {
   wood: '木',
@@ -430,15 +431,18 @@ function scoreYongComplement(
 ): HehunLayer {
   const details: string[] = [];
   let score = 55;
-  const setA = new Set(yongA);
-  const setB = new Set(yongB);
-  const jiSetA = new Set(jiA);
-  const jiSetB = new Set(jiB);
+  const a = normalizeElementList(yongA);
+  const b = normalizeElementList(yongB);
+  const jiACn = normalizeElementList(jiA);
+  const jiBCn = normalizeElementList(jiB);
+  const setB = new Set(b);
+  const jiSetA = new Set(jiACn);
+  const jiSetB = new Set(jiBCn);
 
-  const sharedYong = yongA.filter((x) => setB.has(x));
-  const aHelpsB = yongA.filter((x) => setB.has(x) || [...setB].some((y) => SHENG[x] === y));
-  const conflict = yongA.filter((x) => jiSetB.has(x));
-  const conflict2 = yongB.filter((x) => jiSetA.has(x));
+  const sharedYong = a.filter((x) => setB.has(x));
+  const aHelpsB = a.filter((x) => setB.has(x) || [...setB].some((y) => SHENG[x] === y));
+  const conflict = a.filter((x) => jiSetB.has(x));
+  const conflict2 = b.filter((x) => jiSetA.has(x));
 
   if (sharedYong.length) {
     score += 10 + sharedYong.length * 4;

@@ -18,6 +18,15 @@ type CapabilityRow = {
 function buildCapabilityRows(stats: SystemCapabilityStats): CapabilityRow[] {
   return [
     {
+      key: 'engines',
+      label: '命理引擎',
+      value: stats.engineCount || 0,
+      href: '/engines',
+      hint: stats.engineFamilies
+        ? `命盘 ${stats.engineFamilies.natal} · 工具 ${stats.engineFamilies.tool} · 时间 ${stats.engineFamilies.time}`
+        : '排盘 / 用神 / 大运 / K线…',
+    },
+    {
       key: 'online',
       label: '当前活跃',
       value: stats.onlineNow || 0,
@@ -124,7 +133,7 @@ export default function SystemCapabilityPanel({
   return (
     <Card variant="sunken" padding="md" className={className}>
       <Eyebrow tone="muted" className="mb-3">
-        站内人气 · 系统能力
+        系统能力 · 站内人气
       </Eyebrow>
       <Stack gap={1}>
         {rows.map((row) => (
@@ -133,6 +142,8 @@ export default function SystemCapabilityPanel({
       </Stack>
       <div className="mt-3 border-t border-[color:var(--hairline)] pt-3 text-[11px] leading-4 text-[color:var(--ink-5)]">
         累计测算 {formatCompactCount(stats.calculationsTotal || 0)}
+        <span className="mx-1.5 text-[color:var(--ink-6)]">·</span>
+        引擎 {formatCompactCount(stats.engineCount || 0)} 套
         <span className="mx-1.5 text-[color:var(--ink-6)]">·</span>
         世界易精选 {formatCompactCount(stats.worldYiContentCount)} 篇
         <span className="mx-1.5 text-[color:var(--ink-6)]">·</span>
@@ -144,6 +155,7 @@ export default function SystemCapabilityPanel({
 
 export function SystemCapabilityFooterSignals({ stats }: { stats: SystemCapabilityStats }) {
   const signals = [
+    { label: '命理引擎', value: stats.engineCount || 0 },
     { label: '当前活跃', value: stats.onlineNow || 0 },
     { label: '今日测算', value: stats.calculationsToday || 0 },
     { label: '注册用户', value: stats.registeredUsers || 0 },

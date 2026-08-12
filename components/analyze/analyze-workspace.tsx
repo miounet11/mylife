@@ -867,6 +867,7 @@ export default function AnalyzeWorkspace({
           {stats ? (
             <p className={cn('px-0.5', muteNote)}>
               {[
+                stats.engineCount != null ? `引擎 ${stats.engineCount}` : null,
                 stats.publishedKnowledgeCount != null
                   ? `知识 ${stats.publishedKnowledgeCount}`
                   : null,

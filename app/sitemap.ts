@@ -189,6 +189,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/world-yi/en/tracks', priority: 0.8, changeFrequency: 'weekly', enGateway: true },
     { path: '/world-yi/global', priority: 0.78, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/insights', priority: 0.75, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/engines', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/docs', priority: 0.75, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/docs/birth-info', priority: 0.7, changeFrequency: 'monthly', multiLanguage: true },
     { path: '/docs/true-solar-time', priority: 0.7, changeFrequency: 'monthly', multiLanguage: true },

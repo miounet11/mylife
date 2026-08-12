@@ -76,6 +76,11 @@ export const DOC_ENTRIES: PortalEntry[] = [
     title: '报告读法',
     description: '5 分钟完成「结论 → 动作 → 验证」的阅读顺序。',
   },
+  {
+    href: '/engines',
+    title: '系统引擎',
+    description: '15 套命理计算引擎：排盘、用神、大运、K线、合婚、通书。',
+  },
 ];
 
 export const DOC_CONTENT: Record<string, { title: string; sections: Array<[string, string]> }> = {

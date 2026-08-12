@@ -14,6 +14,7 @@ import {
   type WuXing,
 } from '@/lib/almanac/elements';
 import type { AlmanacDayPack, PersonalDayOverlay, PersonalDayStance, PersonalHourNote } from '@/lib/almanac/types';
+import { toElementCn } from '@/lib/wuxing-normalize';
 
 export type PersonalDayInput = {
   /** 日主天干 e.g. 甲 */
@@ -134,7 +135,8 @@ export function buildPersonalDayOverlay(
   const yongRaw = (input.yongShen || []).map((x) => `${x || ''}`.trim()).filter(Boolean);
   const yong = yongRaw
     .map((x) => {
-      if (['木', '火', '土', '金', '水'].includes(x)) return x as WuXing;
+      const cn = toElementCn(x);
+      if (cn === '木' || cn === '火' || cn === '土' || cn === '金' || cn === '水') return cn;
       return stemElement(x) || branchElement(x);
     })
     .filter(Boolean) as WuXing[];

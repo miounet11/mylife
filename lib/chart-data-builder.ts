@@ -9,6 +9,7 @@ import type { Pillar, FortuneAnalysisResult } from '@/lib/user-types';
 import type { YongShenResult } from '@/lib/bazi-analyzer';
 import type { KlinePointV6, KlineAnchorV6 } from '@/lib/kline-v6';
 import { GAN_TO_WUXING } from '@/lib/bazi-constants';
+import { listHasElement } from '@/lib/wuxing-normalize';
 
 // ── 1. 命局雷达图 ──
 
@@ -38,9 +39,9 @@ export function buildRadarChart(input: {
 
   const yongData = elements.map(el => ({
     name: cnNames[el],
-    value: input.yongShen?.yongShen?.includes(el) ? 90 :
-           input.yongShen?.xiShen?.includes(el) ? 70 :
-           input.yongShen?.jiShen?.includes(el) ? 30 : 50,
+    value: listHasElement(input.yongShen?.yongShen, el) ? 90 :
+           listHasElement(input.yongShen?.xiShen, el) ? 70 :
+           listHasElement(input.yongShen?.jiShen, el) ? 30 : 50,
   }));
 
   return {
@@ -198,8 +199,8 @@ export function buildHeatCalendar(
 
   for (let m = 0; m < 12; m++) {
     const el = elementByMonth[m];
-    const isYong = yongShen?.yongShen?.includes(el);
-    const isJi = yongShen?.jiShen?.includes(el);
+    const isYong = listHasElement(yongShen?.yongShen, el);
+    const isJi = listHasElement(yongShen?.jiShen, el);
     const base = average([klinePoint.career, klinePoint.wealth, klinePoint.marriage, klinePoint.health]);
     const score = clamp(Math.round(base + (isYong ? 8 : 0) + (isJi ? -8 : 0)), 35, 95);
     const status: MonthlyHeatCell['status'] = score >= 72 ? 'push' : score >= 58 ? 'steady' : 'caution';

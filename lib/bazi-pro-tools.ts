@@ -3,6 +3,8 @@
  * 经典表推演，供 expert 排盘台使用。
  */
 
+import { listHasElement } from '@/lib/wuxing-normalize';
+
 export const TIAN_GAN = ['甲', '乙', '丙', '丁', '戊', '己', '庚', '辛', '壬', '癸'] as const;
 export const DI_ZHI = ['子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉', '戌', '亥'] as const;
 
@@ -184,8 +186,8 @@ export function probeLiunianYear(params: {
     甲: '木', 乙: '木', 丙: '火', 丁: '火', 戊: '土', 己: '土', 庚: '金', 辛: '金', 壬: '水', 癸: '水',
   };
   const elLabel = elMap[gan] || '';
-  if (elLabel && params.yongShen?.includes(elLabel)) notes.push(`流年天干属用神「${elLabel}」方向`);
-  if (elLabel && params.jiShen?.includes(elLabel)) notes.push(`流年天干属忌神「${elLabel}」方向，宜审慎`);
+  if (elLabel && listHasElement(params.yongShen, elLabel)) notes.push(`流年天干属用神「${elLabel}」方向`);
+  if (elLabel && listHasElement(params.jiShen, elLabel)) notes.push(`流年天干属忌神「${elLabel}」方向，宜审慎`);
 
   return {
     year: params.year,

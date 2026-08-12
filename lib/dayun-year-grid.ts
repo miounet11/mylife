@@ -4,6 +4,7 @@
  */
 
 import { getYearGanZhi, getChangSheng, getKongWangByDayPillar, isZhiKongWang } from '@/lib/bazi-pro-tools';
+import { listHasElement } from '@/lib/wuxing-normalize';
 
 export interface DayunYearCell {
   year: number;
@@ -56,8 +57,8 @@ function toneForYear(params: {
 }): DayunYearCell['tone'] {
   if (params.vs === '岁运并临') return 'boost';
   if (params.isKongWang) return 'caution';
-  if (params.ganEl && params.jiShen.includes(params.ganEl)) return 'caution';
-  if (params.ganEl && params.yongShen.includes(params.ganEl)) return 'boost';
+  if (params.ganEl && listHasElement(params.jiShen, params.ganEl)) return 'caution';
+  if (params.ganEl && listHasElement(params.yongShen, params.ganEl)) return 'boost';
   return 'ok';
 }
 

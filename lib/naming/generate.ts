@@ -8,6 +8,7 @@ import {
 import { analyzeNameChars, computeWuge } from './kangxi-engine';
 import { attachMethodsToCandidate, type MultiDimContext } from './methods';
 import { scoreName } from './score';
+import { toElementCn } from '@/lib/wuxing-normalize';
 import type {
   CompanyGenerateInput,
   NameCandidate,
@@ -461,7 +462,8 @@ function toRoughPinyinBrand(name: string): string {
 }
 
 function toWx(s: string): Wuxing | null {
-  if (s === '木' || s === '火' || s === '土' || s === '金' || s === '水') return s;
+  const cn = toElementCn(s);
+  if (cn === '木' || cn === '火' || cn === '土' || cn === '金' || cn === '水') return cn;
   return null;
 }
 

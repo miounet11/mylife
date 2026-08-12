@@ -4,7 +4,7 @@ import {
   determineYongShen,
   type YongShenResult,
 } from '@/lib/bazi-analyzer';
-import { calculateDayun, type DayunResult } from '@/lib/dayun-calculator';
+import { calculateDayun, resolveDayunList, type DayunResult } from '@/lib/dayun-calculator';
 import { generateLifeKlineV6, detectKlineAnchorsV6 } from '@/lib/kline-v6';
 import type { CreateContextInput } from '@/lib/agentic-report/create-agentic-context';
 import type { Pillar } from '@/lib/user-types';
@@ -167,18 +167,15 @@ function inferYongShen(pillars: Pillar[]): YongShenResult | null {
   };
 }
 
-/** Prod dayun-calculator returns `dayuns`; local/kline expect `dayunList`. */
-function normalizeDayunResult(raw: DayunResult | (DayunResult & { dayuns?: DayunResult['dayunList'] }) | null): DayunResult {
+/** Prod dayun-calculator returns `dayuns`; kline historically expected `dayunList`. */
+function normalizeDayunResult(raw: DayunResult | null): DayunResult {
   if (!raw) {
-    return { startAge: 0, currentDayunIndex: 0, dayunList: [] };
+    return { startAge: 0, dayuns: [], dayunList: [], currentDayun: null, currentDayunYear: 0, currentDayunIndex: 0 };
   }
-  const dayunList = Array.isArray(raw.dayunList)
-    ? raw.dayunList
-    : Array.isArray((raw as { dayuns?: DayunResult['dayunList'] }).dayuns)
-      ? (raw as { dayuns: DayunResult['dayunList'] }).dayuns
-      : [];
+  const dayunList = resolveDayunList(raw);
   return {
     ...raw,
+    dayuns: dayunList,
     dayunList,
     currentDayunIndex: raw.currentDayunIndex ?? raw.currentDayun?.index ?? 0,
   };
