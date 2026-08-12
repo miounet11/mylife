@@ -29,7 +29,7 @@ const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: strin
 ];
 
 export default function SiteFooter() {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
 
   return (
     <footer className="mt-auto border-t border-[color:var(--hairline)] bg-[color:var(--paper)]">
