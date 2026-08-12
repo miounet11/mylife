@@ -1,8 +1,10 @@
 /**
  * Single key for 五行 across engines.
- * Stems (GAN_TO_WUXING) are English; some branch tables and UI lists are 中文.
- * Comparing them raw made 大运地支 / 证据五行角色永远对不上用神.
+ * Internal lists (用神 / 大运 ganWuxing / zhiWuxing) are English.
+ * UI copy is Chinese via toElementCn. Never compare raw strings.
  */
+
+import { GAN_TO_WUXING, ZHI_TO_WUXING } from '@/lib/bazi-constants';
 
 const TO_EN: Record<string, 'wood' | 'fire' | 'earth' | 'metal' | 'water'> = {
   wood: 'wood',
@@ -59,4 +61,14 @@ export function normalizeElementList(list: unknown): string[] {
     out.push(cn);
   }
   return out;
+}
+
+export function stemToElementEn(gan: string | null | undefined): ElementEn | '' {
+  const raw = `${gan || ''}`.trim();
+  return toElementEn(GAN_TO_WUXING[raw] || raw);
+}
+
+export function branchToElementEn(zhi: string | null | undefined): ElementEn | '' {
+  const raw = `${zhi || ''}`.trim();
+  return toElementEn(ZHI_TO_WUXING[raw] || raw);
 }

@@ -9,6 +9,7 @@
 import { fortuneOperations } from '@/lib/database';
 import { PillarCalculatorService } from '@/lib/services/pillar-calculator.service';
 import { calculateDayun } from '@/lib/dayun-calculator';
+import type { YongShenResult } from '@/lib/bazi-analyzer';
 import { buildTimingProfile } from './timing-orchestrator';
 import { getCurrentLiuNianGanZhi } from './lunar-utils';
 import {
@@ -32,6 +33,18 @@ interface FortuneShape {
 export interface ResolveProfileResult {
   record: TimingProfileRecord;
   freshlyComputed: boolean;
+}
+
+function yongShenFromAnalysis(analysis: unknown): YongShenResult | null {
+  if (!analysis || typeof analysis !== 'object') return null;
+  const root = analysis as Record<string, unknown>;
+  const nested =
+    root.analysis && typeof root.analysis === 'object'
+      ? (root.analysis as Record<string, unknown>)
+      : root;
+  const ys = (root.yongShen || nested.yongShen) as YongShenResult | undefined;
+  if (ys && Array.isArray(ys.yongShen)) return ys;
+  return null;
 }
 
 /**
@@ -77,14 +90,14 @@ export function resolveTimingProfileForFortune(fortune: FortuneShape): ResolvePr
     return { record: hydrated, freshlyComputed: false };
   }
 
-  // 重算
+  // 重算 — 用报告里的用神，避免 timing 与主链各算各的
   const dayunResult = calculateDayun(
     birthDate,
     birthTime,
     gender,
     pillars[0].celestialStem,
     { gan: pillars[1].celestialStem, zhi: pillars[1].earthlyBranch },
-    null,
+    yongShenFromAnalysis(fortune.analysis),
     birthDate.getFullYear()
   );
 

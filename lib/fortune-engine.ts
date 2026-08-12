@@ -17,7 +17,7 @@ import {
   jiPhrase,
   yongPhrase,
 } from './yongshen-presentation';
-import { listHasElement } from './wuxing-normalize';
+import { listHasElement, toElementCn } from './wuxing-normalize';
 import { calculateTrueSolarTimeOffset } from './solar-time';
 import { generateLifeKlineV6 } from './kline-v6';
 
@@ -1225,7 +1225,7 @@ const buildMeasurementStageResults = (input: {
       order: 8,
       score: scoreStageEvidence({ hasCore: Boolean(currentDayun), evidenceCount: currentDayun ? 3 : 1, actionCount: 2, riskCount: currentDayun?.yongShenMatch === 'bad' ? 1 : 0, bonus: currentDayun ? Math.min(6, Math.round((currentDayun.quality === 'excellent' ? 1 : currentDayun.quality === 'good' ? 0.8 : currentDayun.quality === 'neutral' ? 0.6 : 0.4) * 6)) : 0 }),
       conclusion: currentDayun ? `当前${currentDayun.ganZhi}大运，第${input.runtime?.dayunResult?.currentDayunYear || 0}年，匹配${currentDayun.yongShenMatch}。` : '当前大运未命中年龄区间。',
-      evidence: currentDayun ? [`${currentDayun.startYear}-${currentDayun.endYear}`, `天干${currentDayun.ganWuxing}、地支${currentDayun.zhiWuxing}`, currentDayun.description] : ['大运序列已生成但当前段未命中。'],
+      evidence: currentDayun ? [`${currentDayun.startYear}-${currentDayun.endYear}`, `天干${toElementCn(currentDayun.ganWuxing) || currentDayun.ganWuxing}、地支${toElementCn(currentDayun.zhiWuxing) || currentDayun.zhiWuxing}`, currentDayun.description] : ['大运序列已生成但当前段未命中。'],
       risks: currentDayun?.yongShenMatch === 'bad' ? [`${currentDayun.ganZhi}与用神相逆，先控风险。`] : [],
       actions: [input.runtime?.fortune?.nextYear || '用大运做十年背景，不替代年度触发。'],
     }),

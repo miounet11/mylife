@@ -4,9 +4,12 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { getPageSeoGeoPack, isPagePackGeoReady } from '@/lib/page-seo-geo-packs';
 import {
+  NATAL_CHAIN_ORDER,
   SYSTEM_ENGINE_COUNT,
   SYSTEM_ENGINES,
+  SYSTEM_SUPPORT_MODULES,
   engineCapabilityLine,
+  getSystemEngine,
   getSystemEngineCatalog,
 } from '@/lib/system-engines';
 
@@ -34,6 +37,18 @@ describe('system engines catalog', () => {
       const asFile = abs.endsWith('.ts') || abs.endsWith('.tsx');
       assert.ok(existsSync(abs) || existsSync(`${abs}.ts`) || existsSync(`${abs}.tsx`) || (!asFile && existsSync(abs)), engine.path);
     }
+  });
+
+  it('every engine documents an entry point and tests/whenToUse', () => {
+    for (const engine of SYSTEM_ENGINES) {
+      assert.ok(engine.entry, engine.id);
+      assert.ok(engine.whenToUse, engine.id);
+      assert.ok(Array.isArray(engine.dependsOn), engine.id);
+      assert.ok(Array.isArray(engine.tests), engine.id);
+    }
+    assert.equal(getSystemEngine('yongshen')?.entry, 'determineYongShen');
+    assert.deepEqual(NATAL_CHAIN_ORDER, ['pillars', 'yongshen', 'dayun', 'kline', 'shensha']);
+    assert.ok(SYSTEM_SUPPORT_MODULES.some((m) => m.id === 'natal-engine-chain'));
   });
 
   it('registers /engines as a GEO-ready capability page', () => {

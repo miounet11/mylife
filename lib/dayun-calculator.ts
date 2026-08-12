@@ -4,7 +4,7 @@
 
 // @ts-ignore
 import { Solar, Lunar } from 'lunar-javascript';
-import { GAN_TO_WUXING } from './bazi-constants';
+import { GAN_TO_WUXING, ZHI_TO_WUXING } from './bazi-constants';
 import type { YongShenResult } from './bazi-analyzer';
 import { listHasElement } from './wuxing-normalize';
 
@@ -51,12 +51,7 @@ export function resolveDayunList(
   return a || b || [];
 }
 
-// 地支五行映射
-const ZHI_WUXING: Record<string, string> = {
-  '子': '水', '丑': '土', '寅': '木', '卯': '木',
-  '辰': '土', '巳': '火', '午': '火', '未': '土',
-  '申': '金', '酉': '金', '戌': '土', '亥': '水',
-};
+
 
 // 五行生克关系
 const WUXING_SHENG: Record<string, string> = {
@@ -102,7 +97,7 @@ export function calculateDayun(
     const isCurrent = currentAge >= ageStart && currentAge <= ageEnd;
 
     const ganWuxing = GAN_TO_WUXING[gz.gan] || '';
-    const zhiWuxing = ZHI_WUXING[gz.zhi] || '';
+    const zhiWuxing = ZHI_TO_WUXING[gz.zhi] || '';
 
     const yongShenMatch = yongShen
       ? evaluateYongShenMatch(ganWuxing, zhiWuxing, yongShen)

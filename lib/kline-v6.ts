@@ -15,6 +15,7 @@ import type { YongShenResult } from '@/lib/bazi-analyzer';
 import { listHasElement } from '@/lib/wuxing-normalize';
 import {
   GAN_TO_WUXING,
+  ZHI_TO_WUXING,
   GAN_HE, GAN_CHONG,
   ZHI_HE, ZHI_CHONG, ZHI_XING, ZHI_HAI,
   calculateShiShen,
@@ -522,13 +523,7 @@ function monthStemDelta(monthGanZhi: string, yongShen: YongShenResult | null): n
   const gan = monthGanZhi[0] || '';
   const zhi = monthGanZhi[1] || '';
   const ganEl = GAN_TO_WUXING[gan] || '';
-  // 地支五行粗映射
-  const zhiElMap: Record<string, string> = {
-    子: 'water', 丑: 'earth', 寅: 'wood', 卯: 'wood',
-    辰: 'earth', 巳: 'fire', 午: 'fire', 未: 'earth',
-    申: 'metal', 酉: 'metal', 戌: 'earth', 亥: 'water',
-  };
-  const zhiEl = zhiElMap[zhi] || '';
+  const zhiEl = ZHI_TO_WUXING[zhi] || '';
   let d = 0;
   const yong = yongShen.yongShen || [];
   const xi = yongShen.xiShen || [];

@@ -1,12 +1,28 @@
 // ── 八字常量 V6 ──
 
-/** 天干 → 五行 */
+/** 天干 → 五行（内部一律 English） */
 export const GAN_TO_WUXING: Record<string, string> = {
   '甲': 'wood', '乙': 'wood',
   '丙': 'fire', '丁': 'fire',
   '戊': 'earth', '己': 'earth',
   '庚': 'metal', '辛': 'metal',
   '壬': 'water', '癸': 'water',
+};
+
+/** 地支本气 → 五行（内部一律 English，与 GAN_TO_WUXING 同键） */
+export const ZHI_TO_WUXING: Record<string, string> = {
+  子: 'water',
+  丑: 'earth',
+  寅: 'wood',
+  卯: 'wood',
+  辰: 'earth',
+  巳: 'fire',
+  午: 'fire',
+  未: 'earth',
+  申: 'metal',
+  酉: 'metal',
+  戌: 'earth',
+  亥: 'water',
 };
 
 /** 天干合 */

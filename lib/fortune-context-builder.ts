@@ -1,13 +1,4 @@
-import { calculateFourPillars } from '@/lib/fortune-engine';
-import {
-  analyzeShenSha,
-  determineYongShen,
-  type YongShenResult,
-} from '@/lib/bazi-analyzer';
-import { calculateDayun, resolveDayunList, type DayunResult } from '@/lib/dayun-calculator';
-import { generateLifeKlineV6, detectKlineAnchorsV6 } from '@/lib/kline-v6';
 import type { CreateContextInput } from '@/lib/agentic-report/create-agentic-context';
-import type { Pillar } from '@/lib/user-types';
 import { buildBirthSignature } from '@/lib/profile-birth-signature';
 import { getOrCreateProfile, updateProfile } from '@/lib/life-profile/store';
 import {
@@ -18,6 +9,7 @@ import {
   type EffectiveTiming,
 } from '@/lib/calculation-identity';
 import { resolveCityLongitude } from '@/lib/geo/city-longitudes';
+import { runNatalEngineChain } from '@/lib/natal-engine-chain';
 
 export interface BirthInput {
   birthDate: string;
@@ -106,81 +98,6 @@ function resolveStructureTiming(input: BirthInput): {
   };
 }
 
-function elementScoresFromPillars(pillars: Pillar[]): Record<string, number> {
-  const scores = { wood: 0, fire: 0, earth: 0, metal: 0, water: 0 };
-  const map: Record<string, keyof typeof scores> = {
-    甲: 'wood', 乙: 'wood',
-    丙: 'fire', 丁: 'fire',
-    戊: 'earth', 己: 'earth',
-    庚: 'metal', 辛: 'metal',
-    壬: 'water', 癸: 'water',
-  };
-
-  for (const pillar of pillars) {
-    const stemElement = map[pillar.celestialStem];
-    if (stemElement) scores[stemElement] += 12;
-    const branchElement = map[pillar.earthlyBranch];
-    if (branchElement) scores[branchElement] += 8;
-    for (const hidden of pillar.hiddenStems || []) {
-      const hiddenElement = map[hidden];
-      if (hiddenElement) scores[hiddenElement] += 4;
-    }
-  }
-
-  return scores;
-}
-
-function inferYongShen(pillars: Pillar[]): YongShenResult | null {
-  const direct = determineYongShen(pillars.map((pillar) => pillar.celestialStem + pillar.earthlyBranch));
-  if (direct) return direct;
-
-  const dayMaster = pillars[2]?.celestialStem;
-  if (!dayMaster) return null;
-
-  const elementMap: Record<string, string> = {
-    甲: '木', 乙: '木', 丙: '火', 丁: '火', 戊: '土', 己: '土', 庚: '金', 辛: '金', 壬: '水', 癸: '水',
-  };
-  const scores = elementScoresFromPillars(pillars);
-  const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-  const dayElement = elementMap[dayMaster] || '木';
-  const weakest = sorted[sorted.length - 1]?.[0];
-  const strongest = sorted[0]?.[0];
-  const cnMap: Record<string, string> = {
-    wood: '木', fire: '火', earth: '土', metal: '金', water: '水',
-  };
-  const yongShen = weakest ? [cnMap[weakest]] : [];
-  const jiShen = strongest ? [cnMap[strongest]] : [];
-
-  return {
-    dayMaster,
-    dayMasterElement: dayElement,
-    strength: '中和',
-    strengthDesc: '基于五行分布的基础推断',
-    score: 50,
-    yongShen,
-    xiShen: yongShen,
-    jiShen,
-    qiuShen: [],
-    analysis: '引擎基础推断：优先补偏弱五行，谨慎使用偏旺五行。',
-    details: { helpStrength: 0, drainStrength: 0, seasonBonus: 0 },
-    priority: yongShen.map((element) => ({ element, reason: '偏弱五行优先' })),
-  };
-}
-
-/** Prod dayun-calculator returns `dayuns`; kline historically expected `dayunList`. */
-function normalizeDayunResult(raw: DayunResult | null): DayunResult {
-  if (!raw) {
-    return { startAge: 0, dayuns: [], dayunList: [], currentDayun: null, currentDayunYear: 0, currentDayunIndex: 0 };
-  }
-  const dayunList = resolveDayunList(raw);
-  return {
-    ...raw,
-    dayuns: dayunList,
-    dayunList,
-    currentDayunIndex: raw.currentDayunIndex ?? raw.currentDayun?.index ?? 0,
-  };
-}
-
 export type FortuneStructureBundle = CreateContextInput & {
   /** Analyze-aligned timing + locked calculation identity for this recompute. */
   timing: EffectiveTiming;
@@ -211,43 +128,17 @@ export function buildFortuneContextInput(input: BirthInput): FortuneStructureBun
   const pillarTime = timing.effectiveBirthTime;
   const civilDate = parseBirthDate(clockDate);
 
-  const pillars = calculateFourPillars(pillarDate, pillarTime, timezone, {
-    birthPlace,
-    useTrueSolarTime: false,
-    sect,
-  });
-  const yongShen = inferYongShen(pillars);
-  const dayun = normalizeDayunResult(calculateDayun(
+  const natal = runNatalEngineChain({
     civilDate,
-    clockTime,
+    civilTime: clockTime,
+    pillarDate,
+    pillarTime,
+    timezone,
+    birthPlace,
+    sect,
     gender,
-    pillars[0]?.celestialStem || '',
-    { gan: pillars[1]?.celestialStem || '', zhi: pillars[1]?.earthlyBranch || '' },
-    yongShen,
-    civilDate.getFullYear(),
-  ));
-
-  const kline = generateLifeKlineV6(civilDate, gender, pillars, yongShen, dayun, {
-    fromBirth: true,
-    lifeYears: 80,
   });
-  const anchors = detectKlineAnchorsV6(kline);
-  const elements = elementScoresFromPillars(pillars);
-  const pattern = yongShen?.pattern?.pattern || '正格';
-
-  const baziStr = pillars.map((p) => `${p.celestialStem}${p.earthlyBranch}`);
-  let shenSha: string[] = [];
-  try {
-    const shenShaResult = analyzeShenSha(baziStr);
-    const list = shenShaResult?.list;
-    if (Array.isArray(list)) {
-      shenSha = list
-        .map((item) => (typeof item === 'string' ? item : item?.name || ''))
-        .filter(Boolean);
-    }
-  } catch {
-    shenSha = [];
-  }
+  const { pillars, yongShen, dayun, kline, anchors, shenSha, elements, pattern } = natal;
 
   const birthSignature = buildBirthSignature({
     birthDate: clockDate,

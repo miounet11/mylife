@@ -1,6 +1,7 @@
 /**
  * Canonical roster of Life K-Line calculation engines.
- * Used by system capability (homepage / footer / API) — not marketing copy.
+ * Developer handbook: docs/SYSTEM_ENGINES.md
+ * Public page: /engines
  */
 
 import { YONGSHEN_ENGINE_VERSION } from '@/lib/yongshen-engine-version';
@@ -34,7 +35,88 @@ export type SystemEngineEntry = {
   path: string;
   href: string;
   family: SystemEngineFamily;
+  /** Public export to call. */
+  entry: string;
+  dependsOn: Array<SystemEngineId | 'wuxing-normalize' | 'solar-time' | 'calculation-identity'>;
+  tests: string[];
+  whenToUse: string;
 };
+
+export type SystemSupportModule = {
+  id: string;
+  name: string;
+  path: string;
+  role: string;
+  entry: string;
+};
+
+/** Shared helpers — not product engines, but every engine should reuse these. */
+export const SYSTEM_SUPPORT_MODULES: SystemSupportModule[] = [
+  {
+    id: 'wuxing-normalize',
+    name: '五行键',
+    path: 'lib/wuxing-normalize.ts',
+    role: 'EN/CN 五行唯一比较键。内部 English，展示用 toElementCn。',
+    entry: 'listHasElement / toElementCn / stemToElementEn / branchToElementEn',
+  },
+  {
+    id: 'natal-engine-chain',
+    name: '命盘主链入口',
+    path: 'lib/natal-engine-chain.ts',
+    role: '四柱→用神(司令分日)→大运→K线→神煞。十维/合婚/通书走这条，不要自己拼。',
+    entry: 'runNatalEngineChain / resolveYongShenForPillars',
+  },
+  {
+    id: 'fortune-context',
+    name: '报告上下文',
+    path: 'lib/fortune-context-builder.ts',
+    role: '真太阳时 + natal chain + identity。给报告/十维/合婚预填。',
+    entry: 'buildFortuneContextInput',
+  },
+  {
+    id: 'solar-time',
+    name: '真太阳时',
+    path: 'lib/solar-time.ts',
+    role: '经度校正钟表时间。排盘只校正一次。',
+    entry: 'calculateTrueSolarTime / resolveEffectiveTiming',
+  },
+  {
+    id: 'calculation-identity',
+    name: '计算身份',
+    path: 'lib/calculation-identity.ts',
+    role: '钟表时间 vs 有效排盘时间锁定，升级不得换盘。',
+    entry: 'buildChartCalculationIdentity',
+  },
+  {
+    id: 'yongshen-live',
+    name: '用神热读',
+    path: 'lib/yongshen-live.ts',
+    role: '读旧报告时按当前版本重算用神，不覆盖落库四柱。',
+    entry: 'resolveLiveYongShen',
+  },
+  {
+    id: 'yongshen-presentation',
+    name: '用神表述',
+    path: 'lib/yongshen-presentation.ts',
+    role: '内部 English → 用户中文；调候不并入主用神。',
+    entry: 'formatYongShenPublic / elementsToCn',
+  },
+  {
+    id: 'liuyao',
+    name: '六爻排卦（教学）',
+    path: 'lib/liuyao/cast.ts',
+    role: '三钱本卦/变卦结构，不评分、不断事。',
+    entry: 'castLiuyao',
+  },
+];
+
+export const NATAL_CHAIN_ORDER: SystemEngineId[] = [
+  'pillars',
+  'yongshen',
+  'dayun',
+  'kline',
+  'shensha',
+];
 
 export const SYSTEM_ENGINE_FAMILY_LABEL: Record<SystemEngineFamily, string> = {
   natal: '命盘主链',
@@ -52,6 +134,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/fortune-engine.ts',
     href: '/analyze',
     family: 'natal',
+    entry: 'calculateFourPillars',
+    dependsOn: ['solar-time', 'calculation-identity'],
+    tests: ['lib/__tests__/bazi-pillars-regression.test.ts', 'lib/__tests__/chart-audit.test.ts'],
+    whenToUse: '任何需要年月日时四柱的地方。禁止另写 Solar/Lunar 排盘。',
   },
   {
     id: 'yongshen',
@@ -61,6 +147,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/bazi-analyzer.ts',
     href: '/analyze',
     family: 'natal',
+    entry: 'determineYongShen',
+    dependsOn: ['pillars'],
+    tests: ['lib/__tests__/bazi-analyzer.test.ts', 'lib/__tests__/yongshen-presentation.test.ts'],
+    whenToUse: '必须带 birthDate/hour 以启用司令分日。内部 yongShen[] 是 English。',
   },
   {
     id: 'dayun',
@@ -70,6 +160,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/dayun-calculator.ts',
     href: '/analyze',
     family: 'natal',
+    entry: 'calculateDayun / resolveDayunList',
+    dependsOn: ['pillars', 'yongshen', 'wuxing-normalize'],
+    tests: ['lib/__tests__/dayun-normalize.test.ts'],
+    whenToUse: '传入同一套 yongShen。读列表用 resolveDayunList（dayuns = dayunList）。',
   },
   {
     id: 'kline',
@@ -79,6 +173,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/kline-v6.ts',
     href: '/analyze',
     family: 'natal',
+    entry: 'generateLifeKlineV6 / generateMonthlyKlineV6',
+    dependsOn: ['pillars', 'yongshen', 'dayun', 'wuxing-normalize'],
+    tests: ['lib/__tests__/kline-views.test.ts', 'lib/__tests__/kline-single-exit.test.ts'],
+    whenToUse: '画趋势只走 V6。禁止 Math.sin 人造周期。',
   },
   {
     id: 'shensha',
@@ -88,6 +186,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/shensha-calculator.ts',
     href: '/analyze',
     family: 'natal',
+    entry: 'calculateShenSha',
+    dependsOn: ['pillars'],
+    tests: ['lib/__tests__/bazi-analyzer.test.ts'],
+    whenToUse: '辅助验证，不得覆盖用神/大运主判。',
   },
   {
     id: 'chart-audit',
@@ -97,6 +199,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/chart-audit.ts',
     href: '/docs/birth-info',
     family: 'natal',
+    entry: 'buildChartAudit',
+    dependsOn: ['pillars', 'solar-time'],
+    tests: ['lib/__tests__/chart-audit.test.ts'],
+    whenToUse: '用户质疑四柱或节气边界时并排重算。',
   },
   {
     id: 'fortune-orchestrator',
@@ -106,6 +212,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/fortune-engine.ts',
     href: '/analyze',
     family: 'natal',
+    entry: 'analyzeFortune',
+    dependsOn: ['pillars', 'yongshen', 'dayun', 'kline', 'shensha'],
+    tests: ['lib/__tests__/report-pro-view.test.ts', 'lib/__tests__/report-quality.test.ts'],
+    whenToUse: '完整报告落库。新工具不要复制这份编排，走 natal chain。',
   },
   {
     id: 'hehun',
@@ -115,6 +225,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/hehun-engine.ts',
     href: '/hehun',
     family: 'tool',
+    entry: 'analyzeHehun / personFromBirthInput',
+    dependsOn: ['pillars', 'yongshen', 'dayun', 'wuxing-normalize'],
+    tests: ['lib/__tests__/hehun-prefill.test.ts', 'lib/__tests__/hehun-present-result.test.ts'],
+    whenToUse: '双方盘对照。用 normalizeElementList 比用忌，勿另起纳音体系。',
   },
   {
     id: 'naming',
@@ -124,6 +238,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/naming/kangxi-engine.ts',
     href: '/tools/naming',
     family: 'tool',
+    entry: 'generatePersonNames / scoreName',
+    dependsOn: ['yongshen', 'wuxing-normalize'],
+    tests: ['lib/__tests__/naming-generate.test.ts'],
+    whenToUse: '用神可传 English 或中文。字库五行是中文，比较前 toElementCn。',
   },
   {
     id: 'fengshui',
@@ -133,6 +251,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/fengshui/space',
     href: '/tools/fengshui-space',
     family: 'tool',
+    entry: 'space report / site-advise APIs',
+    dependsOn: ['pillars', 'yongshen'],
+    tests: ['lib/__tests__/fengshui-engine.test.ts', 'lib/__tests__/fengshui-full-report.test.ts'],
+    whenToUse: '空间场与人宅合参。禁疾病寿命定命。',
   },
   {
     id: 'xiangxue',
@@ -142,6 +264,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/xiangxue/engines.ts',
     href: '/tools/physiognomy',
     family: 'tool',
+    entry: 'heuristicXiangxue',
+    dependsOn: [],
+    tests: [],
+    whenToUse: '只描述可见结构。可选用神作对照，不覆盖命盘。',
   },
   {
     id: 'ziwei',
@@ -151,6 +277,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/ziwei/edu-chart.ts',
     href: '/tools/ziwei-edu',
     family: 'tool',
+    entry: 'buildEduZiweiChart',
+    dependsOn: ['pillars'],
+    tests: ['lib/__tests__/ziwei-edu-chart.test.ts'],
+    whenToUse: '教学盘。不替代四柱主链。',
   },
   {
     id: 'almanac',
@@ -160,6 +290,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/almanac',
     href: '/almanac',
     family: 'time',
+    entry: 'buildAlmanacDayPack / buildPersonalDayOverlay',
+    dependsOn: ['pillars', 'yongshen', 'wuxing-normalize'],
+    tests: [],
+    whenToUse: '当日宜忌 × 日主用神。权重低于命盘。',
   },
   {
     id: 'astro',
@@ -169,6 +303,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/astro',
     href: '/astro',
     family: 'time',
+    entry: 'buildAstroDailyMatchPack',
+    dependsOn: ['almanac', 'yongshen'],
+    tests: ['lib/__tests__/astro-daily-match.test.ts'],
+    whenToUse: '大众入口。有生辰时叠个人层，仍不得压过四柱结论。',
   },
   {
     id: 'dimensions',
@@ -178,6 +316,10 @@ export const SYSTEM_ENGINES: SystemEngineEntry[] = [
     path: 'lib/dimensions/engine-pack.ts',
     href: '/dimensions',
     family: 'tool',
+    entry: 'buildDimensionEnginePack',
+    dependsOn: ['pillars', 'yongshen', 'dayun', 'kline'],
+    tests: ['lib/__tests__/dimension-advisors.test.ts', 'lib/__tests__/dimension-smoke-validate.test.ts'],
+    whenToUse: '必须 buildFortuneContextInput / natal chain，禁止维度自己排盘。',
   },
 ];
 
@@ -200,4 +342,8 @@ export function getSystemEngineCatalog() {
 
 export function engineCapabilityLine(): string {
   return `命理引擎 ${SYSTEM_ENGINE_COUNT} 套（排盘/用神/大运/K线/合婚/通书…）`;
+}
+
+export function getSystemEngine(id: SystemEngineId): SystemEngineEntry | undefined {
+  return SYSTEM_ENGINES.find((e) => e.id === id);
 }
