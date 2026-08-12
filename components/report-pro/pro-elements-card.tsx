@@ -17,16 +17,17 @@ export default function ProElementsCard({
         <div>
           <h2 className="text-[14px] font-semibold text-[color:var(--ink-1)]">喜用与趋利避害</h2>
           <p className="mt-0.5 text-[12px] text-[color:var(--ink-5)]">
-            顺着
+            先定
             <ProTermTip term="用神" />
-            /
+            （扶抑主线），再看
             <ProTermTip term="喜神" />
-            ，躲开
+            /
+            调候，躲开
             <ProTermTip term="忌神" />
             {elements.strengthDesc ? (
               <span className="ml-1 text-[color:var(--ink-4)]">
                 · {elements.strengthDesc}
-                {typeof elements.strengthScore === 'number' ? ` ${elements.strengthScore}` : ''}
+                {elements.actionHint ? ` · ${elements.actionHint}` : ''}
               </span>
             ) : null}
           </p>
@@ -46,20 +47,35 @@ export default function ProElementsCard({
 
       <p className="mt-3 text-[13px] leading-[1.65] text-[color:var(--ink-2)]">{elements.plainSummary}</p>
       <p className="mt-1.5 text-[12px] leading-[1.5] text-[color:var(--ink-5)]">
-        忌神是高压时别硬刚的提醒，不是诅咒。
+        忌神是高压时别硬刚的提醒，不是诅咒。调候是季节调节，不替代主用神。
       </p>
 
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[color:var(--ink-2)]">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 text-[13px] text-[color:var(--ink-2)]">
         {elements.yongShen.map((el) => (
-          <span key={`y-${el}`} title="用神：对你最有帮助的方向" className="font-medium text-[color:var(--brand-strong)]">
+          <span
+            key={`y-${el}`}
+            title="用神（扶抑主线）：对你最有帮助的方向"
+            className="font-medium text-[color:var(--brand-strong)]"
+          >
             用神 · {el}
           </span>
         ))}
-        {elements.xiShen.map((el) => (
-          <span key={`x-${el}`} title="喜神：辅助用神的有利因素">
-            喜神 · {el}
+        {elements.tiaohuoElement ? (
+          <span
+            key={`t-${elements.tiaohuoElement}`}
+            title={elements.tiaohuoNote || '调候：季节调节，辅助而非主用'}
+            className="text-[color:var(--ink-3)]"
+          >
+            调候 · {elements.tiaohuoElement}
           </span>
-        ))}
+        ) : null}
+        {elements.xiShen
+          .filter((el) => el !== elements.tiaohuoElement)
+          .map((el) => (
+            <span key={`x-${el}`} title="喜神：辅助用神的有利因素">
+              喜神 · {el}
+            </span>
+          ))}
         {elements.jiShen.map((el) => (
           <span key={`j-${el}`} title="忌神：容易消耗你的方向" className="text-[color:var(--ink-3)]">
             忌神 · {el}
@@ -72,8 +88,8 @@ export default function ProElementsCard({
 
       {chain.length > 0 ? (
         <div className="mt-3 rounded-[10px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken,#f5f7f2)]/50 px-3 py-2.5">
-          <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--ink-5)]">
-            引擎怎么判的（可核对）
+          <div className="text-[11px] font-medium text-[color:var(--ink-5)]">
+            怎么判的（得令 → 得地得势 → 扶抑）
           </div>
           <ol className="mt-1.5 list-decimal space-y-1 pl-4">
             {chain.map((line) => (

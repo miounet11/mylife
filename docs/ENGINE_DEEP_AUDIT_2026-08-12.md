@@ -33,9 +33,11 @@ Classical Zi Ping:
 - Help/drain: **天干 + 地支藏干** (年/月/时柱 scales; 日支由通根处理)
 - Roots via 藏干 weighted
 - Boundary soft-clamp when drain≫help near strong threshold
-- Engine stamp: `2026-08-12-siling-branch-v2`
+- Engine stamp: `2026-08-12-user-facing-v3`
+- **User-facing**: 主用神 = 扶抑 only；调候单独标注，不并入用神列表（避免「身弱却见火用神」颠覆大众心智）
+- reasonChain uses 得令/得地/得势 plain language (no 司令 jargon in UI)
 
-**Verdict:** Aligns with 月令优先 + 三维度 + 司令分野 + 得势含藏干.
+**Verdict:** Aligns with 月令优先 + 三维度 + 司令分野 + 得势含藏干；表述贴合普及扶抑读法.
 
 ### 1.2 用神（扶抑 + 调候 + 通关）
 

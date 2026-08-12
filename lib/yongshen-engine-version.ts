@@ -4,7 +4,7 @@
  */
 
 /** Bump this when lib/bazi-analyzer 用神/强弱 logic changes. */
-export const YONGSHEN_ENGINE_VERSION = '2026-08-12-siling-branch-v2';
+export const YONGSHEN_ENGINE_VERSION = '2026-08-12-user-facing-v3';
 
 export function isYongShenVersionCurrent(version: string | null | undefined): boolean {
   return `${version || ''}`.trim() === YONGSHEN_ENGINE_VERSION;

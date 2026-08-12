@@ -73,7 +73,7 @@ export interface ProKlinePeak {
   label: string;
 }
 
-/** 喜用忌 — 小白话 */
+/** 喜用忌 — 小白话（先扶抑、后调候，贴合大众心智） */
 export interface ProElementGuide {
   yongShen: string[];
   xiShen: string[];
@@ -83,10 +83,17 @@ export interface ProElementGuide {
   /** 避害：尽量少做什么 */
   avoidList: string[];
   plainSummary: string;
-  /** 引擎理由链（月令/帮扶克泄/调候/取用） */
+  /** 用户向理由链（得令/得地/得势 → 扶抑） */
   reasonChain?: string[];
   strengthDesc?: string;
   strengthScore?: number;
+  /** 宜生扶 / 宜克泄 */
+  actionHint?: string;
+  /** 一句总览 */
+  headline?: string;
+  /** 调候附注（与主用神分列） */
+  tiaohuoNote?: string;
+  tiaohuoElement?: string;
   /** 用神算法版本落后，建议整盘重算 */
   yongShenStale?: boolean;
   yongShenEngineVersion?: string;
@@ -781,19 +788,32 @@ function buildElementGuide(params: Parameters<typeof buildProReportView>[0]): Pr
     avoidList.push('避免在低分窗口同时开太多战线或高杠杆决策。');
   }
 
-  const strengthHint = liveYs.strengthDesc
-    ? `当前结构判为「${liveYs.strengthDesc}」${liveYs.score ? `（强弱分 ${liveYs.score}）` : ''}。`
-    : '';
+  // 大众读法：先说强弱与扶抑主用，调候单独一句，避免「身弱却用火」的认知冲突
+  const structureYong = yongShen;
+  const tiaohuoEl = liveYs.tiaohuoElement;
+  const strengthHint = liveYs.headline
+    ? `${liveYs.headline}。`
+    : liveYs.strengthDesc
+      ? `当前判为「${liveYs.strengthDesc}」${liveYs.actionHint ? `，${liveYs.actionHint}` : ''}。`
+      : '';
 
   const plainSummary = [
     strengthHint,
-    favored.length
-      ? `对你更有帮助的方向（用神/喜神）是「${favored.join('、')}」：做事、选合作、排时间，尽量往这些气质靠。`
+    structureYong.length
+      ? `主用神是「${structureYong.join('、')}」（扶抑主线）：做事、选合作、排时间，优先往这些方向靠。`
       : '用神信息偏少时，先按「低后悔成本」行动：能验证再加码。',
-    jiShen.length
-      ? `更容易消耗你的方向（忌神）是「${jiShen.join('、')}」：不是永远不能碰，而是别在高压窗口硬刚、别一次梭哈。`
+    liveYs.tiaohuoNote
+      ? `调候提醒：${liveYs.tiaohuoNote}`
+      : tiaohuoEl
+        ? `另有调候喜「${tiaohuoEl}」，作季节调节，不替代上面的主用神。`
+        : '',
+    xiShen.filter((e) => e !== tiaohuoEl).length
+      ? `喜神（辅助）还可兼顾「${xiShen.filter((e) => e !== tiaohuoEl).join('、')}」。`
       : '',
-    '读法很简单：绿色多做、红色少硬推；拿不准时，先做一件 2–4 周能看到反馈的小事。这就是趋利避害，不需要故弄玄虚。',
+    jiShen.length
+      ? `忌神是「${jiShen.join('、')}」：不是永远不能碰，而是别在高压窗口硬刚、别一次梭哈。`
+      : '',
+    '读法：先认准主用神，再看调候/喜神；拿不准时，先做一件 2–4 周能看到反馈的小事。',
   ]
     .filter(Boolean)
     .join('');
@@ -804,10 +824,14 @@ function buildElementGuide(params: Parameters<typeof buildProReportView>[0]): Pr
     jiShen,
     doList: uniqueStrings(doList).slice(0, 8),
     avoidList: uniqueStrings(avoidList).slice(0, 8),
-    plainSummary: presentLong(plainSummary, 520),
+    plainSummary: presentLong(plainSummary, 560),
     reasonChain: liveYs.reasonChain || [],
     strengthDesc: liveYs.strengthDesc || undefined,
     strengthScore: liveYs.score || undefined,
+    actionHint: liveYs.actionHint,
+    headline: liveYs.headline,
+    tiaohuoNote: liveYs.tiaohuoNote,
+    tiaohuoElement: tiaohuoEl,
     yongShenStale: liveYs.stale,
     yongShenEngineVersion: liveYs.liveVersion,
   };

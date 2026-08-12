@@ -54,9 +54,10 @@ describe('determineYongShen + 司令 / 藏干', () => {
       `癸司令 seasonBonus ${waterCmd!.details.seasonBonus} should exceed 本气 ${base!.details.seasonBonus}`,
     );
     assert.equal(waterCmd!.details.siling?.gan, '癸');
+    // 用户向表述：说「以水当令/为主气」，不抛司令术语
     assert.ok(
-      waterCmd!.threeGain?.reasonChain?.some((line) => /司令|余气|癸/.test(line)),
-      'reason chain should mention 司令/癸',
+      waterCmd!.threeGain?.reasonChain?.some((line) => /月令丑.*水/.test(line)),
+      'plain reason should mention 丑月 + 水',
     );
   });
 
@@ -69,8 +70,23 @@ describe('determineYongShen + 司令 / 藏干', () => {
       `branch drain should push drainStrength, got ${withBranch!.details.drainStrength}`,
     );
     assert.ok(
-      withBranch!.threeGain?.reasonChain?.some((line) => /干支帮扶|克泄/.test(line)),
+      withBranch!.threeGain?.reasonChain?.some((line) => /生扶|克泄|通根/.test(line)),
     );
+  });
+
+  it('身弱/偏弱主用神是印比，调候火不挤进用神列表（符合大众心智）', () => {
+    const result = determineYongShen(['丙戌', '辛丑', '甲辰', '乙丑']);
+    assert.ok(result);
+    // 扶抑：水木
+    assert.ok(result!.yongShen.includes('water'));
+    assert.ok(result!.yongShen.includes('wood'));
+    // 冬月调候火：可在喜神/调候字段，但不应冒充主用神颠覆「身弱喜印比」
+    assert.ok(!result!.yongShen.includes('fire'), `yong must not list fire as peer: ${result!.yongShen}`);
+    assert.ok(result!.tiaohuo?.element === 'fire');
+    assert.ok(result!.userFacing?.tiaohuoNote);
+    assert.match(result!.userFacing!.headline, /生扶|水|木/);
+    assert.ok(result!.threeGain?.reasonChain?.some((l) => /扶抑|印|比劫|生扶/.test(l)));
+    assert.ok(result!.threeGain?.reasonChain?.some((l) => /调候/.test(l)));
   });
 });
 
@@ -117,9 +133,11 @@ describe('determineYongShen', () => {
       `weak/neutral 甲 should favor water/wood yong, got ${result!.yongShen.join(',')}`,
     );
     assert.ok(
-      result!.threeGain?.reasonChain?.some((line) => /失令|本气/.test(line)),
-      'reason chain should mention month-order (本气/失令)',
+      result!.threeGain?.reasonChain?.some((line) => /失令|当令|月令/.test(line)),
+      'reason chain should mention month-order in plain language',
     );
+    // 主用神不含火（调候单独说）
+    assert.ok(!result!.yongShen.includes('fire'));
   });
 
   it('detects weak day master and favors resource/peer elements', () => {

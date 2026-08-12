@@ -23,6 +23,20 @@ export interface YongShenResult {
   pattern?: { pattern: string; description: string };
   confidence?: { score: number; boundary?: string };
   threeGain?: { reasonChain: string[] };
+  /**
+   * 面向用户的表述（先扶抑、后调候，贴近大众心智）。
+   * 引擎内部仍用 score/藏干/司令；此处只负责「怎么说」。
+   */
+  userFacing?: {
+    /** 一句总览：身偏弱，宜水木生扶 */
+    headline: string;
+    /** 宜生扶 | 宜克泄 | 宜调候补缺 */
+    actionHint: string;
+    /** 扶抑主用（中文五行） */
+    structureYong: string[];
+    /** 调候说明（有则显示，不与主用混列） */
+    tiaohuoNote?: string;
+  };
   details: {
     helpStrength: number;
     drainStrength: number;
@@ -603,6 +617,26 @@ function detectTongguan(normalized: Record<Element, number>): YongShenResult['to
   return undefined;
 }
 
+/** 十神角色白话（相对日主）— 大众最熟的读法 */
+function tenGodRolePlain(dmElement: Element, el: Element): string {
+  if (el === dmElement) return '比劫帮身';
+  if (el === GENERATED_BY[dmElement]) return '印星生身';
+  if (el === GENERATES[dmElement]) return '食伤泄秀';
+  if (el === CONTROLS[dmElement]) return '财星耗身';
+  if (el === CONTROLLED_BY[dmElement]) return '官杀克身';
+  return '五行调节';
+}
+
+function strengthActionHint(strength: string, strengthDesc: string): string {
+  if (strength === 'very_strong' || strength === 'strong' || strengthDesc.includes('偏旺')) {
+    return '宜克泄（官杀、财、食伤一类）';
+  }
+  if (strength === 'very_weak' || strength === 'weak' || strengthDesc.includes('偏弱')) {
+    return '宜生扶（印、比劫一类）';
+  }
+  return '宜补偏调候，不强求一边倒';
+}
+
 function buildYongXiJiQiu(
   dmElement: Element,
   strength: string,
@@ -640,14 +674,14 @@ function buildYongXiJiQiu(
     ji = uniqElements([GENERATES[dmElement], CONTROLS[dmElement], CONTROLLED_BY[dmElement]]);
     qiu = uniqElements([CONTROLS[dmElement], CONTROLLED_BY[dmElement]]);
   } else {
-    // 中和：按五行偏枯补缺；若印比偏弱则仍以扶身为先（避免调候火盖过水木）
+    // 中和：按五行偏枯补缺；若印比偏弱则仍以扶身为先
     const selfGroup = normalized[dmElement] + normalized[GENERATED_BY[dmElement]];
     const drainGroup =
       normalized[GENERATES[dmElement]] +
       normalized[CONTROLS[dmElement]] +
       normalized[CONTROLLED_BY[dmElement]];
     if (selfGroup + 6 < drainGroup) {
-      // 中和偏弱：扶身（印/比）
+      // 中和偏弱：扶身（印/比）— 大众心智：偏弱就喜印比
       yong = uniqElements([GENERATED_BY[dmElement], dmElement]);
       xi = uniqElements([GENERATED_BY[dmElement], dmElement, GENERATES[dmElement]]);
       ji = uniqElements([CONTROLLED_BY[dmElement], CONTROLS[dmElement]]);
@@ -668,15 +702,17 @@ function buildYongXiJiQiu(
     }
   }
 
-  // 调候：并入用神，但不挤掉扶抑主线的前两位（冬木仍要火，但不能只剩火）
-  if (tiaohuo) {
-    const te = tiaohuo.element as Element;
-    if (!yong.includes(te)) {
-      if (yong.length >= 2) yong = uniqElements([yong[0], yong[1], te]).slice(0, 3);
-      else yong = uniqElements([...yong, te]).slice(0, 3);
-    }
+  /**
+   * 调候：不并入主「用神」列表。
+   * 用户心智：身弱=喜印比；若把冬火与水木并列成「用神」，会像系统自相矛盾。
+   * 普及读法：先扶抑定主用，调候作喜神/附注（「另需火暖局」）。
+   * 例外：扶抑主用本身已是该五行（如夏月身旺用水），则保持在用神，不再重复塞喜神。
+   */
+  const tiaohuoEl = tiaohuo?.element as Element | undefined;
+  if (tiaohuoEl && !yong.includes(tiaohuoEl) && !ji.includes(tiaohuoEl)) {
+    xi = uniqElements([tiaohuoEl, ...xi]);
   }
-  if (tongguan && !xi.includes(tongguan.element as Element)) {
+  if (tongguan && !xi.includes(tongguan.element as Element) && !yong.includes(tongguan.element as Element)) {
     xi = uniqElements([tongguan.element as Element, ...xi]);
   }
 
@@ -686,13 +722,101 @@ function buildYongXiJiQiu(
   qiu = qiu.filter((el) => !yong.includes(el) && !xi.includes(el)).slice(0, 2);
 
   const priority = [
-    ...yong.map((element) => ({ element, reason: '用神：扶抑/格局/调候主线' })),
-    ...xi.map((element) => ({ element, reason: '喜神：辅助用神成势' })),
-    ...ji.map((element) => ({ element, reason: '忌神：加重失衡' })),
+    ...yong.map((element) => ({
+      element,
+      reason: `用神（扶抑）：${tenGodRolePlain(dmElement, element)}`,
+    })),
+    ...xi.map((element) => {
+      const isTiao = tiaohuoEl === element;
+      const isTong = tongguan?.element === element;
+      const tag = isTiao ? '喜神（调候）' : isTong ? '喜神（通关）' : '喜神';
+      return { element, reason: `${tag}：${tenGodRolePlain(dmElement, element)}` };
+    }),
+    ...ji.map((element) => ({
+      element,
+      reason: `忌神：${tenGodRolePlain(dmElement, element)}，易加重失衡`,
+    })),
     ...qiu.map((element) => ({ element, reason: '仇神：助忌伤用' })),
   ];
 
   return { yongShen: yong, xiShen: xi, jiShen: ji, qiuShen: qiu, priority };
+}
+
+/**
+ * 用大众最熟的「得令 / 得地 / 得势 → 身强身弱 → 扶抑用神」叙事写理由链。
+ * 内部司令/藏干只翻译成日常用语，不抛术语颠覆认知。
+ */
+function buildPlainReasonChain(params: {
+  dmElement: Element;
+  monthZhi: string;
+  siling: SilingYuan;
+  seasonBonus: number;
+  rootStrength: number;
+  help: number;
+  drain: number;
+  strengthDesc: string;
+  pattern: { pattern: string; description: string } | null;
+  yong: Element[];
+  ji: Element[];
+  tiaohuo?: YongShenResult['tiaohuo'];
+  tongguan?: YongShenResult['tongguan'];
+}): string[] {
+  const {
+    dmElement, monthZhi, siling, seasonBonus, rootStrength,
+    help, drain, strengthDesc, pattern, yong, ji, tiaohuo, tongguan,
+  } = params;
+  const dmCn = EN_TO_CN[dmElement];
+  const cmdCn = EN_TO_CN[siling.element];
+
+  // 1) 月令 — 得令/失令（不提司令分野术语）
+  let monthLine: string;
+  if (seasonBonus >= 8) {
+    monthLine = `月令${monthZhi}以${cmdCn}当令，日主${dmCn}得令，根基偏旺`;
+  } else if (seasonBonus < 0) {
+    monthLine = `月令${monthZhi}以${cmdCn}当令，日主${dmCn}偏失令（不得令）`;
+  } else {
+    monthLine = `月令${monthZhi}以${cmdCn}为主气，日主${dmCn}平令，不算特别旺也不算特别弱`;
+  }
+
+  // 2) 得地 / 得势
+  const rootWord =
+    rootStrength >= 12 ? '通根较深（得地）'
+      : rootStrength >= 6 ? '有一定通根'
+        : rootStrength > 0 ? '通根偏浅'
+          : '几乎无根';
+  let forceLine: string;
+  if (drain > help * 1.15) {
+    forceLine = `${rootWord}；生扶弱于克泄耗（不得势），整体偏消耗`;
+  } else if (help > drain * 1.15) {
+    forceLine = `${rootWord}；生扶重于克泄耗（得势），整体偏有力`;
+  } else {
+    forceLine = `${rootWord}；生扶与克泄大致相当`;
+  }
+
+  // 3) 结论强弱 + 扶抑
+  const yongText = yong.map((e) => {
+    const cn = EN_TO_CN[e];
+    return `${cn}（${tenGodRolePlain(dmElement, e)}）`;
+  }).join('、');
+  const jiText = ji.slice(0, 2).map((e) => EN_TO_CN[e]).join('、');
+  const patternName = pattern?.pattern && !pattern.pattern.includes('正格')
+    ? `，格局倾向「${pattern.pattern}」`
+    : '';
+  const structureLine = `综合为「${strengthDesc}」${patternName} → 按扶抑：主用神取${yongText || '结构综合'}${jiText ? `，忌${jiText}` : ''}`;
+
+  const chain = [monthLine, forceLine, structureLine];
+
+  // 4) 调候附注（不与主用混谈）
+  if (tiaohuo) {
+    const te = EN_TO_CN[tiaohuo.element as Element] || tiaohuo.element;
+    chain.push(`另需调候：${tiaohuo.reason}（喜${te}作辅助，不改变上面扶抑主线）`);
+  }
+  if (tongguan) {
+    const te = EN_TO_CN[tongguan.element as Element] || tongguan.element;
+    chain.push(`通关：${tongguan.reason}（喜${te}化对峙）`);
+  }
+
+  return chain;
 }
 
 function buildConfidence(score: number): YongShenResult['confidence'] {
@@ -733,9 +857,6 @@ export function determineYongShen(
   if (!dmElement) return null;
 
   const monthZhi = pillars[1].zhi;
-  const monthHidden = ZHI_CANG_GAN[monthZhi] || [];
-  const monthMainGan = monthHidden[0] || '';
-  const monthMainEl = monthMainGan ? toElement(monthMainGan) : null;
 
   const dayInMonth = resolveDayInMonthOption(options);
   const siling = resolveSilingYuan(monthZhi, dayInMonth);
@@ -772,21 +893,36 @@ export function determineYongShen(
   );
 
   const confidence = buildConfidence(score);
-  const commandLabel = siling.fromSiling
-    ? `司令${siling.role}${siling.gan}${EN_TO_CN[siling.element]}（月内第${siling.dayInMonth}日）`
-    : `本气${monthMainGan || siling.gan}${monthMainEl ? EN_TO_CN[monthMainEl] : EN_TO_CN[siling.element]}`;
-  const orderWord =
-    seasonBonus >= 8 ? '得令/得助' : seasonBonus < 0 ? '失令偏' : '平令';
-  const monthOrderNote = `月令${monthZhi}${commandLabel}，日主${EN_TO_CN[dmElement]}${orderWord}（令气${seasonBonus > 0 ? '+' : ''}${seasonBonus}）`;
-  const threeGain: YongShenResult['threeGain'] = {
-    reasonChain: [
-      monthOrderNote,
-      `通根${Math.round(rootStrength)}，干支帮扶${help}、克泄${drain}${drain > help ? '（克泄重于帮扶）' : help > drain ? '（帮扶重于克泄）' : ''}`,
-      tiaohuo ? `调候：${tiaohuo.reason}` : '调候需求不显',
-      tongguan ? `通关：${tongguan.reason}` : '无明显两神交战',
-      `综合取用：${yongShen.map((e) => EN_TO_CN[e as Element]).join('、')}`,
-    ],
-  };
+  const yongEls = yongShen as Element[];
+  const jiEls = jiShen as Element[];
+  const reasonChain = buildPlainReasonChain({
+    dmElement,
+    monthZhi,
+    siling,
+    seasonBonus,
+    rootStrength,
+    help,
+    drain,
+    strengthDesc,
+    pattern,
+    yong: yongEls,
+    ji: jiEls,
+    tiaohuo,
+    tongguan,
+  });
+  const threeGain: YongShenResult['threeGain'] = { reasonChain };
+
+  const actionHint = strengthActionHint(strength, strengthDesc);
+  const structureYongCn = yongEls.map((e) => EN_TO_CN[e]);
+  const tiaohuoNote = tiaohuo
+    ? `${tiaohuo.reason}（${EN_TO_CN[tiaohuo.element as Element] || tiaohuo.element}作调候辅助，不是扶抑主用神）`
+    : undefined;
+  const headline = `日主${EN_TO_CN[dmElement]}「${strengthDesc}」，${actionHint}；主用神${structureYongCn.join('、') || '综合'}`;
+
+  let analysis = buildAnalysisText(dmElement, strengthDesc, pattern, yongEls, jiEls);
+  if (tiaohuo) {
+    analysis = analysis.replace(/。$/, '') + `；${tiaohuo.reason}。`;
+  }
 
   return {
     dayMaster,
@@ -798,12 +934,18 @@ export function determineYongShen(
     xiShen,
     jiShen,
     qiuShen,
-    analysis: buildAnalysisText(dmElement, strengthDesc, pattern, yongShen as Element[], jiShen as Element[]),
+    analysis,
     tiaohuo,
     tongguan,
-    pattern: pattern || { pattern: '正格', description: '日主强弱适中，按扶抑、调候、通关综合取用。' },
+    pattern: pattern || { pattern: '正格', description: '日主强弱适中，按扶抑取用；调候、通关作辅助。' },
     confidence,
     threeGain,
+    userFacing: {
+      headline,
+      actionHint,
+      structureYong: structureYongCn,
+      tiaohuoNote,
+    },
     details: {
       helpStrength: Math.round(help * 10) / 10,
       drainStrength: Math.round(drain * 10) / 10,

@@ -60,6 +60,13 @@ export type YongShenPresentation = {
   score: number;
   reasonChain: string[];
   analysis: string;
+  /** 一句用户向总览 */
+  headline?: string;
+  /** 宜生扶 / 宜克泄 */
+  actionHint?: string;
+  /** 调候附注（与主用神分列） */
+  tiaohuoNote?: string;
+  tiaohuoElement?: string;
   stale: boolean;
   storedVersion: string | null;
   liveVersion: string;
@@ -117,6 +124,10 @@ export function resolveYongShenPresentation(result: unknown): YongShenPresentati
     (!storedVersion || !isYongShenVersionCurrent(storedVersion));
 
   if (live) {
+    const uf = live.userFacing;
+    const tiaohuoEl = live.tiaohuo?.element
+      ? EN_TO_CN[`${live.tiaohuo.element}`] || `${live.tiaohuo.element}`
+      : undefined;
     return {
       yongShen: toCnList(live.yongShen),
       xiShen: toCnList(live.xiShen),
@@ -126,6 +137,10 @@ export function resolveYongShenPresentation(result: unknown): YongShenPresentati
       score: live.score,
       reasonChain: live.threeGain?.reasonChain || [],
       analysis: live.analysis || '',
+      headline: uf?.headline,
+      actionHint: uf?.actionHint,
+      tiaohuoNote: uf?.tiaohuoNote,
+      tiaohuoElement: tiaohuoEl && ['木', '火', '土', '金', '水'].includes(tiaohuoEl) ? tiaohuoEl : undefined,
       stale,
       storedVersion,
       liveVersion,
