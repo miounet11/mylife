@@ -222,6 +222,10 @@ export function buildReportFollowupSuggestions(params: {
   correctionLevel?: 'healthy' | 'watch' | 'action' | null;
   correctionSummary?: string | null;
   pendingOverdueEvent?: { title?: string; date?: string; overdueDays?: number } | null;
+  /** 主用神（扶抑） */
+  yongShen?: string[] | null;
+  strengthDesc?: string | null;
+  tiaohuoNote?: string | null;
 } = {}): ReportFollowupSuggestion[] {
   const suggestions: ReportFollowupSuggestion[] = [];
   const name = params.publicName || '我';
@@ -233,6 +237,18 @@ export function buildReportFollowupSuggestions(params: {
       label: `回收"${pe.title.slice(0, 8)}"`,
       question: `${pe.date} 我预设的"${pe.title}"已经过去 ${pe.overdueDays} 天，结果如何？请帮我对照原报告的判断，看哪一项验证准了、哪一项偏了，下次同类事件该怎么修正。`,
       intent: 'event-validation',
+    });
+  }
+
+  // ────── 优先级 1.5：喜忌张力（最容易聊下去、也最容易误读的点）──────
+  const yong = (params.yongShen || []).filter(Boolean);
+  if (yong.length && params.strengthDesc) {
+    suggestions.push({
+      label: `${params.strengthDesc}怎么用`,
+      question: `${name}这份盘判为「${params.strengthDesc}」，主用神是「${yong.join('、')}」${
+        params.tiaohuoNote ? `；另有调候：${params.tiaohuoNote}` : ''
+      }。请不要再复述一遍喜忌列表，直接讲：接下来 30 天我该怎么把主用神落到一件可验证的事上？调候和主用神打架时听谁的？`,
+      intent: 'pattern',
     });
   }
 

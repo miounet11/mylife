@@ -1317,6 +1317,7 @@ export default function AIAssistantChat({
               }
               onCopy={handleCopyMessage}
               copied={copiedMessageId === message.id}
+              onAskQuestion={handlePromptClick}
             />
           ))}
 

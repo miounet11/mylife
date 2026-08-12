@@ -88,6 +88,7 @@ import ReportMetaSidebar from '@/components/report/report-meta-sidebar';
 import { getCurrentUserId } from '@/lib/user-utils';
 import { resolveTimingProfileForFortune } from '@/lib/life-timing/resolve-timing-profile';
 import { determineYongShen, analyzeShenSha } from '@/lib/bazi-analyzer';
+import { resolveYongShenPresentation } from '@/lib/yongshen-live';
 import { calculateDayun } from '@/lib/dayun-calculator';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -766,6 +767,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     return { title: oldest.title, date: oldest.date, overdueDays };
   })();
 
+  const liveYongForChat = resolveYongShenPresentation(result);
   const reportFollowupSuggestions = buildReportFollowupSuggestions({
     publicName,
     patternType: result.pattern?.type,
@@ -778,6 +780,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     correctionLevel: correctionInsight?.level,
     correctionSummary: correctionInsight?.summary,
     pendingOverdueEvent,
+    yongShen: liveYongForChat.yongShen,
+    strengthDesc: liveYongForChat.strengthDesc || liveYongForChat.actionHint,
+    tiaohuoNote: liveYongForChat.tiaohuoNote,
   });
 
   // v5-B5 (2026-05-08): 优先使用缓存的追问建议，否则用确定性建议

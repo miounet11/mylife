@@ -489,9 +489,10 @@ async function generateAIResponse(
     systemContent = withTeacher.systemContent;
   }
 
-  // Structure contract always (product law); skill/truth anchor only when not stream
-  // (stream already has EFC in teacher block — avoid triple-duplicate of dayMaster/yongShen)
-  systemContent = appendAnswerStructureContract(systemContent);
+  // Structure contract: first user turn = decision card; later turns = depth (no form replay)
+  const priorUserTurns = userHistory.filter((item) => item.role === 'user').length;
+  const isFollowupTurn = priorUserTurns >= 1;
+  systemContent = appendAnswerStructureContract(systemContent, { followup: isFollowupTurn });
 
   if (!streamMode) {
     try {
@@ -547,7 +548,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
           model,
           messages: baseMessages,
           temperature: 0.65,
-          maxTokens: 900,
+          maxTokens: isFollowupTurn ? 1600 : 1200,
           reasoningEffort: 'minimal',
         },
         {
@@ -572,7 +573,7 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
           model,
           messages: baseMessages,
           temperature: 0.7,
-          maxTokens: 1200,
+          maxTokens: isFollowupTurn ? 1800 : 1400,
           reasoningEffort: 'low',
         },
         {
@@ -647,8 +648,8 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
     let structure = scoreChatAnswerStructure(finalAnswer);
     let structureRepaired = false;
 
-    // Soft one-shot repair when first pass is structure-thin (decision product quality).
-    if (structure.isThin && finalAnswer.length >= 40) {
+    // Soft one-shot repair: first turn only. Follow-ups must stay conversational (not rewritten into a form).
+    if (!isFollowupTurn && structure.isThin && finalAnswer.length >= 40) {
       try {
         console.log('[LLM Chat] structure thin → one repair pass');
         const repairCompletion = await createOpenAiCompatibleChatCompletion(

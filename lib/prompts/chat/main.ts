@@ -54,10 +54,12 @@ const HARD_CONSTRAINTS = [
 ];
 
 const SOFT_PREFERENCES = [
-  '回答结构默认：1) 判断依据 2) 当前阶段建议 3) 风险提醒 4) 若适合，建议把节点落成事件。',
+  '首轮：判断依据 → 结论 → 阶段动作 → 风险 → 验证点 → 还想问。',
+  '追问轮：不要重复决策卡；只深挖这一句，写顾问口吻的连贯段落。',
   '语气直接、有承担感，避免"也许/可能/仅供参考"消解判断力。',
   '动作建议必须可执行，给具体时机或频率，不写"保持平常心"。',
-  '回答长度控制在 200~500 字之间，密度优先，长度其次。',
+  '首轮 300～600 字；追问 400～900 字。密度优先。',
+  '每轮文末用「还想问」给 2 条只属于本盘的下一问，让用户能继续往下聊。',
 ];
 
 const ANTI_PATTERN_LIST = [
@@ -124,7 +126,7 @@ function buildInput(input: ChatMainInput): string {
 
 export const CHAT_MAIN_SPEC: PromptSpec<ChatMainInput> = {
   id: 'chat.main',
-  version: 'v2-2026-05-19',
+  version: 'v3-2026-08-12-depth',
   persona: PERSONA,
   task: TASK,
   buildInput,

@@ -3,7 +3,9 @@ import { describe, it } from 'node:test';
 import {
   appendAnswerStructureContract,
   buildVerifyEventFields,
+  CHAT_FOLLOWUP_DEPTH_CONTRACT,
   CHAT_STRUCTURE_REPAIR_INSTRUCTION,
+  extractNextAskHooks,
   parseChatAnswerStructure,
   scoreChatAnswerStructure,
 } from '@/lib/chat-answer-contract';
@@ -14,6 +16,25 @@ describe('chat-answer-contract', () => {
     assert.ok(a.includes('回答结构'));
     const b = appendAnswerStructureContract(a);
     assert.equal(b, a);
+  });
+
+  it('uses depth contract for follow-up turns', () => {
+    const a = appendAnswerStructureContract('base', { followup: true });
+    assert.ok(a.includes('追问深挖'));
+    assert.ok(a.includes('不要再输出完整的'));
+    assert.ok(CHAT_FOLLOWUP_DEPTH_CONTRACT.includes('还想问'));
+  });
+
+  it('extracts 还想问 hooks', () => {
+    const hooks = extractNextAskHooks(`
+**当前结论** 先稳住。
+**还想问**
+- 主用神水木怎么落到本周一件事？
+- 调候和主用神打架时听谁的？
+`);
+    assert.equal(hooks.length, 2);
+    assert.match(hooks[0]!, /主用神/);
+    assert.match(hooks[1]!, /调候/);
   });
 
   it('parses structured answer sections', () => {

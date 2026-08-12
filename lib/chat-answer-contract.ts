@@ -4,9 +4,9 @@
  */
 
 export const CHAT_ANSWER_STRUCTURE_CONTRACT = [
-  '【回答结构 · 硬要求】',
-  '请用清晰小标题组织正文（Markdown 加粗标题即可，标题前不要加 1. 2. 编号），固定顺序：',
-  '**判断依据** — 有报告：点明日主/用神喜忌/当前大运/窗口中至少一项，且必须与会话真值一致，禁止改写。',
+  '【回答结构 · 首轮决策卡】',
+  '这是本会话的第一轮完整判断。请用清晰小标题组织正文（Markdown 加粗标题即可，标题前不要加 1. 2. 编号），固定顺序：',
+  '**判断依据** — 有报告：点明日主/主用神（扶抑）/忌神/当前大运/窗口中至少一项，且必须与会话真值一致。调候单独说，不得写成身弱主用神。',
   '无报告：用一两句说明「本会话未绑定报告，以下按通用决策框架」，禁止编造日主/用神/大运/流年吉凶。',
   '**当前结论** — 1～2 句可执行判断（推进 / 暂缓 / 条件推进），不要空套话。',
   '**阶段动作** — 固定三行，格式严格：',
@@ -15,8 +15,28 @@ export const CHAT_ANSWER_STRUCTURE_CONTRACT = [
   '- 30 天内：…',
   '**风险提醒** — 一条最该防的误判或过早投入信号。',
   '**验证点** — 一条 7～30 天内可观察的现实信号（便于「记入事件」复盘）。',
-  '无报告时：五个标题仍必须写满；不要用大段解释「无法推演」占版面（一句即可），把篇幅留给动作与验证；文末用一行引导：从报告页点「顾问开场」或先去排盘绑定。',
+  '文末必须另起一段，格式严格：',
+  '**还想问**',
+  '- …（只属于这份盘/这个问题的下一问）',
+  '- …（另一条更深的下一问）',
   '禁止恐吓、绝对化命运断言；不替代医疗、法律或具体投资标的建议。',
+].join('\n');
+
+/** 第二轮起：对话深度，禁止再套「今天/7天/30天」表单 */
+export const CHAT_FOLLOWUP_DEPTH_CONTRACT = [
+  '【回答结构 · 追问深挖】',
+  '这是多轮追问，不要再输出完整的「今天 / 7 天 / 30 天」决策卡。用户已经看过首轮结构。',
+  '本轮只深挖用户这一句，写得像顾问在把一件事说透，而不是再填一张表。',
+  '必须做到：',
+  '1) 先用 1 句接住上一轮结论，再往下拆一层（为什么、例外、边界、现实怎么验）。',
+  '2) 至少引用 1 条本盘真值：日主/主用神/忌神/调候/大运/窗口（不得改写；调候不得冒充主用神）。',
+  '3) 给 1 个只属于这个人的具体细节（不是「注意身体」「保持平常心」）。',
+  '4) 篇幅 400～900 字，密度优先；可以分段，但不要五个固定小标题全套再来一遍。',
+  '5) 文末必须：',
+  '**还想问**',
+  '- …（顺着本轮没说完的一点）',
+  '- …（换一个相邻议题，仍锚定同一份盘）',
+  '禁止重开一套喜忌体系；禁止空话收尾。',
 ].join('\n');
 
 /**
@@ -163,11 +183,39 @@ export function scoreChatAnswerStructure(
   return { filled, max: slots.length, isRich, isThin, missing };
 }
 
-export function appendAnswerStructureContract(systemContent: string): string {
+export function appendAnswerStructureContract(
+  systemContent: string,
+  options?: { followup?: boolean },
+): string {
   const base = `${systemContent || ''}`.trim();
-  if (!base) return CHAT_ANSWER_STRUCTURE_CONTRACT;
-  if (base.includes('【回答结构 · 硬要求')) return base;
-  return `${base}\n\n${CHAT_ANSWER_STRUCTURE_CONTRACT}`;
+  const contract = options?.followup
+    ? CHAT_FOLLOWUP_DEPTH_CONTRACT
+    : CHAT_ANSWER_STRUCTURE_CONTRACT;
+  if (!base) return contract;
+  if (base.includes('【回答结构 · 首轮') || base.includes('【回答结构 · 追问') || base.includes('【回答结构 · 硬要求')) {
+    return base;
+  }
+  return `${base}\n\n${contract}`;
+}
+
+/** 从回答抽出「还想问」下一问，供聊天气泡点击续问 */
+export function extractNextAskHooks(answer: string): string[] {
+  const text = `${answer || ''}`.trim();
+  if (!text) return [];
+  const section = text.match(
+    /(?:\*\*)?(?:还想问|下一问|你可以继续问)(?:\*\*)?[：:\s]*([\s\S]*)$/i,
+  );
+  const block = section?.[1] || '';
+  const lines = block
+    .split('\n')
+    .map((line) => line.replace(/^[\s-*•、\d.．]+/, '').trim())
+    .filter((line) => line.length >= 6 && line.length <= 80 && !/^（/.test(line));
+  const unique: string[] = [];
+  for (const line of lines) {
+    if (!unique.includes(line)) unique.push(line);
+    if (unique.length >= 3) break;
+  }
+  return unique;
 }
 
 /** Enrich event description / follow-up from structured answer */

@@ -36,9 +36,10 @@ export function buildTeacherEfcBlock(pack: GroundTruthPack): string {
     f.dayMaster ? `日主：${f.dayMaster}` : '',
     f.pattern ? `格局：${f.pattern}` : '',
     f.pillars.length ? `四柱：${f.pillars.join(' ')}` : '',
-    f.yongShen.length ? `用神：${f.yongShen.join('、')}` : '',
+    f.yongShen.length ? `主用神（扶抑）：${f.yongShen.join('、')}` : '',
     f.xiShen.length ? `喜神：${f.xiShen.join('、')}` : '',
     f.jiShen.length ? `忌神：${f.jiShen.join('、')}` : '',
+    '读法：先扶抑主用神，调候为辅，不得把调候写成身弱主用。',
     f.currentDayun
       ? `当前大运：${f.currentDayun.ganZhi}（${f.currentDayun.startAge}-${f.currentDayun.endAge}岁，${f.currentDayun.quality}）`
       : '',

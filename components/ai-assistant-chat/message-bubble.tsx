@@ -17,6 +17,7 @@ import {
   isSyntheticOpeningMessage,
 } from '@/components/ai-assistant-chat/chat-helpers';
 import {
+  extractNextAskHooks,
   parseChatAnswerStructure,
   scoreChatAnswerStructure,
 } from '@/lib/chat-answer-contract';
@@ -46,6 +47,8 @@ interface MessageBubbleProps {
   onCopy: (messageId: string, content: string) => void;
   copied: boolean;
   locale?: string | null;
+  /** Click a 「还想问」 hook to continue the thread */
+  onAskQuestion?: (question: string) => void;
 }
 
 const BRAND_TEAL = '#0b5f55';
@@ -70,6 +73,7 @@ export function MessageBubble({
   onCopy,
   copied,
   locale,
+  onAskQuestion,
 }: MessageBubbleProps) {
   const en = isEnglishUiLocale(locale);
   const t = (zh: string, enText: string) => (en ? enText : zh);
@@ -97,6 +101,8 @@ export function MessageBubble({
   const showDecisionCard = Boolean(
     structured && (structureScore?.isRich || message.structureRich),
   );
+  const nextAskHooks =
+    message.role === 'assistant' && !isOpening ? extractNextAskHooks(displayContent) : [];
 
   if (message.role === 'user') {
     return (
@@ -312,7 +318,27 @@ export function MessageBubble({
             <span className="ml-1">{verifyHint}</span>
           </div>
         ) : null}
+        {nextAskHooks.length && onAskQuestion ? (
+          <div className="mt-2 space-y-1.5">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#8a8d91]">
+              {t('还想问', 'Ask next')}
+            </div>
+            <div className="flex flex-col gap-1.5">
+              {nextAskHooks.map((hook) => (
+                <button
+                  key={hook}
+                  type="button"
+                  onClick={() => onAskQuestion(hook)}
+                  className="rounded-[8px] border border-[#d7e3df] bg-white px-3 py-1.5 text-left text-[12px] leading-[1.45] text-[#0b5f55] transition hover:border-[#0b5f55] hover:bg-[#f3f8f6]"
+                >
+                  {hook}
+                </button>
+              ))}
+            </div>
+          </div>
+        ) : null}
         {!isOpening &&
+        !nextAskHooks.length &&
         (structureScore?.isThin || message.structureThin) &&
         message.llmUsed !== false ? (
           <div className="mt-1.5 text-[11px] leading-[1.4] text-[#8a8d91]">

@@ -219,7 +219,7 @@ export function buildChatExperienceContext(params: {
     intentPreset ? `专项：${intentPreset.entryLabel}` : '',
     report.pattern?.type ? `格局：${report.pattern.type}` : '',
     report.fortune?.currentDaYun ? `阶段：${report.fortune.currentDaYun}` : '',
-    (report.advice?.yongShen || []).length > 0 ? `用神：${report.advice?.yongShen.join('、')}` : '',
+    (report.advice?.yongShen || []).length > 0 ? `主用神：${report.advice?.yongShen.join('、')}` : '',
     topScenario ? `主战场：${topScenario.actionLabel}` : '',
     bestWindow ? `最近优先窗口：${bestWindow.label}` : '',
     ...tacitTags.map((item) => `隐性状态：${item}`),
@@ -232,6 +232,9 @@ export function buildChatExperienceContext(params: {
       ...(intentPreset?.questions || []),
       mappedFocusedEvent ? `围绕“${mappedFocusedEvent.title}”这件事，最可能的偏差原因是什么？` : '',
       mappedFocusedEvent ? `如果我要修正“${mappedFocusedEvent.title}”的判断，下一步最该看什么？` : '',
+      (report.advice?.yongShen || []).length
+        ? `我这份盘主用神是「${(report.advice?.yongShen || []).slice(0, 2).join('、')}」，接下来 30 天我该把哪一件事做成可验证的结果？`
+        : '',
       topScenario ? `${topScenario.title}现在最该怎么推进？` : '',
       bestWindow ? `如果把重点放在${bestWindow.label}，我应该提前准备什么？` : '',
       riskWindow ? `我该怎样规避${riskWindow.label}这段时间的风险？` : '',
@@ -296,7 +299,33 @@ export function buildChatExperienceContext(params: {
       '你正在继续追问同一份命理报告，请明确引用报告里的结构、行运、窗口和现实事件，不要给泛泛空话。',
       packHint ? `报告提示：${packHint}` : '',
       `报告核心：日主${report.bazi?.dayMaster || '未知'}，格局${report.pattern?.type || '以当前结构为准'}，当前大运${report.fortune?.currentDaYun || '以当前阶段判断为准'}，当前流年${report.fortune?.currentLiuNian || '以当年节奏继续校验'}。`,
-      (report.advice?.yongShen || []).length > 0 ? `用神/喜神：${[...(report.advice?.yongShen || []), ...(report.advice?.xiShen || [])].join('、')}。` : '',
+      (report.advice?.yongShen || []).length > 0
+        ? `主用神（扶抑）：${(report.advice?.yongShen || []).join('、')}。忌神：${(report.advice?.jiShen || []).join('、') || '—'}。`
+        : '',
+      (() => {
+        try {
+          const { resolveYongShenPresentation } = require('@/lib/yongshen-live') as typeof import('@/lib/yongshen-live');
+          const live = resolveYongShenPresentation({
+            basic: report.bazi,
+            pillars: report.bazi?.pillars,
+            advice: report.advice,
+            yongShen: (report as { yongShen?: unknown }).yongShen,
+            birthDate: report.birthDate,
+            birthTime: report.birthTime,
+          });
+          if (!live.headline && !live.yongShen.length) return '';
+          return [
+            live.headline ? `用神总览：${live.headline}` : '',
+            live.tiaohuoNote ? `调候（辅助，非主用）：${live.tiaohuoNote}` : '',
+            live.reasonChain?.[0] ? `月令读法：${live.reasonChain[0]}` : '',
+            '对话纪律：先扶抑主用神，调候单独说；追问轮深挖一条线，不要重复套「今天/7天/30天」表。',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        } catch {
+          return '';
+        }
+      })(),
       topScenario ? `当前最值得展开的方向：${topScenario.title}，结论是“${topScenario.actionLabel}”。` : '',
       bestWindow ? `最近最佳窗口：${bestWindow.label}，原因：${bestWindow.reason}` : '',
       riskWindow ? `需要额外谨慎的窗口：${riskWindow.label}，原因：${riskWindow.reason}` : '',
@@ -450,7 +479,8 @@ export function buildChatEventDraft(params: {
     reportId: context?.report?.id,
     topScenario: context?.report?.topScenario,
   });
-  if (fields.verifyPoint) {
+  // parsed.conclusion falls back to raw text — only override when real sections exist
+  if (fields.parsed.verify || fields.parsed.today) {
     title = fields.title;
     description = fields.description;
     answerSummary = compactText(fields.verifyPoint, 120);

@@ -222,7 +222,15 @@ export function buildReportAnchoredAnswer(
 
   const bridge = continuity && scene !== 'followup' ? `\n\n${continuity}` : '';
 
-  return `${header}\n\n${body}${bridge}${evidence}\n\n（回答锚定报告真值、尽量白话；若与现实冲突，请记入事件本并回访校准。有疑问请继续追问。）`;
+  const nextAsks = [
+    scene === 'career' ? '这个岗位/项目，怎样判断是顺主用神还是在硬刚忌神？' : '',
+    scene === 'wealth' ? '如果只能改一个收入结构，30 天内先改哪一块？' : '',
+    scene === 'marriage' ? '下一次冲突出现时，我该用什么话术停损而不是升级？' : '',
+    `主用神「${yong}」落到本周一件小事上，你会怎么验收？`,
+    ctx.tiaohuoNote ? '调候和主用神打架时，这个月听谁的？' : `「${ji}」方向如果已经开了，怎样收缩而不翻盘？`,
+  ].filter(Boolean);
+
+  return `${header}\n\n${body}${bridge}${evidence}\n\n**还想问**\n- ${nextAsks[0]}\n- ${nextAsks[1]}\n\n（回答锚定报告真值；有疑问点下面继续追问。）`;
 }
 
 /** 多轮：承接上一问主题，避免每轮重开白 */
