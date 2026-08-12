@@ -12,6 +12,8 @@ import ProOutlookPair from '@/components/report-pro/pro-outlook-pair';
 import ProTopicGrid from '@/components/report-pro/pro-topic-grid';
 import ProBeginnerGuide from '@/components/report-pro/pro-beginner-guide';
 import ProElementsCard from '@/components/report-pro/pro-elements-card';
+import YongShenStaleBanner from '@/components/report/yongshen-stale-banner';
+import ReportErrorButton from '@/components/report/report-error-button';
 import ProTimeScores from '@/components/report-pro/pro-time-scores';
 import ProRiskAlerts from '@/components/report-pro/pro-risk-alerts';
 import ProActionBar from '@/components/report-pro/pro-action-bar';
@@ -161,12 +163,26 @@ export default function ProReportShell({
         source="pro_report_shell"
         compact
       />
+      {view.elements?.yongShenStale ? (
+        <YongShenStaleBanner
+          reportId={reportId}
+          strengthDesc={view.elements.strengthDesc}
+          yongShen={view.elements.yongShen}
+        />
+      ) : null}
       <section className="border-b border-[color:var(--hairline)] pb-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-[12px] font-medium text-[color:var(--ink-5)]">你的报告</div>
               <KnowledgeBaseStamp />
+              <ReportErrorButton
+                compact
+                reportId={reportId}
+                category="content_wrong"
+                label="整份报错"
+                presetMessage={`【报告报错】\n报告ID：${reportId}\n\n问题描述：\n`}
+              />
             </div>
             <h1 className="mt-1.5 text-[18px] font-semibold leading-snug tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[22px]">
               {publicName ? `${publicName} · ` : ''}
@@ -363,7 +379,7 @@ export default function ProReportShell({
 
       <div id="pro-elements" className="scroll-mt-header space-y-3">
         <ReportIllustrationCite keys={['yongshen', 'structure']} title="结构示意" limit={1} />
-        <ProElementsCard elements={view.elements} />
+        <ProElementsCard elements={view.elements} reportId={reportId} />
       </div>
 
       <div id="pro-time" className="scroll-mt-header">

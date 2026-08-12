@@ -10,6 +10,7 @@ import { MasterPhrases, generatePersonalizedPhrase, describeMonth } from './mast
 import { GAN_TO_WUXING, GAN_HE, GAN_CHONG, ZHI_CANG_GAN, ZHI_CHONG, ZHI_HE, ZHI_XING, ZHI_HAI, ZHI_SAN_HE, WUXING_SEASON_SCORE,
   calculateShiShen } from './bazi-constants';
 import { determineYongShen, generateBaziShiShenAnalysis, getLuckyElements, calculateWuxingStrength, analyzeShenSha } from './bazi-analyzer';
+import { YONGSHEN_ENGINE_VERSION } from './yongshen-engine-version';
 import { calculateTrueSolarTimeOffset } from './solar-time';
 import { generateLifeKlineV6 } from './kline-v6';
 
@@ -287,6 +288,10 @@ export const analyzeFortune = (
       explanation,
       judgmentBlocks: expertEvidence.judgmentBlocks,
       enhancementNotes: expertEvidence.notes,
+      /** Bump when 用神/强弱算法变更，用于旧报告提示重算 */
+      engineVersions: {
+        yongShen: YONGSHEN_ENGINE_VERSION,
+      },
       contextSignals: {
         engineEvidence: expertEvidence,
         // 供 agentic groundTruth 直接消费，避免只嵌在 report 包内导致空真值
@@ -298,7 +303,8 @@ export const analyzeFortune = (
     shenSha: shenShaResult ?? undefined,
     // 顶层用神真值：完整报告 / 升级 / Agent 统一读取
     yongShen: yongShenResult ?? undefined,
-  } as FortuneAnalysisResult & { yongShen?: YongShenResult | null };
+    yongShenEngineVersion: YONGSHEN_ENGINE_VERSION,
+  } as FortuneAnalysisResult & { yongShen?: YongShenResult | null; yongShenEngineVersion?: string };
 };
 
 // ==================== 体型推算 ====================

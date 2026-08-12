@@ -8,6 +8,7 @@ import { ChatCapabilityShell } from '@/components/chat/chat-capability-shell';
 import { ChatShareButton } from '@/components/chat/chat-share-button';
 import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
 import { BrandMark } from '@/components/ui/brand-mark';
+import ReportErrorButton from '@/components/report/report-error-button';
 import {
   chatOpeningSurface,
   isCapabilityTeacherId,
@@ -102,6 +103,16 @@ export default async function ChatPage({
             </div>
           </div>
           <nav className="flex shrink-0 items-center gap-x-2.5 text-[11px] text-[color:var(--ink-3)] sm:gap-x-3 sm:text-[12px]">
+            <ReportErrorButton
+              compact
+              category="chat_wrong"
+              label={en ? 'Report error' : '对话报错'}
+              presetMessage={
+                en
+                  ? `Chat answer seems wrong.\nTeacher: ${teacher.name}\n\nWhat went wrong:\n`
+                  : `【对话报错】\n老师：${teacher.name}\n\n问题描述（例如用神/身强弱/建议与报告不一致）：\n`
+              }
+            />
             <ChatShareButton
               locale={uiLocale}
               title={

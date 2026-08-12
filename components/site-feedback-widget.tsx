@@ -3,22 +3,39 @@
 /**
  * Global anonymous feedback / bug-report entry.
  * Visible on every page; never exposes ops email to the user.
+ * Can be opened from anywhere via openSiteFeedback().
  */
 
 import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, MessageSquarePlus, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { FEEDBACK_CATEGORIES } from '@/lib/user-feedback-types';
+import { FEEDBACK_CATEGORIES, type FeedbackCategoryKey } from '@/lib/user-feedback-types';
 import { trackClientEvent } from '@/lib/analytics-client';
 
 type Status = 'idle' | 'submitting' | 'done' | 'error';
 
+export type OpenFeedbackOptions = {
+  category?: FeedbackCategoryKey | string;
+  message?: string;
+  reportId?: string;
+  pageUrl?: string;
+};
+
+const OPEN_EVENT = 'lk-open-feedback';
+
+/** Open the global feedback dialog from any component. */
+export function openSiteFeedback(options: OpenFeedbackOptions = {}) {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(OPEN_EVENT, { detail: options }));
+}
+
 export default function SiteFeedbackWidget() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
-  const [category, setCategory] = useState('page_error');
+  const [category, setCategory] = useState<string>('content_wrong');
   const [message, setMessage] = useState('');
   const [pageUrl, setPageUrl] = useState('');
+  const [reportId, setReportId] = useState('');
   const [status, setStatus] = useState<Status>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [ticketId, setTicketId] = useState('');
@@ -42,11 +59,37 @@ export default function SiteFeedbackWidget() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
+  useEffect(() => {
+    const onOpen = (ev: Event) => {
+      const detail = (ev as CustomEvent<OpenFeedbackOptions>).detail || {};
+      setStatus('idle');
+      setErrorMsg('');
+      setTicketId('');
+      setCategory(detail.category || 'content_wrong');
+      setMessage(detail.message || '');
+      setReportId(detail.reportId || '');
+      if (detail.pageUrl) setPageUrl(detail.pageUrl);
+      else if (typeof window !== 'undefined') setPageUrl(window.location.href);
+      setOpen(true);
+      void trackClientEvent({
+        eventName: 'feedback_widget_opened',
+        page: pathname || undefined,
+        meta: {
+          preset: detail.category || 'programmatic',
+          hasReportId: Boolean(detail.reportId),
+        },
+      });
+    };
+    window.addEventListener(OPEN_EVENT, onOpen as EventListener);
+    return () => window.removeEventListener(OPEN_EVENT, onOpen as EventListener);
+  }, [pathname]);
+
   if (hideOnAdmin) return null;
 
   const resetForm = () => {
-    setCategory('page_error');
+    setCategory('content_wrong');
     setMessage('');
+    setReportId('');
     setStatus('idle');
     setErrorMsg('');
     setTicketId('');
@@ -77,6 +120,16 @@ export default function SiteFeedbackWidget() {
           category,
           message: message.trim(),
           pageUrl: pageUrl.trim() || (typeof window !== 'undefined' ? window.location.href : ''),
+          reportId: reportId.trim() || undefined,
+          context: {
+            pathname: pathname || null,
+            reportId: reportId.trim() || null,
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : null,
+            viewport:
+              typeof window !== 'undefined'
+                ? { w: window.innerWidth, h: window.innerHeight }
+                : null,
+          },
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -88,7 +141,11 @@ export default function SiteFeedbackWidget() {
       void trackClientEvent({
         eventName: 'feedback_submitted',
         page: pathname || undefined,
-        meta: { category, hasUrl: Boolean(pageUrl.trim()) },
+        meta: {
+          category,
+          hasUrl: Boolean(pageUrl.trim()),
+          hasReportId: Boolean(reportId.trim()),
+        },
       });
     } catch (error) {
       setStatus('error');
@@ -102,7 +159,7 @@ export default function SiteFeedbackWidget() {
       <div className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-2 md:bottom-6 md:right-6">
         <button
           type="button"
-          onClick={() => handleOpen('page_error')}
+          onClick={() => handleOpen('content_wrong')}
           className="inline-flex h-11 items-center gap-2 rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3.5 text-[13px] font-semibold text-[color:var(--ink-2)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
           aria-label="报错或留言"
         >
@@ -112,7 +169,7 @@ export default function SiteFeedbackWidget() {
         <button
           type="button"
           onClick={() => handleOpen('message')}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-[color:var(--brand)] px-3.5 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(41,72,125,0.28)] transition hover:opacity-95"
+          className="inline-flex h-11 items-center gap-2 rounded-full bg-[color:var(--brand)] px-3.5 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(11,95,85,0.28)] transition hover:opacity-95"
           aria-label="匿名留言"
         >
           <MessageSquarePlus className="h-4 w-4" />
@@ -137,7 +194,7 @@ export default function SiteFeedbackWidget() {
                   匿名报错 / 留言
                 </h2>
                 <p className="mt-0.5 text-[12px] leading-5 text-[color:var(--ink-4)]">
-                  无需登录。我们会定期查看并优化产品，不会向你展示运营邮箱。
+                  无需登录。我们会在后台收集并定期修正（用神、身强弱、页面故障等）。
                 </p>
               </div>
               <button
@@ -157,7 +214,7 @@ export default function SiteFeedbackWidget() {
                   <div>
                     <p className="text-[14px] font-semibold text-[color:var(--ink-1)]">已收到，谢谢你的反馈</p>
                     <p className="mt-1 text-[12px] leading-5 text-[color:var(--ink-3)]">
-                      我们会定期排查这些记录来优化体验。
+                      运营后台会看到类型、页面、报告 ID 与说明，用于后续修正。
                       {ticketId ? (
                         <>
                           {' '}
@@ -208,6 +265,20 @@ export default function SiteFeedbackWidget() {
                 </label>
 
                 <label className="block space-y-1.5">
+                  <span className="text-[12px] font-semibold text-[color:var(--ink-2)]">
+                    报告 ID
+                    <span className="ml-1 font-normal text-[color:var(--ink-4)]">（可选，方便我们对照盘）</span>
+                  </span>
+                  <input
+                    type="text"
+                    value={reportId}
+                    onChange={(e) => setReportId(e.target.value)}
+                    placeholder="例如 result 链接里的 id"
+                    className="fb-input h-10 w-full px-3 font-mono text-[12px]"
+                  />
+                </label>
+
+                <label className="block space-y-1.5">
                   <span className="text-[12px] font-semibold text-[color:var(--ink-2)]">说明</span>
                   <textarea
                     value={message}
@@ -216,7 +287,7 @@ export default function SiteFeedbackWidget() {
                     minLength={4}
                     maxLength={4000}
                     rows={5}
-                    placeholder="发生了什么？你期望怎样？越具体越好（例如：点了生成后一直转圈 / 某块文字竖排）"
+                    placeholder="例如：我的盘是丙戌辛丑甲辰乙丑，系统说身偏旺喜金土，但我认为身弱应喜水木。期望：……"
                     className="fb-input min-h-[120px] w-full resize-y px-3 py-2 text-[13px] leading-6"
                   />
                 </label>

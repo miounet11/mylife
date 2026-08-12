@@ -61,6 +61,8 @@ function openDatabase(): DatabaseHandle {
       user_agent TEXT,
       client_ip TEXT,
       user_id TEXT,
+      report_id TEXT,
+      context_json TEXT,
       status TEXT NOT NULL DEFAULT 'new',
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL
@@ -68,6 +70,17 @@ function openDatabase(): DatabaseHandle {
     CREATE INDEX IF NOT EXISTS idx_site_feedback_created ON site_feedback(created_at DESC);
     CREATE INDEX IF NOT EXISTS idx_site_feedback_status ON site_feedback(status, created_at DESC);
   `);
+  // Soft migrate older DBs
+  try {
+    handle.exec(`ALTER TABLE site_feedback ADD COLUMN report_id TEXT`);
+  } catch {
+    /* column exists */
+  }
+  try {
+    handle.exec(`ALTER TABLE site_feedback ADD COLUMN context_json TEXT`);
+  } catch {
+    /* column exists */
+  }
   db = handle;
   return handle;
 }
@@ -85,6 +98,8 @@ function mapRow(row: Record<string, unknown>): SiteFeedbackRecord {
     userAgent: row.user_agent ? String(row.user_agent) : null,
     clientIp: row.client_ip ? String(row.client_ip) : null,
     userId: row.user_id ? String(row.user_id) : null,
+    reportId: row.report_id ? String(row.report_id) : null,
+    contextJson: row.context_json ? String(row.context_json) : null,
     status: (row.status as SiteFeedbackStatus) || 'new',
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
@@ -98,18 +113,29 @@ export function createSiteFeedback(input: {
   userAgent?: string | null;
   clientIp?: string | null;
   userId?: string | null;
+  reportId?: string | null;
+  context?: Record<string, unknown> | null;
 }): SiteFeedbackRecord {
   const database = openDatabase();
   const id = `fb_${Date.now()}_${randomUUID().slice(0, 8)}`;
   const timestamp = nowIso();
   const message = input.message.trim().slice(0, 4000);
   const pageUrl = (input.pageUrl || '').trim().slice(0, 1000) || null;
+  const reportId = (input.reportId || '').trim().slice(0, 120) || null;
+  let contextJson: string | null = null;
+  if (input.context && typeof input.context === 'object') {
+    try {
+      contextJson = JSON.stringify(input.context).slice(0, 8000);
+    } catch {
+      contextJson = null;
+    }
+  }
 
   database
     .prepare(
       `INSERT INTO site_feedback (
-        id, category, message, page_url, user_agent, client_ip, user_id, status, created_at, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`,
+        id, category, message, page_url, user_agent, client_ip, user_id, report_id, context_json, status, created_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`,
     )
     .run(
       id,
@@ -119,6 +145,8 @@ export function createSiteFeedback(input: {
       input.userAgent?.slice(0, 500) || null,
       input.clientIp?.slice(0, 80) || null,
       input.userId || null,
+      reportId,
+      contextJson,
       timestamp,
       timestamp,
     );
@@ -152,6 +180,8 @@ export function createSiteFeedback(input: {
     userAgent: input.userAgent || null,
     clientIp: input.clientIp || null,
     userId: input.userId || null,
+    reportId,
+    contextJson,
     status: 'new',
     createdAt: timestamp,
     updatedAt: timestamp,

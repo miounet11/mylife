@@ -18,6 +18,7 @@ import type {
   YearlyTrendSnapshot,
 } from '@/lib/report-v2';
 import { localizeElementList, presentReportText } from '@/lib/report-presentation';
+import { resolveYongShenPresentation } from '@/lib/yongshen-live';
 import {
   buildWhyFromStatus,
   composeExplainParagraph,
@@ -82,6 +83,13 @@ export interface ProElementGuide {
   /** 避害：尽量少做什么 */
   avoidList: string[];
   plainSummary: string;
+  /** 引擎理由链（月令/帮扶克泄/调候/取用） */
+  reasonChain?: string[];
+  strengthDesc?: string;
+  strengthScore?: number;
+  /** 用神算法版本落后，建议整盘重算 */
+  yongShenStale?: boolean;
+  yongShenEngineVersion?: string;
 }
 
 /** 时间轴打分：本月 / 今年 / 明年 */
@@ -722,9 +730,21 @@ function buildOverviewTags(params: Parameters<typeof buildProReportView>[0]): st
 }
 
 function buildElementGuide(params: Parameters<typeof buildProReportView>[0]): ProElementGuide {
-  const yongShen = localizeElementList(params.result.advice?.yongShen || []);
-  const xiShen = localizeElementList(params.result.advice?.xiShen || []);
-  const jiShen = localizeElementList(params.result.advice?.jiShen || []);
+  // 现算用神（月令本气版），避免旧盘缓存的喜忌翻转
+  const liveYs = resolveYongShenPresentation(params.result);
+
+  const yongShen =
+    liveYs.yongShen.length > 0
+      ? liveYs.yongShen
+      : localizeElementList(params.result.advice?.yongShen || []);
+  const xiShen =
+    liveYs.xiShen.length > 0
+      ? liveYs.xiShen
+      : localizeElementList(params.result.advice?.xiShen || []);
+  const jiShen =
+    liveYs.jiShen.length > 0
+      ? liveYs.jiShen
+      : localizeElementList(params.result.advice?.jiShen || []);
 
   const favored = [...new Set([...yongShen, ...xiShen])];
   const doList: string[] = [];
@@ -761,7 +781,12 @@ function buildElementGuide(params: Parameters<typeof buildProReportView>[0]): Pr
     avoidList.push('避免在低分窗口同时开太多战线或高杠杆决策。');
   }
 
+  const strengthHint = liveYs.strengthDesc
+    ? `当前结构判为「${liveYs.strengthDesc}」${liveYs.score ? `（强弱分 ${liveYs.score}）` : ''}。`
+    : '';
+
   const plainSummary = [
+    strengthHint,
     favored.length
       ? `对你更有帮助的方向（用神/喜神）是「${favored.join('、')}」：做事、选合作、排时间，尽量往这些气质靠。`
       : '用神信息偏少时，先按「低后悔成本」行动：能验证再加码。',
@@ -779,7 +804,12 @@ function buildElementGuide(params: Parameters<typeof buildProReportView>[0]): Pr
     jiShen,
     doList: uniqueStrings(doList).slice(0, 8),
     avoidList: uniqueStrings(avoidList).slice(0, 8),
-    plainSummary: presentLong(plainSummary, 480),
+    plainSummary: presentLong(plainSummary, 520),
+    reasonChain: liveYs.reasonChain || [],
+    strengthDesc: liveYs.strengthDesc || undefined,
+    strengthScore: liveYs.score || undefined,
+    yongShenStale: liveYs.stale,
+    yongShenEngineVersion: liveYs.liveVersion,
   };
 }
 

@@ -327,8 +327,23 @@ export function extractChatContextFromSnapshot(
     asText(advice.career?.general || advice.marriage?.general, 100),
   ].filter(Boolean) as string[];
 
-  const yongList = advice.yongShen || yong.yongShen || [];
-  const jiList = advice.jiShen || yong.jiShen || [];
+  // 强制现算用神（与报告页一致），避免旧缓存身强/身弱翻转后聊天仍引用旧喜忌
+  let yongList = advice.yongShen || yong.yongShen || [];
+  let jiList = advice.jiShen || yong.jiShen || [];
+  let xiList = advice.xiShen || yong.xiShen || [];
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveYongShenPresentation } = require('@/lib/yongshen-live') as typeof import('@/lib/yongshen-live');
+    const liveYs = resolveYongShenPresentation(result.basic ? result : s.result || s);
+    if (liveYs.yongShen.length) yongList = liveYs.yongShen;
+    if (liveYs.jiShen.length) jiList = liveYs.jiShen;
+    if (liveYs.xiShen.length) xiList = liveYs.xiShen;
+    if (liveYs.live?.dayMaster && !basic.dayMaster) {
+      basic.dayMaster = liveYs.live.dayMaster;
+    }
+  } catch {
+    // keep stored
+  }
 
   let scraped: ReportChatContext = {
     reportId,
@@ -336,7 +351,7 @@ export function extractChatContextFromSnapshot(
     pattern: result.pattern?.type || basic.pattern || '',
     yongShen: yongList,
     jiShen: jiList,
-    xiShen: advice.xiShen || yong.xiShen || [],
+    xiShen: xiList,
     topScenario: overall?.title || asText(overall?.summary, 40) || career?.title,
     bestWindow:
       asText(goodMonth?.label || goodMonth?.month || goodMonth?.title, 24) ||

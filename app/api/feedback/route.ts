@@ -30,6 +30,11 @@ export async function POST(request: NextRequest) {
     const category = `${body.category || ''}`.trim();
     const message = `${body.message || ''}`.trim();
     const pageUrl = `${body.pageUrl || body.url || ''}`.trim();
+    const reportId = `${body.reportId || body.fortuneId || ''}`.trim();
+    const context =
+      body.context && typeof body.context === 'object'
+        ? (body.context as Record<string, unknown>)
+        : null;
 
     if (!isValidFeedbackCategory(category)) {
       return NextResponse.json({ success: false, error: '请选择问题类型' }, { status: 400 });
@@ -61,6 +66,8 @@ export async function POST(request: NextRequest) {
       userAgent: request.headers.get('user-agent'),
       clientIp: ip || null,
       userId,
+      reportId: reportId || null,
+      context,
     });
 
     // Fire-and-forget notify; storage already succeeded.

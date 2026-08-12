@@ -393,6 +393,24 @@ export default function AdminFeedbackClient({
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-[color:var(--ink-2)]">
                     {item.message}
                   </p>
+                  {item.reportId ? (
+                    <p className="mt-1.5 text-[12px] font-medium text-[color:var(--ink-3)]">
+                      报告 ID：{' '}
+                      <a
+                        href={`/result/${encodeURIComponent(item.reportId)}`}
+                        className="font-mono text-[color:var(--brand)] hover:underline"
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        {item.reportId}
+                      </a>
+                    </p>
+                  ) : null}
+                  {item.contextJson ? (
+                    <pre className="mt-1.5 max-h-24 overflow-auto rounded bg-[color:var(--bg-sunken)] p-2 text-[10px] leading-4 text-[color:var(--ink-4)]">
+                      {item.contextJson}
+                    </pre>
+                  ) : null}
                   <div className="mt-2 font-mono text-[10px] text-[color:var(--ink-5)]">
                     {item.id}
                     {item.userId ? ` · user ${item.userId}` : ' · anonymous'}
