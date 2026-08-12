@@ -440,7 +440,9 @@ export default function ProReportShell({
           .join(' · ')}
         lines={[
           view.elements.yongShen?.length
-            ? `用神 ${view.elements.yongShen.slice(0, 3).join('、')}`
+            ? `主用神 ${view.elements.yongShen.slice(0, 3).join('、')}${
+                view.elements.tiaohuoElement ? ` · 调候 ${view.elements.tiaohuoElement}` : ''
+              }`
             : '',
           view.klinePeak
             ? `高点参考 ${view.klinePeak.year} · ${view.klinePeak.label || view.klinePeak.score}`

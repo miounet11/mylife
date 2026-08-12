@@ -56,7 +56,7 @@ const HARD_CONSTRAINTS = [
   'windows[].label 必须在 [ENGINE_KLINE_WINDOWS] 或 [ENGINE_DAYUN_WINDOWS] 的 label 集合中出现。',
   'summary 必须显式包含 [ENGINE_KLINE_WINDOWS] 的最高优先窗口标签（即 windows[0].label）。',
   'topPriority 不能与 avoidNow 指向同一类动作（不允许"既要又要"式空话）。',
-  '不得改写 ENGINE_CONSTITUTION 的日主强弱、用神、忌神。',
+  '不得改写 ENGINE_CONSTITUTION 的日主强弱、用神、忌神；主用神为扶抑，调候见 tiaohuoNote 勿混写。',
   '不得使用工程占位词：ENGINE_*、CONTEXT_*、anchorPoints、windows 等英文键名直接出现在用户可见文本里。',
   // v5-D48/D49 李继刚式时间锚约束（vocab 共享源）
   ...buildTimingAnchorHardConstraints('actions', '2~5 条（与 ACTIONS_CONTRACT 同口径）'),

@@ -23,14 +23,27 @@ export function buildFallbackAgentResults(
   for (const key of keys) {
     switch (key) {
       case 'core_constitution': {
-        const constitutionSummary = `${engine.constitution.dayMaster}日主，${engine.constitution.patternType}，${engine.constitution.strength} — 用神${engine.constitution.yongShen.join('、') || '待定'}，忌神${engine.constitution.jiShen.join('、') || '待定'}`;
+        const c = engine.constitution;
+        const constitutionSummary =
+          c.headline ||
+          `${c.dayMaster}日主，${c.patternType}，${c.strengthDesc || c.strength} — 主用神${c.yongShen.join('、') || '待定'}，忌神${c.jiShen.join('、') || '待定'}${
+            c.tiaohuoElement ? `；调候${c.tiaohuoElement}` : ''
+          }`;
         results[key] = {
           summary: constitutionSummary,
           constitutionSummary,
-          plainReading: `日主${engine.constitution.dayMaster}，优先顺着用神${engine.constitution.yongShen.join('、') || '结构'}做可验证动作。`,
-          favorableElements: engine.constitution.yongShen,
-          unfavorableElements: engine.constitution.jiShen,
-          actions: ['优先补充用神方向资源', '在忌神触达期保持谨慎'],
+          plainReading:
+            c.headline ||
+            `日主${c.dayMaster}，优先顺着主用神「${c.yongShen.join('、') || '结构'}」做可验证动作${
+              c.tiaohuoNote ? `；${c.tiaohuoNote}` : ''
+            }。`,
+          favorableElements: c.yongShen,
+          unfavorableElements: c.jiShen,
+          actions: [
+            '优先补充扶抑主用神方向资源',
+            '在忌神触达期保持谨慎',
+            ...(c.tiaohuoNote ? [`调候仅作辅助：${c.tiaohuoNote}`] : []),
+          ],
         };
         break;
       }

@@ -8,6 +8,7 @@ import type { YongShenResult } from '@/lib/bazi-analyzer';
 import type { DayunResult } from '@/lib/dayun-calculator';
 import type { LifeProfile } from '@/lib/life-profile/types';
 import { calculateShiShen, ZHI_CANG_GAN } from '@/lib/bazi-constants';
+import { formatYongShenPublic } from '@/lib/yongshen-presentation';
 
 export interface GroundTruthInput {
   birthDate: Date;
@@ -36,15 +37,22 @@ export function buildEngineGroundTruth(input: GroundTruthInput): EngineGroundTru
     ? currentYear - birthDate.getFullYear()
     : 0;
 
-  // ── Constitution ──
+  // ── Constitution（用户向中文五行 + 扶抑/调候分列）──
+  const pubYs = formatYongShenPublic(yongShen);
   const constitution: EngineGroundTruth['constitution'] = {
     dayMaster,
-    strength: normalizeStrength(yongShen?.strength || '中和'),
-    patternType: input.pattern || '正格',
-    yongShen: yongShen?.yongShen || [],
-    xiShen: yongShen?.xiShen || [],
-    jiShen: yongShen?.jiShen || [],
+    strength: normalizeStrength(yongShen?.strengthDesc || yongShen?.strength || '中和'),
+    strengthDesc: pubYs?.strengthDesc || yongShen?.strengthDesc,
+    actionHint: pubYs?.actionHint,
+    patternType: input.pattern || yongShen?.pattern?.pattern || '正格',
+    yongShen: pubYs?.yongShen || [],
+    xiShen: pubYs?.xiShen || [],
+    jiShen: pubYs?.jiShen || [],
+    tiaohuoElement: pubYs?.tiaohuoElement,
+    tiaohuoNote: pubYs?.tiaohuoNote,
+    headline: pubYs?.headline,
     seasonContext: getSeasonContext(birthDate.getMonth() + 1),
+    readingRule: '先扶抑主用神，调候为辅；不得把调候写成身弱主用神。',
   };
 
   // ── Pillars ──

@@ -1100,8 +1100,13 @@ export function generateBaziShiShenAnalysis(bazi: string[]) {
 }
 
 export function getLuckyElements(yongShen: YongShenResult) {
-  const primary = (yongShen.yongShen[0] as Element) || 'fire';
-  const secondary = (yongShen.xiShen[0] as Element) || primary;
+  const toEl = (raw: string | undefined): Element => {
+    if (!raw) return 'fire';
+    if (ELEMENTS.includes(raw as Element)) return raw as Element;
+    return CN_TO_EN[raw] || 'fire';
+  };
+  const primary = toEl(yongShen.yongShen[0]);
+  const secondary = toEl(yongShen.xiShen[0] || yongShen.yongShen[1]) || primary;
 
   return {
     colors: [...new Set([...LUCKY_COLORS[primary], ...LUCKY_COLORS[secondary]])].slice(0, 4),

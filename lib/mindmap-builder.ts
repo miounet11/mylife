@@ -107,32 +107,41 @@ export function buildMindMap(input: MindMapInput): MindMapOutput {
   };
   root.children!.push(patternNode);
 
-  // ── Layer 6: 用神系统 ──
+  // ── Layer 6: 用神系统（扶抑主用 / 调候分列）──
   if (yongShen) {
-    const ysNode: MindMapNode = { content: '用神系统', children: [] };
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+    const pub = formatYongShenPublic(yongShen);
+    const ysNode: MindMapNode = { content: '用神系统（扶抑）', children: [] };
 
-    if (yongShen.yongShen?.length) {
+    if (pub?.headline) {
       ysNode.children!.push({
-        content: `用神：${yongShen.yongShen.join('、')}`,
-        payload: { level: 'strong', note: '优先补充的关键能量' },
+        content: pub.headline,
+        payload: { level: 'good', note: pub.actionHint },
       });
     }
-    if (yongShen.xiShen?.length) {
+    if (pub?.yongShen?.length) {
       ysNode.children!.push({
-        content: `喜神：${yongShen.xiShen.join('、')}`,
+        content: `主用神：${pub.yongShen.join('、')}`,
+        payload: { level: 'strong', note: '扶抑主线：优先补充的关键方向' },
+      });
+    }
+    if (pub?.tiaohuoElement || pub?.tiaohuoNote) {
+      ysNode.children!.push({
+        content: `调候：${pub.tiaohuoElement || ''}${pub.tiaohuoNote ? `（${pub.tiaohuoNote}）` : ''}`,
+        payload: { level: 'good', note: '季节调节，不替代主用神' },
+      });
+    }
+    if (pub?.xiShen?.length) {
+      ysNode.children!.push({
+        content: `喜神：${pub.xiShen.join('、')}`,
         payload: { level: 'good', note: '辅助增强的方向' },
       });
     }
-    if (yongShen.jiShen?.length) {
+    if (pub?.jiShen?.length) {
       ysNode.children!.push({
-        content: `忌神：${yongShen.jiShen.join('、')}`,
+        content: `忌神：${pub.jiShen.join('、')}`,
         payload: { level: 'risk', note: '需避开或缓行的方向' },
-      });
-    }
-    if (yongShen.tiaohuo) {
-      ysNode.children!.push({
-        content: `调候：${yongShen.tiaohuo.element}（${yongShen.tiaohuo.reason}）`,
-        payload: { level: 'good', note: yongShen.tiaohuo.note },
       });
     }
     if (yongShen.tongguan) {

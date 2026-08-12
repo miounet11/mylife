@@ -134,22 +134,38 @@ export function buildDashboard(input: DashboardInput): DashboardData {
       nayin: p.nayin || '',
       element: GAN_TO_WUXING_CN[p.celestialStem] || '',
     })),
-    dayMasterStrength: yongShen?.strengthDesc || '待分析',
-    yongShen: yongShen?.yongShen || [],
-    jiShen: yongShen?.jiShen || [],
+    dayMasterStrength: (() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+      const pub = formatYongShenPublic(yongShen);
+      return pub?.headline || yongShen?.strengthDesc || '待分析';
+    })(),
+    yongShen: (() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+      return formatYongShenPublic(yongShen)?.yongShen || [];
+    })(),
+    jiShen: (() => {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+      return formatYongShenPublic(yongShen)?.jiShen || [];
+    })(),
     specialSignals: buildSpecialSignals(yongShen),
   };
 
   // ── Elements ──
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { formatYongShenPublic: fmtYsDash } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+  const pubYsDash = fmtYsDash(yongShen);
   const elements: DashboardElements = {
     radarData: {
       labels: sortedElements.map(([k]) => mapElementCn(k)),
       strengths: sortedElements.map(([, v]) => v.strength || 0),
       yongShenPreference: sortedElements.map(([k]) => {
         const cn = mapElementCn(k);
-        if (yongShen?.yongShen?.includes(cn)) return 85;
-        if (yongShen?.xiShen?.includes(cn)) return 65;
-        if (yongShen?.jiShen?.includes(cn)) return 25;
+        if (pubYsDash?.yongShen?.includes(cn)) return 85;
+        if (pubYsDash?.xiShen?.includes(cn)) return 65;
+        if (pubYsDash?.jiShen?.includes(cn)) return 25;
         return 50;
       }),
     },
@@ -170,20 +186,22 @@ export function buildDashboard(input: DashboardInput): DashboardData {
     monthlyOutlook: buildMonthlyOutlook(klineData.find(p => p.year === currentYear), yongShen),
   };
 
-  // ── Strategy ──
+  // ── Strategy（中文主用神）──
+  const yongCn = pubYsDash?.yongShen || [];
+  const jiCn = pubYsDash?.jiShen || [];
   const strategy: DashboardStrategy = {
-    primaryAction: yongShen?.yongShen?.length
-      ? `优先补充${yongShen.yongShen.join('、')}对应的资源、人脉和环境`
+    primaryAction: yongCn.length
+      ? `优先补充主用神「${yongCn.join('、')}」对应的资源、人脉和环境${pubYsDash?.tiaohuoNote ? `；${pubYsDash.tiaohuoNote}` : ''}`
       : '先稳定日主根基，再向外扩展',
-    avoidAction: yongShen?.jiShen?.length
-      ? `避开${yongShen.jiShen.join('、')}方向过度投入`
+    avoidAction: jiCn.length
+      ? `避开忌神「${jiCn.join('、')}」方向过度投入`
       : '避免在忌神触达期做大额决策',
-    bestDirection: yongShen?.yongShen?.[0] ? directionMap[yongShen.yongShen[0]] || '东南' : '因地制宜',
-    bestColors: yongShen?.yongShen?.length ? yongShen.yongShen.map(el => colorMap[el] || '').filter(Boolean).slice(0, 3) : ['红色', '紫色'],
-    luckyNumbers: yongShen?.yongShen?.length ? yongShen.yongShen.flatMap(el => numberMap[el] || []).slice(0, 3) : [1, 6, 8],
+    bestDirection: yongCn[0] ? directionMap[yongCn[0]] || '东南' : '因地制宜',
+    bestColors: yongCn.length ? yongCn.map(el => colorMap[el] || '').filter(Boolean).slice(0, 3) : ['红色', '紫色'],
+    luckyNumbers: yongCn.length ? yongCn.flatMap(el => numberMap[el] || []).slice(0, 3) : [1, 6, 8],
     timingAdvice: overallScore >= 75 ? '当前时机有利，宜积极推进关键决策。' : overallScore >= 60 ? '可做小步验证，不宜大规模铺开。' : '先收敛守势，等待大运/流年转顺再推进。',
-    priorities: yongShen?.yongShen?.map((e: string) => `${e}方向优先`) || [],
-    cautions: yongShen?.jiShen?.map((e: string) => `注意${e}方向`) || [],
+    priorities: yongCn.map((e: string) => `主用神「${e}」方向优先`),
+    cautions: jiCn.map((e: string) => `忌神「${e}」方向慎触`),
   };
 
   // ── Disclaimer ──
@@ -246,30 +264,41 @@ function findCurrentAnchor(anchors: KlineAnchorV6[], currentYear: number): Kline
 }
 
 function buildSpecialSignals(yongShen: YongShenResult | null): string[] {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+  const pub = formatYongShenPublic(yongShen);
   const signals: string[] = [];
-  if (yongShen?.tiaohuo) signals.push(`调候${yongShen.tiaohuo.element}：${yongShen.tiaohuo.note}`);
-  if (yongShen?.tongguan) signals.push(`通关${yongShen.tongguan.element}：${yongShen.tongguan.note}`);
+  if (pub?.actionHint) signals.push(pub.actionHint);
+  if (pub?.tiaohuoNote) signals.push(`调候：${pub.tiaohuoNote}`);
+  else if (yongShen?.tiaohuo) signals.push(`调候：${yongShen.tiaohuo.reason}`);
+  if (yongShen?.tongguan) signals.push(`通关：${yongShen.tongguan.reason}`);
   if (yongShen?.pattern) signals.push(`特殊格局：${yongShen.pattern.pattern}`);
   return signals;
 }
 
 function buildElementInsight(top: string, bottom: string, yongShen: YongShenResult | null): string {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+  const pub = formatYongShenPublic(yongShen);
   const topCn = mapElementCn(top);
   const bottomCn = mapElementCn(bottom);
-  const isTopYong = yongShen?.yongShen?.includes(topCn);
-  const isBottomJi = yongShen?.jiShen?.includes(bottomCn);
-  if (isTopYong && isBottomJi) return `${topCn}旺且为用神，这是核心优势；${bottomCn}弱且为忌神，不需要刻意补。`;
-  if (isTopYong) return `${topCn}旺且为用神，应充分发挥优势。`;
-  return `优先补齐${bottomCn}的短板，同时发挥${topCn}的优势。`;
+  const isTopYong = Boolean(pub?.yongShen?.includes(topCn) || yongShen?.yongShen?.includes(top) || yongShen?.yongShen?.includes(topCn));
+  const isBottomJi = Boolean(pub?.jiShen?.includes(bottomCn) || yongShen?.jiShen?.includes(bottom) || yongShen?.jiShen?.includes(bottomCn));
+  if (isTopYong && isBottomJi) return `${topCn}旺且为主用神，这是核心优势；${bottomCn}弱且为忌神，不需要刻意补。`;
+  if (isTopYong) return `${topCn}旺且为主用神，应充分发挥优势。`;
+  return `优先补齐${bottomCn}的短板，同时发挥${topCn}的优势；取舍时对照扶抑主用神。`;
 }
 
 function buildMonthlyOutlook(yearPoint: KlinePointV6 | undefined, yongShen: YongShenResult | null): DashboardTimeline['monthlyOutlook'] {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { formatYongShenPublic } = require('@/lib/yongshen-presentation') as typeof import('@/lib/yongshen-presentation');
+  const pub = formatYongShenPublic(yongShen);
   const elementByMonth = ['水', '木', '木', '火', '火', '土', '土', '金', '金', '水', '水', '木'];
   const base = yearPoint ? Math.round(average([yearPoint.career, yearPoint.wealth, yearPoint.marriage, yearPoint.health])) : 60;
 
   return elementByMonth.map((el, i) => {
-    const isYong = yongShen?.yongShen?.includes(el);
-    const isJi = yongShen?.jiShen?.includes(el);
+    const isYong = Boolean(pub?.yongShen?.includes(el) || yongShen?.yongShen?.includes(el));
+    const isJi = Boolean(pub?.jiShen?.includes(el) || yongShen?.jiShen?.includes(el));
     const score = Math.max(30, Math.min(95, base + (isYong ? 8 : 0) + (isJi ? -8 : 0)));
     return {
       month: i + 1,

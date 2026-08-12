@@ -5,19 +5,7 @@
 import { determineYongShen } from '@/lib/bazi-analyzer';
 import { calculateFourPillars } from '@/lib/fortune-engine';
 import type { PersonalDayInput } from '@/lib/almanac/personal-day';
-
-const EN_WX: Record<string, string> = {
-  wood: '木',
-  fire: '火',
-  earth: '土',
-  metal: '金',
-  water: '水',
-  木: '木',
-  火: '火',
-  土: '土',
-  金: '金',
-  水: '水',
-};
+import { elementsToCn, formatYongShenPublic } from '@/lib/yongshen-presentation';
 
 export type UserChartSnapshot = PersonalDayInput & {
   source: 'engine' | 'stored_pillars' | 'birth_only' | 'query';
@@ -27,13 +15,13 @@ export type UserChartSnapshot = PersonalDayInput & {
   analysisSnippet?: string;
   birthDate?: string;
   name?: string;
+  /** 宜生扶 / 宜克泄 */
+  actionHint?: string;
+  tiaohuoNote?: string;
 };
 
 function mapYongList(raw: unknown): string[] {
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .map((x) => EN_WX[`${x || ''}`.trim().toLowerCase()] || EN_WX[`${x || ''}`.trim()] || '')
-    .filter(Boolean);
+  return elementsToCn(raw);
 }
 
 function parseBirthTimeHour(birthTime?: string | null): number {
@@ -76,16 +64,21 @@ export function buildChartFromBirth(input: {
       birthHour: Number.isFinite(hour) ? hour : 12,
       birthMinute: Number.isFinite(minute) ? minute : 0,
     });
+    const pub = formatYongShenPublic(ys);
     return {
       source: 'engine',
       dayMaster: day.celestialStem,
       dayBranch: day.earthlyBranch,
       dayPillar: `${day.celestialStem}${day.earthlyBranch}`,
-      yongShen: mapYongList(ys?.yongShen) || mapYongList(ys?.dayMasterElement ? [ys.dayMasterElement] : []),
+      yongShen: pub?.yongShen?.length
+        ? pub.yongShen
+        : mapYongList(ys?.yongShen) || mapYongList(ys?.dayMasterElement ? [ys.dayMasterElement] : []),
       bazi,
-      dayMasterElement: ys?.dayMasterElement || EN_WX[day.fiveElements?.main || ''] || undefined,
-      strengthDesc: ys?.strengthDesc || undefined,
-      analysisSnippet: ys?.analysis?.slice(0, 120) || undefined,
+      dayMasterElement: ys?.dayMasterElement || day.fiveElements?.main || undefined,
+      strengthDesc: pub?.strengthDesc || ys?.strengthDesc || undefined,
+      actionHint: pub?.actionHint,
+      tiaohuoNote: pub?.tiaohuoNote,
+      analysisSnippet: (pub?.headline || ys?.analysis || '').slice(0, 140) || undefined,
       birthDate: input.birthDate,
     };
   } catch (error) {
@@ -124,10 +117,11 @@ export function chartFromStoredFortune(fortune: {
           birthHour: fortune.birthTime ? Number(`${fortune.birthTime}`.split(':')[0]) : undefined,
         });
         if (ys) {
-          if (!yong.length) yong = mapYongList(ys.yongShen);
-          strengthDesc = ys.strengthDesc;
+          const pub = formatYongShenPublic(ys);
+          if (!yong.length) yong = pub?.yongShen?.length ? pub.yongShen : mapYongList(ys.yongShen);
+          strengthDesc = pub?.strengthDesc || ys.strengthDesc;
           dayMasterElement = ys.dayMasterElement;
-          analysisSnippet = ys.analysis?.slice(0, 120);
+          analysisSnippet = (pub?.headline || ys.analysis || '').slice(0, 140);
         }
       } catch {
         // keep stored

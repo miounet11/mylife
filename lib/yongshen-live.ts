@@ -8,29 +8,10 @@ import {
   readStoredYongShenEngineVersion,
   YONGSHEN_ENGINE_VERSION,
 } from '@/lib/yongshen-engine-version';
-
-const EN_TO_CN: Record<string, string> = {
-  wood: '木',
-  fire: '火',
-  earth: '土',
-  metal: '金',
-  water: '水',
-  木: '木',
-  火: '火',
-  土: '土',
-  金: '金',
-  水: '水',
-};
+import { elementsToCn, formatYongShenPublic } from '@/lib/yongshen-presentation';
 
 function toCnList(list: unknown): string[] {
-  if (!Array.isArray(list)) return [];
-  return [
-    ...new Set(
-      list
-        .map((x) => EN_TO_CN[`${x || ''}`.trim()] || `${x || ''}`.trim())
-        .filter((x) => ['木', '火', '土', '金', '水'].includes(x)),
-    ),
-  ];
+  return elementsToCn(list);
 }
 
 /** 从报告 result 尽量抽出四柱干支数组 */
@@ -124,23 +105,20 @@ export function resolveYongShenPresentation(result: unknown): YongShenPresentati
     (!storedVersion || !isYongShenVersionCurrent(storedVersion));
 
   if (live) {
-    const uf = live.userFacing;
-    const tiaohuoEl = live.tiaohuo?.element
-      ? EN_TO_CN[`${live.tiaohuo.element}`] || `${live.tiaohuo.element}`
-      : undefined;
+    const pub = formatYongShenPublic(live);
     return {
-      yongShen: toCnList(live.yongShen),
-      xiShen: toCnList(live.xiShen),
-      jiShen: toCnList(live.jiShen),
+      yongShen: pub?.yongShen || toCnList(live.yongShen),
+      xiShen: pub?.xiShen || toCnList(live.xiShen),
+      jiShen: pub?.jiShen || toCnList(live.jiShen),
       strength: live.strength,
-      strengthDesc: live.strengthDesc,
+      strengthDesc: pub?.strengthDesc || live.strengthDesc,
       score: live.score,
-      reasonChain: live.threeGain?.reasonChain || [],
-      analysis: live.analysis || '',
-      headline: uf?.headline,
-      actionHint: uf?.actionHint,
-      tiaohuoNote: uf?.tiaohuoNote,
-      tiaohuoElement: tiaohuoEl && ['木', '火', '土', '金', '水'].includes(tiaohuoEl) ? tiaohuoEl : undefined,
+      reasonChain: pub?.reasonChain || live.threeGain?.reasonChain || [],
+      analysis: pub?.analysis || live.analysis || '',
+      headline: pub?.headline,
+      actionHint: pub?.actionHint,
+      tiaohuoNote: pub?.tiaohuoNote,
+      tiaohuoElement: pub?.tiaohuoElement,
       stale,
       storedVersion,
       liveVersion,

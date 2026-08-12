@@ -11,6 +11,12 @@ import { GAN_TO_WUXING, GAN_HE, GAN_CHONG, ZHI_CANG_GAN, ZHI_CHONG, ZHI_HE, ZHI_
   calculateShiShen } from './bazi-constants';
 import { determineYongShen, generateBaziShiShenAnalysis, getLuckyElements, calculateWuxingStrength, analyzeShenSha } from './bazi-analyzer';
 import { YONGSHEN_ENGINE_VERSION } from './yongshen-engine-version';
+import {
+  elementsToCn,
+  formatYongShenPublic,
+  jiPhrase,
+  yongPhrase,
+} from './yongshen-presentation';
 import { calculateTrueSolarTimeOffset } from './solar-time';
 import { generateLifeKlineV6 } from './kline-v6';
 
@@ -537,7 +543,7 @@ const buildFortuneTrend = (bazi: string[], birthDate: Date, gender: string, ys: 
     // 使用精确大运数据
     const currentDaYun = dayunResult?.currentDayun
       ? `${dayunResult.currentDayun.ganZhi}大运（${dayunResult.currentDayun.startAge}-${dayunResult.currentDayun.endAge}岁，${dayunResult.currentDayun.description}）`
-      : ys ? `用神${ys.yongShen.join('、')}` : '待分析';
+      : ys ? `主用神${yongPhrase(ys)}` : '待分析';
 
     // 流年与大运互动
     const interaction = dayunResult?.currentDayun
@@ -624,15 +630,17 @@ const buildAdvice = (
     actions: evidence.health.actions,
   } as HealthAdvice;
 
+  // 建议字段对用户/下游一律中文五行；引擎对象 yongShenResult 仍保留 English keys 供 K 线匹配
+  const pub = formatYongShenPublic(ys);
   return {
     career, wealth, marriage, health,
     colors: [...new Set([...career.colors, ...wealth.colors])],
     directions: [...new Set(yongShenDirs)],
     numbers: yongShenNums,
     timing: [pickDeterministic(MasterPhrases.timing, `${adviceSeed}:overall:timing`)],
-    yongShen: ys?.yongShen || [],
-    jiShen: ys?.jiShen || [],
-    xiShen: ys?.xiShen || [],
+    yongShen: pub?.yongShen || elementsToCn(ys?.yongShen),
+    jiShen: pub?.jiShen || elementsToCn(ys?.jiShen),
+    xiShen: pub?.xiShen || elementsToCn(ys?.xiShen),
   };
 };
 
@@ -646,8 +654,9 @@ const buildAdviceEvidence = (
   const domain = (name: 'career' | 'wealth' | 'relationship' | 'growth') => tenGod?.lifeDomains.find((item) => item.domain === name);
   const relations = pillars ? buildPillarRelationDetail(pillars) : null;
   const shenShaSignals = buildShenShaSignals(shenSha);
-  const yong = ys?.yongShen?.slice(0, 2).join('、') || '用神未定';
-  const ji = ys?.jiShen?.slice(0, 2).join('、') || '过度消耗';
+  const yong = yongPhrase(ys, '用神未定');
+  const ji = jiPhrase(ys, '过度消耗');
+  const tiao = formatYongShenPublic(ys)?.tiaohuoNote;
   const careerDomain = domain('career');
   const wealthDomain = domain('wealth');
   const relationDomain = domain('relationship');
@@ -662,18 +671,18 @@ const buildAdviceEvidence = (
 
   return {
     career: {
-      general: `职业判断先看${careerDomain?.evidence.join('、') || '月柱、官杀、印星、食伤'}，再顺${yong}做取舍。`,
-      timing: opportunityNames.length ? `遇到${opportunityNames[0]}被大运流年触发时更适合推进。` : `顺${yong}的大运流年适合推进。`,
+      general: `职业判断先看${careerDomain?.evidence.join('、') || '月柱、官杀、印星、食伤'}，再顺主用神「${yong}」做取舍${tiao ? `（${tiao}）` : ''}。`,
+      timing: opportunityNames.length ? `遇到${opportunityNames[0]}被大运流年触发时更适合推进。` : `顺主用神「${yong}」的大运流年适合推进。`,
       drivers: [careerDomain?.driver || '', ...(careerDomain?.evidence || []), mobility ? mobility.plainLanguage : ''].filter(Boolean),
       risks: [riskNames.includes('伤官见官') ? '伤官见官期避免硬碰规则与上级。' : '', relationRisk].filter(Boolean),
-      actions: [`把${yong}对应的资源、人脉和工作环境放到优先级第一。`, '用可验证成果替代情绪化证明。', mobility ? '外部机会可以看，但不要为了变化而变化。' : '先稳主线，再扩副线。'],
+      actions: [`把主用神「${yong}」对应的资源、人脉和工作环境放到优先级第一。`, '用可验证成果替代情绪化证明。', mobility ? '外部机会可以看，但不要为了变化而变化。' : '先稳主线，再扩副线。'],
     },
     wealth: {
       general: `财富判断看${wealthDomain?.evidence.join('、') || '财星、食伤生财、比劫分财'}，不是只看单个财星。`,
-      timing: `财星或食伤被顺运触发时适合做增量，遇${ji}时先控风险。`,
+      timing: `财星或食伤被顺运触发时适合做增量，遇忌神「${ji}」时先控风险。`,
       drivers: [wealthDomain?.driver || '', ...(wealthDomain?.evidence || [])].filter(Boolean),
       risks: [riskNames.includes('比劫夺财') ? '比劫夺财期少做高杠杆合伙与人情借贷。' : '', riskNames.includes('财印相战') ? '财印相战期避免现金流和长期学习投入互相挤压。' : ''].filter(Boolean),
-      actions: ['现金流、负债、合伙边界分开管理。', `投资和扩张优先选能补${yong}的方向。`, '大额决策必须留复盘证据，不靠感觉下注。'],
+      actions: ['现金流、负债、合伙边界分开管理。', `投资和扩张优先选能补主用神「${yong}」的方向。`, '大额决策必须留复盘证据，不靠感觉下注。'],
     },
     marriage: {
       general: `关系判断看日支、配偶星与合冲刑害；${relationDomain?.driver || '桃花神煞只作辅助。'}`,
@@ -683,11 +692,11 @@ const buildAdviceEvidence = (
       actions: ['重要关系先讲边界，再讲期待。', '冲刑明显的年份少做冲动承诺。', peach ? '人缘增强时更要控制暧昧和误会成本。' : '用稳定互动代替短期情绪验证。'],
     },
     health: {
-      general: `健康/生活方式只按五行偏枯、冲刑和调候给非医学建议；核心是顺${yong}、避${ji}。`,
+      general: `健康/生活方式只按五行偏枯、冲刑和调候给非医学建议；核心是顺主用神「${yong}」、避忌神「${ji}」。`,
       timing: '冲刑害和忌神年份以减压、体检、规律作息为主。',
       drivers: [growthDomain?.driver || '', ys?.tiaohuo?.reason || '', ys?.threeGain?.reasonChain?.join('；') || ''].filter(Boolean),
       risks: [relationRisk, shenShaSignals.find((item) => item.name === '羊刃')?.plainLanguage || ''].filter(Boolean),
-      actions: ['不做医学诊断；不适直接就医。', '把睡眠、运动、饮食和压力管理当成底层配置。', `生活环境优先补${yong}，减少${ji}对应的过载。`],
+      actions: ['不做医学诊断；不适直接就医。', '把睡眠、运动、饮食和压力管理当成底层配置。', `生活环境优先补主用神「${yong}」，减少忌神「${ji}」对应的过载。`],
     },
   };
 };
@@ -926,9 +935,11 @@ const buildEngineEvidencePack = (
     ys?.pattern ? `特殊格局：${ys.pattern.description}` : '',
   ].filter(Boolean);
 
+  const pubYs = formatYongShenPublic(ys);
   const actionBasis = [
-    ys?.yongShen?.length ? `用神${ys.yongShen.join('、')}，先补关键资源与环境。` : '',
-    ys?.jiShen?.length ? `忌神${ys.jiShen.join('、')}，避免在高压期硬冲这些方向。` : '',
+    pubYs?.yongShen?.length ? `主用神（扶抑）${pubYs.yongShen.join('、')}，先补关键资源与环境。` : '',
+    pubYs?.tiaohuoNote ? `调候辅助：${pubYs.tiaohuoNote}` : '',
+    pubYs?.jiShen?.length ? `忌神${pubYs.jiShen.join('、')}，避免在高压期硬冲这些方向。` : '',
     tenGodDominance[0] ? `${tenGodDominance[0].name}偏显，优先校准${tenGodDominance[0].focus}。` : '',
     strongest ? `${strongest.element}气最显，优势要用在可持续场景，不要过度。` : '',
     weakest ? `${weakest.element}气最弱，短板要靠习惯、节奏和外部资源补齐。` : '',
@@ -974,7 +985,14 @@ const buildEngineEvidencePack = (
       { id: 'pillars', label: `四柱 ${bazi.join(' ')}`, source: 'pillars', weight: 1 },
       strongest ? { id: 'five-elements', label: `五行最显 ${strongest.element}`, source: 'five-elements', weight: 0.9 } : null,
       tenGodDominance[0] ? { id: 'ten-gods', label: `十神重心 ${tenGodDominance[0].name}`, source: 'ten-gods', weight: 0.8 } : null,
-      ys?.yongShen?.length ? { id: 'yong-shen', label: `用神 ${ys.yongShen.join('、')}`, source: 'yong-shen', weight: 0.9 } : null,
+      formatYongShenPublic(ys)?.yongShen?.length
+        ? {
+            id: 'yong-shen',
+            label: `主用神 ${formatYongShenPublic(ys)!.yongShen.join('、')}`,
+            source: 'yong-shen',
+            weight: 0.9,
+          }
+        : null,
       shenShaSignals.length ? { id: 'shen-sha', label: `辅助神煞 ${shenShaSignals.map((item) => item.name).join('、')}`, source: 'shen-sha', weight: 0.35 } : null,
     ].filter(Boolean) as EngineEvidencePack['evidenceRefs'],
     scoringBreakdown: {
@@ -1020,7 +1038,9 @@ const buildEngineEvidencePack = (
         evidence: actionBasis.slice(0, 4),
       },
       futureGuidance: {
-        headline: ys?.yongShen?.length ? `未来行动顺序：顺${ys.yongShen.slice(0, 2).join('、')}，避${(ys.jiShen || []).slice(0, 2).join('、') || '过度消耗'}。` : '未来行动顺序：先补资源，再做关键推进。',
+        headline: pubYs?.yongShen?.length
+          ? `未来行动顺序：顺主用神「${pubYs.yongShen.slice(0, 2).join('、')}」，避「${(pubYs.jiShen || []).slice(0, 2).join('、') || '过度消耗'}」。`
+          : '未来行动顺序：先补资源，再做关键推进。',
         evidence: actionBasis.slice(0, 4),
       },
     },
@@ -1128,7 +1148,11 @@ const buildMeasurementStageResults = (input: {
       conclusion: input.strength ? `日主${input.strength.dayMaster}${input.strength.label}，强弱分${input.strength.score}。` : '日主强弱待定。',
       evidence: input.strength?.threeGain?.reasonChain || [input.strength ? `帮扶${input.strength.helpStrength}，克泄耗${input.strength.drainStrength}` : '缺少强弱证据'],
       risks: input.strength?.confidence?.boundary ? ['强弱接近边界，不能用过度绝对的判断。'] : [],
-      actions: [input.ys?.yongShen?.length ? `以${input.ys.yongShen.join('、')}作为扶抑取舍主线。` : '先确认扶抑再给行动建议。'],
+      actions: [
+        formatYongShenPublic(input.ys)?.yongShen?.length
+          ? `以主用神「${formatYongShenPublic(input.ys)!.yongShen.join('、')}」作为扶抑取舍主线。`
+          : '先确认扶抑再给行动建议。',
+      ],
     }),
     makeStage({
       id: 'pattern',
@@ -1154,11 +1178,35 @@ const buildMeasurementStageResults = (input: {
       id: 'yong-shen',
       label: '用神取舍',
       order: 6,
-      score: scoreStageEvidence({ hasCore: Boolean(input.ys?.yongShen?.length), evidenceCount: [input.ys?.analysis, input.ys?.tiaohuo?.reason, input.ys?.tongguan?.reason, ...(input.ys?.priority || [])].filter(Boolean).length, actionCount: input.ys?.yongShen?.length ? input.ys.yongShen.length : 1, riskCount: input.ys?.jiShen?.length || 0, bonus: input.ys?.confidence?.score ? Math.round(input.ys.confidence.score * 3) : 0 }),
-      conclusion: input.ys?.yongShen?.length ? `用神${input.ys.yongShen.join('、')}，忌神${(input.ys.jiShen || []).join('、') || '无明显'}。` : '用神未形成明确排序。',
-      evidence: [input.ys?.analysis, input.ys?.tiaohuo?.reason, input.ys?.tongguan?.reason, ...(input.ys?.priority || [])].filter(Boolean) as string[],
-      risks: input.ys?.jiShen?.length ? [`忌神${input.ys.jiShen.join('、')}年份和环境先控风险。`] : [],
-      actions: input.ys?.yongShen?.length ? [`资源、行业、节奏优先顺${input.ys.yongShen.join('、')}。`] : ['先做事件验证再扩大建议粒度。'],
+      score: scoreStageEvidence({
+        hasCore: Boolean(input.ys?.yongShen?.length),
+        evidenceCount: [input.ys?.analysis, input.ys?.tiaohuo?.reason, input.ys?.tongguan?.reason, ...(input.ys?.priority || [])].filter(Boolean).length,
+        actionCount: input.ys?.yongShen?.length ? input.ys.yongShen.length : 1,
+        riskCount: input.ys?.jiShen?.length || 0,
+        bonus: input.ys?.confidence?.score ? Math.round(input.ys.confidence.score * 3) : 0,
+      }),
+      conclusion: (() => {
+        const p = formatYongShenPublic(input.ys);
+        if (!p?.yongShen.length) return '用神未形成明确排序。';
+        const tiao = p.tiaohuoElement ? `；调候辅助${p.tiaohuoElement}` : '';
+        return `主用神（扶抑）${p.yongShen.join('、')}，忌神${p.jiShen.join('、') || '无明显'}${tiao}。`;
+      })(),
+      evidence: [
+        formatYongShenPublic(input.ys)?.headline,
+        input.ys?.analysis,
+        input.ys?.tiaohuo?.reason ? `调候：${input.ys.tiaohuo.reason}` : '',
+        input.ys?.tongguan?.reason,
+        ...(input.ys?.priority || []).map((item) => {
+          const el = elementsToCn([item.element])[0] || item.element;
+          return `${el}：${item.reason}`;
+        }),
+      ].filter(Boolean) as string[],
+      risks: formatYongShenPublic(input.ys)?.jiShen?.length
+        ? [`忌神${formatYongShenPublic(input.ys)!.jiShen.join('、')}年份和环境先控风险。`]
+        : [],
+      actions: formatYongShenPublic(input.ys)?.yongShen?.length
+        ? [`资源、行业、节奏优先顺主用神「${formatYongShenPublic(input.ys)!.yongShen.join('、')}」。`]
+        : ['先做事件验证再扩大建议粒度。'],
     }),
     makeStage({
       id: 'shen-sha',
@@ -1256,15 +1304,18 @@ const resolveTenGodFocus = (name: string): string => {
 };
 
 const buildAnalysisSummary = (ys: YongShenResult | null, dayunResult?: DayunResult): string => {
+  const pub = formatYongShenPublic(ys);
   const pattern = ys?.pattern?.pattern || (ys?.strengthDesc ? `${ys.strengthDesc}格局` : '当前命局');
   const dayun = dayunResult?.currentDayun?.ganZhi
     ? `${dayunResult.currentDayun.ganZhi}大运`
     : '当前阶段';
-  const yongShen = (ys?.yongShen || []).slice(0, 2).join('、');
+  const yongShen = (pub?.yongShen || []).slice(0, 2).join('、');
 
   return [
     `${pattern}是当前主判断，重心落在${dayun}。`,
-    yongShen ? `优先顺着${yongShen}对应方向做取舍。` : '',
+    pub?.headline ? `${pub.headline}。` : '',
+    yongShen ? `优先顺着主用神「${yongShen}」做取舍。` : '',
+    pub?.tiaohuoNote ? `调候提醒：${pub.tiaohuoNote}` : '',
   ].filter(Boolean).join('');
 };
 

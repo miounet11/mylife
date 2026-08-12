@@ -413,13 +413,27 @@ export default function ExpertDesk({
           <div className="no-print">
             <ReportIllustrationCite keys={['yongshen']} title="用神示意（教学）" limit={1} />
           </div>
-          <SectionTitle>⑨ 用神喜忌</SectionTitle>
+          <SectionTitle>⑨ 用神喜忌（扶抑主线）</SectionTitle>
+          {desk.yongJi.headline ? (
+            <p className="mt-2 text-[12px] leading-relaxed text-[#334155]">{desk.yongJi.headline}</p>
+          ) : null}
+          {desk.yongJi.actionHint ? (
+            <p className="mt-1 text-[11px] text-[#64748b]">{desk.yongJi.actionHint}</p>
+          ) : null}
           <div className="mt-3 flex flex-wrap gap-2">
             {desk.yongJi.yongShen.map((e) => (
               <span key={`y-${e}`} className="rounded-full bg-[#d1fae5] px-2.5 py-1 text-[12px] font-bold text-[#047857]">
-                用 {e}
+                主用 {e}
               </span>
             ))}
+            {desk.yongJi.tiaohuoNote ? (
+              <span
+                title={desk.yongJi.tiaohuoNote}
+                className="rounded-full bg-[#fef3c7] px-2.5 py-1 text-[12px] font-semibold text-[#b45309]"
+              >
+                调候 · 辅助
+              </span>
+            ) : null}
             {desk.yongJi.xiShen.map((e) => (
               <span key={`x-${e}`} className="rounded-full bg-[#ecfdf5] px-2.5 py-1 text-[12px] font-semibold text-[#059669]">
                 喜 {e}
@@ -434,6 +448,9 @@ export default function ExpertDesk({
               <span className="text-[12px] text-[#64748b]">用忌未落库，请据格局自行点用</span>
             ) : null}
           </div>
+          {desk.yongJi.tiaohuoNote ? (
+            <p className="mt-2 text-[11px] leading-relaxed text-[#64748b]">调候：{desk.yongJi.tiaohuoNote}</p>
+          ) : null}
         </section>
       </div>
 

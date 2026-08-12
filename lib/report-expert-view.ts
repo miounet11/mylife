@@ -288,7 +288,16 @@ export interface ExpertDeskView {
   fiveElements: Array<{ key: string; label: string; strength: number; quality: string; description: string }>;
   tenGods: { self: string; output: string[]; input: string[]; control: string[]; controlled: string[] };
   pattern: { type: string; strength: string; quality: string; description: string };
-  yongJi: { yongShen: string[]; xiShen: string[]; jiShen: string[] };
+  yongJi: {
+    yongShen: string[];
+    xiShen: string[];
+    jiShen: string[];
+    /** 扶抑主线一句总览 */
+    headline?: string;
+    /** 调候附注 */
+    tiaohuoNote?: string;
+    actionHint?: string;
+  };
   dayun: {
     startAge: number;
     currentYearInDayun: number;
@@ -444,11 +453,29 @@ export function buildExpertDeskView(params: {
     quality: presentReportText(result.pattern?.quality, 16) || '—',
     description: presentReportText(result.pattern?.description, 320) || '',
   };
-  const yongJi = {
+  // Live 扶抑主用神（与 Pro 页一致），避免旧 advice 英文/混调候
+  let yongJi = {
     yongShen: localizeElementList(result.advice?.yongShen || result.yongShen?.yongShen || []),
     xiShen: localizeElementList(result.advice?.xiShen || result.yongShen?.xiShen || []),
     jiShen: localizeElementList(result.advice?.jiShen || result.yongShen?.jiShen || []),
   };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { resolveYongShenPresentation } = require('@/lib/yongshen-live') as typeof import('@/lib/yongshen-live');
+    const liveYs = resolveYongShenPresentation(result);
+    if (liveYs.yongShen.length) {
+      yongJi = {
+        yongShen: liveYs.yongShen,
+        xiShen: liveYs.xiShen,
+        jiShen: liveYs.jiShen,
+        headline: liveYs.headline,
+        tiaohuoNote: liveYs.tiaohuoNote,
+        actionHint: liveYs.actionHint,
+      };
+    }
+  } catch {
+    // keep stored
+  }
 
   const dayunResult = params.dayun || (result.dayun as DayunResult | undefined) || null;
   const dayunRows = (dayunResult?.dayuns || []).map((d) => mapDayunRow(d, dayMaster, kongWang));

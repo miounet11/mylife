@@ -41,6 +41,11 @@ export interface ReportChatContext {
   yongShen?: string[];
   jiShen?: string[];
   xiShen?: string[];
+  /** 中和偏弱 等 */
+  strengthDesc?: string;
+  /** 宜生扶…；主用神水木 */
+  yongHeadline?: string;
+  tiaohuoNote?: string;
   topScenario?: string;
   bestWindow?: string;
   riskWindow?: string;
@@ -91,14 +96,18 @@ export function buildReportAnchoredAnswer(
     focusAreas: ctx.focusAreas,
   });
 
-  const yong = (ctx.yongShen || []).join('、') || '用神';
+  const yong = (ctx.yongShen || []).join('、') || '主用神';
   const ji = (ctx.jiShen || []).join('、') || '忌神';
   const scene = detectScene(q);
   const continuity = buildMultiTurnContinuity(q, priorMessages || [], scene);
 
   const header = [
     `【锚定报告 ${ctx.reportId.slice(0, 10)}… · ${KNOWLEDGE_BASE.shortLabel}】`,
-    ctx.dayMaster ? `日主 ${ctx.dayMaster}${ctx.pattern ? ` · 格局 ${ctx.pattern}` : ''}` : '',
+    ctx.dayMaster
+      ? `日主 ${ctx.dayMaster}${ctx.strengthDesc ? ` · ${ctx.strengthDesc}` : ''}${ctx.pattern ? ` · 格局 ${ctx.pattern}` : ''}`
+      : '',
+    ctx.yongHeadline || `主用神（扶抑）${yong} · 忌神 ${ji}`,
+    ctx.tiaohuoNote ? `调候（辅助）${ctx.tiaohuoNote}` : '',
     ctx.pillarsSummary ? `四柱 ${ctx.pillarsSummary}` : '',
     ctx.currentDayun || ctx.currentLiunian
       ? `运局 ${[ctx.currentDayun, ctx.currentLiunian].filter(Boolean).join(' × ')}`
@@ -327,10 +336,13 @@ export function extractChatContextFromSnapshot(
     asText(advice.career?.general || advice.marriage?.general, 100),
   ].filter(Boolean) as string[];
 
-  // 强制现算用神（与报告页一致），避免旧缓存身强/身弱翻转后聊天仍引用旧喜忌
+  // 强制现算用神（与报告页一致），扶抑主用 / 调候分列
   let yongList = advice.yongShen || yong.yongShen || [];
   let jiList = advice.jiShen || yong.jiShen || [];
   let xiList = advice.xiShen || yong.xiShen || [];
+  let strengthDesc = '';
+  let yongHeadline = '';
+  let tiaohuoNote = '';
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { resolveYongShenPresentation } = require('@/lib/yongshen-live') as typeof import('@/lib/yongshen-live');
@@ -338,6 +350,9 @@ export function extractChatContextFromSnapshot(
     if (liveYs.yongShen.length) yongList = liveYs.yongShen;
     if (liveYs.jiShen.length) jiList = liveYs.jiShen;
     if (liveYs.xiShen.length) xiList = liveYs.xiShen;
+    strengthDesc = liveYs.strengthDesc || '';
+    yongHeadline = liveYs.headline || '';
+    tiaohuoNote = liveYs.tiaohuoNote || '';
     if (liveYs.live?.dayMaster && !basic.dayMaster) {
       basic.dayMaster = liveYs.live.dayMaster;
     }
@@ -352,6 +367,9 @@ export function extractChatContextFromSnapshot(
     yongShen: yongList,
     jiShen: jiList,
     xiShen: xiList,
+    strengthDesc,
+    yongHeadline,
+    tiaohuoNote,
     topScenario: overall?.title || asText(overall?.summary, 40) || career?.title,
     bestWindow:
       asText(goodMonth?.label || goodMonth?.month || goodMonth?.title, 24) ||
@@ -372,7 +390,7 @@ export function extractChatContextFromSnapshot(
       advice.career?.actions?.[0] ||
       advice.career?.specific?.[0] ||
       overall?.actionLabel ||
-      (yongList[0] ? `顺着用神「${yongList[0]}」推进一件可验证的事` : undefined),
+      (yongList[0] ? `顺着主用神「${yongList[0]}」推进一件可验证的事` : undefined),
     avoidThis:
       advice.career?.avoid?.[0] ||
       advice.jiShen?.[0] ||

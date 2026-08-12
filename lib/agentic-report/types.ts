@@ -33,11 +33,23 @@ export interface EngineGroundTruth {
   constitution: {
     dayMaster: string;
     strength: 'strong' | 'weak' | 'balanced' | 'follow';
+    /** 用户向强弱文案，如 中和偏弱 */
+    strengthDesc?: string;
+    /** 宜生扶 / 宜克泄 */
+    actionHint?: string;
     patternType: string;
+    /** 主用神（扶抑），中文五行 */
     yongShen: string[];
     xiShen: string[];
     jiShen: string[];
+    /** 调候五行（中文），与主用神分列 */
+    tiaohuoElement?: string;
+    tiaohuoNote?: string;
+    /** 一句用户向总览 */
+    headline?: string;
     seasonContext: string;
+    /** 读法纪律（注入 Agent） */
+    readingRule?: string;
   };
   pillars: Array<{
     label: string;
