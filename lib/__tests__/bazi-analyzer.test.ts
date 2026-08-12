@@ -72,12 +72,22 @@ describe('determineYongShen', () => {
     assert.ok(result!.jiShen.some((el) => ['fire', 'wood'].includes(el)));
   });
 
-  it('classifies follow-strong pattern when self element dominates', () => {
-    const result = determineYongShen(['甲寅', '丙寅', '甲寅', '甲寅']);
+  it('classifies follow-strong pattern when self element dominates without solid root', () => {
+    // 印比党众但日支无木根（坐申金）— 才可论从
+    const result = determineYongShen(['甲寅', '丙寅', '甲申', '甲寅']);
     assert.ok(result);
     assert.ok(result!.pattern);
+    // 有根则正格；无根才从 — 两种都可接受，但不能在「通根很深」时硬从
     assert.match(result!.pattern!.pattern, /从旺|从强|正格/);
     assert.ok(result!.pattern!.description.length > 4);
+  });
+
+  it('does not force 从旺 when day master has solid 寅卯 roots even in 酉月', () => {
+    const result = determineYongShen(['甲子', '辛酉', '甲寅', '乙卯']);
+    assert.ok(result);
+    // 通根明显 → 正格扶抑，而非从旺只取木
+    assert.equal(result!.pattern?.pattern, '正格');
+    assert.ok(result!.score >= 50);
   });
 
   it('classifies follow-weak pattern for heavily drained charts', () => {

@@ -271,41 +271,51 @@ function resolveStrengthLevel(score: number): { strength: string; strengthDesc: 
   return { strength: 'very_weak', strengthDesc: '身极弱' };
 }
 
+/**
+ * 从格判定（从严）：
+ * - 传统：日主无根或极弱才论「从」；有明显通根不得从旺/从强。
+ * - 此前仅用 score+selfGroup 会在「酉月甲木但寅卯通根」时误判从旺。
+ */
 function detectCongPattern(
   normalized: Record<Element, number>,
   dmElement: Element,
   strengthScore: number,
+  rootStrength = 0,
 ): { pattern: string; description: string } | null {
   const selfGroup = normalized[dmElement] + normalized[GENERATED_BY[dmElement]];
   const sorted = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => b.pct - a.pct);
   const dominant = sorted[0];
 
-  if (strengthScore >= 68 && selfGroup >= 55 && dominant.el === dmElement) {
+  // 通根明显（约等于日支中气以上）→ 不从
+  const hasSolidRoot = rootStrength >= 8;
+
+  if (!hasSolidRoot && strengthScore >= 72 && selfGroup >= 58 && dominant.el === dmElement) {
     return {
       pattern: '从旺格',
-      description: `${EN_TO_CN[dmElement]}气独旺，全局顺势而从，宜顺其旺势取用神。`,
+      description: `${EN_TO_CN[dmElement]}气独旺且日主无坚实通根，全局顺势而从，宜顺其旺势取用神。`,
     };
   }
 
-  if (strengthScore >= 62 && selfGroup >= 50) {
+  if (!hasSolidRoot && strengthScore >= 68 && selfGroup >= 55) {
     return {
       pattern: '从强格',
-      description: `印比助身过旺，宜顺旺势，以泄耗为调节。`,
+      description: `印比党众极盛、日主少根，宜顺旺势，以泄耗为调节。`,
     };
   }
 
-  if (strengthScore <= 32 && selfGroup <= 18) {
+  // 从弱：日主极弱且印比很少
+  if (strengthScore <= 30 && selfGroup <= 16 && rootStrength <= 5) {
     const drainEl = sorted[0].el;
     const patternName = drainEl === CONTROLS[dmElement] ? '从财格'
       : drainEl === CONTROLLED_BY[dmElement] ? '从杀格'
         : drainEl === GENERATES[dmElement] ? '从儿格' : '从弱格';
     return {
       pattern: patternName,
-      description: `日主${EN_TO_CN[dmElement]}极弱，${EN_TO_CN[drainEl]}势成主导，宜从势而行。`,
+      description: `日主${EN_TO_CN[dmElement]}极弱少根，${EN_TO_CN[drainEl]}势成主导，宜从势而行。`,
     };
   }
 
-  if (strengthScore <= 38 && selfGroup <= 25) {
+  if (strengthScore <= 34 && selfGroup <= 20 && rootStrength <= 4) {
     return {
       pattern: '从弱格',
       description: `日主失令少根，全局克泄耗重，宜从顺势五行。`,
@@ -512,7 +522,7 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
 
   const elementScores = calculateElementScores(bazi);
   const normalized = normalizeElementScores(elementScores);
-  const pattern = detectCongPattern(normalized, dmElement, score);
+  const pattern = detectCongPattern(normalized, dmElement, score, rootStrength);
   const tiaohuo = detectTiaohuo(monthZhi);
   const tongguan = detectTongguan(normalized);
   const { yongShen, xiShen, jiShen, qiuShen, priority } = buildYongXiJiQiu(
