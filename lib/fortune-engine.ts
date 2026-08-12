@@ -216,8 +216,14 @@ export const analyzeFortune = (
   // 2. 构造权威分析器所需的 bazi 字符串数组
   const baziStr = pillars.map(p => p.celestialStem + p.earthlyBranch);
 
-  // 3. 权威用神分析 (日主强弱、用神忌神、格局、调候、通关)
-  const yongShenResult = determineYongShen(baziStr);
+  // 3. 权威用神分析 (日主强弱、用神忌神、格局、调候、通关；司令分日 + 藏干帮扶)
+  const birthHour = Number(`${birthTime || '12:00'}`.split(':')[0] || 12);
+  const birthMinute = Number(`${birthTime || '12:00'}`.split(':')[1] || 0);
+  const yongShenResult = determineYongShen(baziStr, {
+    birthDate,
+    birthHour: Number.isFinite(birthHour) ? birthHour : 12,
+    birthMinute: Number.isFinite(birthMinute) ? birthMinute : 0,
+  });
 
   // 4. 权威十神分析
   const shiShenAnalysis = generateBaziShiShenAnalysis(baziStr);

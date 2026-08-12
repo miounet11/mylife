@@ -67,6 +67,31 @@ export type YongShenPresentation = {
   live: YongShenResult | null;
 };
 
+/** Best-effort birth date for 司令分日 on live recompute. */
+function extractBirthDateHint(result: unknown): { birthDate?: string; birthHour?: number; birthMinute?: number } {
+  const r = (result || {}) as any;
+  const raw =
+    r.birthDate ||
+    r.basic?.birthDate ||
+    r.input?.birthDate ||
+    r.meta?.birthDate ||
+    r.calculationProfile?.clockBirthDate ||
+    '';
+  const birthDate = `${raw || ''}`.trim().slice(0, 10);
+  const timeRaw =
+    r.birthTime ||
+    r.basic?.birthTime ||
+    r.input?.birthTime ||
+    r.meta?.birthTime ||
+    '';
+  const tm = `${timeRaw || ''}`.match(/(\d{1,2}):(\d{2})/);
+  return {
+    birthDate: /^\d{4}-\d{2}-\d{2}$/.test(birthDate) ? birthDate : undefined,
+    birthHour: tm ? Number(tm[1]) : undefined,
+    birthMinute: tm ? Number(tm[2]) : undefined,
+  };
+}
+
 /**
  * Prefer live recompute from pillars; fall back to stored advice/yongShen.
  * `stale=true` when stored engine version ≠ current (or missing on old reports with pillars).
@@ -80,7 +105,8 @@ export function resolveYongShenPresentation(result: unknown): YongShenPresentati
   let live: YongShenResult | null = null;
   if (pillars) {
     try {
-      live = determineYongShen(pillars);
+      const birthHint = extractBirthDateHint(result);
+      live = determineYongShen(pillars, birthHint);
     } catch {
       live = null;
     }

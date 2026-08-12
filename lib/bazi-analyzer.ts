@@ -27,8 +27,51 @@ export interface YongShenResult {
     helpStrength: number;
     drainStrength: number;
     seasonBonus: number;
+    /** 人元司令（分日）摘要；无出生日则退回本气 */
+    siling?: {
+      gan: string;
+      element: string;
+      role: string;
+      dayInMonth: number;
+      fromSiling: boolean;
+    };
   };
   priority: Array<{ element: string; reason: string }>;
+}
+
+/** Optional birth timing so 司令 can resolve by day-of-month within the branch. */
+export type DetermineYongShenOptions = {
+  /** Day index within month branch (1-based from 交节). Wins over birthDate. */
+  dayInMonth?: number | null;
+  /** Civil birth date; used with lunar PrevJie to compute dayInMonth. */
+  birthDate?: Date | string | null;
+  birthHour?: number;
+  birthMinute?: number;
+};
+
+function parseBirthDateOption(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  if (value instanceof Date) {
+    return Number.isFinite(value.getTime()) ? value : null;
+  }
+  const m = `${value}`.trim().match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (!m) return null;
+  const d = new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
+  return Number.isFinite(d.getTime()) ? d : null;
+}
+
+function resolveDayInMonthOption(opts?: DetermineYongShenOptions | null): number | null {
+  if (!opts) return null;
+  if (opts.dayInMonth != null && Number.isFinite(opts.dayInMonth)) {
+    return Math.floor(Number(opts.dayInMonth));
+  }
+  const birth = parseBirthDateOption(opts.birthDate);
+  if (!birth) return null;
+  return computeDayInMonthBranch(
+    birth,
+    opts.birthHour ?? 12,
+    opts.birthMinute ?? 0,
+  );
 }
 
 const ELEMENTS = ['wood', 'fire', 'earth', 'metal', 'water'] as const;
@@ -142,51 +185,224 @@ function uniqElements(elements: Element[]): Element[] {
 }
 
 /**
- * 月令对日主的「得令 / 失令」加权。
- * 以月支本气（藏干第一位）为主，不以粗四季表代替月令。
- * 例：丑月本气己土，甲木不得令；仅用「冬木 +10」会把身弱/中和误判成身偏旺。
+ * 十二月人元司令分野（约 30 日）— 自月建交节起算。
+ * 次序为用事先后（余气→中气→本气），与 ZHI_CANG_GAN 本中余存储序不同。
+ * 参考常见《三命通会》分野表（天数因流派略差 ±1，作工程近似）。
  */
-function getMonthOrderBonus(monthZhi: string, dmElement: Element): number {
+const SILING_SEGMENTS: Record<string, Array<{ gan: string; days: number; role: string }>> = {
+  子: [
+    { gan: '壬', days: 10, role: '余气' },
+    { gan: '癸', days: 20, role: '本气' },
+  ],
+  丑: [
+    { gan: '癸', days: 9, role: '余气' },
+    { gan: '辛', days: 3, role: '中气' },
+    { gan: '己', days: 18, role: '本气' },
+  ],
+  寅: [
+    { gan: '戊', days: 7, role: '余气' },
+    { gan: '丙', days: 7, role: '中气' },
+    { gan: '甲', days: 16, role: '本气' },
+  ],
+  卯: [
+    { gan: '甲', days: 10, role: '余气' },
+    { gan: '乙', days: 20, role: '本气' },
+  ],
+  辰: [
+    { gan: '乙', days: 9, role: '余气' },
+    { gan: '癸', days: 3, role: '中气' },
+    { gan: '戊', days: 18, role: '本气' },
+  ],
+  巳: [
+    { gan: '戊', days: 5, role: '余气' },
+    { gan: '庚', days: 9, role: '中气' },
+    { gan: '丙', days: 16, role: '本气' },
+  ],
+  午: [
+    { gan: '丙', days: 10, role: '余气' },
+    { gan: '己', days: 9, role: '中气' },
+    { gan: '丁', days: 11, role: '本气' },
+  ],
+  未: [
+    { gan: '丁', days: 9, role: '余气' },
+    { gan: '乙', days: 3, role: '中气' },
+    { gan: '己', days: 18, role: '本气' },
+  ],
+  申: [
+    { gan: '戊', days: 7, role: '余气' },
+    { gan: '壬', days: 7, role: '中气' },
+    { gan: '庚', days: 16, role: '本气' },
+  ],
+  酉: [
+    { gan: '庚', days: 10, role: '余气' },
+    { gan: '辛', days: 20, role: '本气' },
+  ],
+  戌: [
+    { gan: '辛', days: 9, role: '余气' },
+    { gan: '丁', days: 3, role: '中气' },
+    { gan: '戊', days: 18, role: '本气' },
+  ],
+  亥: [
+    { gan: '戊', days: 7, role: '余气' },
+    { gan: '甲', days: 7, role: '中气' },
+    { gan: '壬', days: 16, role: '本气' },
+  ],
+};
+
+export type SilingYuan = {
+  gan: string;
+  element: Element;
+  role: string;
+  /** 1-based day within month branch */
+  dayInMonth: number;
+  /** true when resolved from day-of-month, false = fallback 本气 */
+  fromSiling: boolean;
+};
+
+/**
+ * 按月内第几天取「人元司令」。
+ * dayInMonth: 自月建交节起第 1 日…约 30 日；越界夹到首尾段。
+ */
+export function resolveSilingYuan(monthZhi: string, dayInMonth?: number | null): SilingYuan {
   const hidden = ZHI_CANG_GAN[monthZhi] || [];
-  const mainGan = hidden[0];
-  const mainEl = mainGan ? toElement(mainGan) : null;
+  const fallbackGan = hidden[0] || '甲';
+  const fallbackEl = toElement(fallbackGan) || 'wood';
+  const segs = SILING_SEGMENTS[monthZhi];
+  if (!segs?.length || dayInMonth == null || !Number.isFinite(dayInMonth)) {
+    return {
+      gan: fallbackGan,
+      element: fallbackEl,
+      role: '本气',
+      dayInMonth: dayInMonth && dayInMonth > 0 ? Math.floor(dayInMonth) : 0,
+      fromSiling: false,
+    };
+  }
+  const total = segs.reduce((s, x) => s + x.days, 0) || 30;
+  let d = Math.floor(dayInMonth);
+  if (d < 1) d = 1;
+  if (d > total) d = total;
+  let cursor = 0;
+  for (const seg of segs) {
+    cursor += seg.days;
+    if (d <= cursor) {
+      const el = toElement(seg.gan) || fallbackEl;
+      return {
+        gan: seg.gan,
+        element: el,
+        role: seg.role,
+        dayInMonth: d,
+        fromSiling: true,
+      };
+    }
+  }
+  const last = segs[segs.length - 1];
+  return {
+    gan: last.gan,
+    element: toElement(last.gan) || fallbackEl,
+    role: last.role,
+    dayInMonth: d,
+    fromSiling: true,
+  };
+}
+
+/**
+ * 出生时刻 → 当前月建内第几天（交节起算）。
+ * 失败返回 null，调用方退回本气。
+ */
+export function computeDayInMonthBranch(
+  birthDate: Date,
+  hour = 12,
+  minute = 0,
+): number | null {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { Solar } = require('lunar-javascript') as {
+      Solar: {
+        fromYmdHms: (
+          y: number,
+          m: number,
+          d: number,
+          h: number,
+          mi: number,
+          s: number,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        ) => any;
+      };
+    };
+    const y = birthDate.getFullYear();
+    const m = birthDate.getMonth() + 1;
+    const d = birthDate.getDate();
+    const lunar = Solar.fromYmdHms(y, m, d, hour, minute, 0).getLunar();
+    const prevJie = lunar.getPrevJie().getSolar();
+    const jieMs = new Date(
+      prevJie.getYear(),
+      prevJie.getMonth() - 1,
+      prevJie.getDay(),
+      0,
+      0,
+      0,
+    ).getTime();
+    const birthMs = new Date(y, m - 1, d, hour, minute, 0).getTime();
+    const days = Math.floor((birthMs - jieMs) / (24 * 3600 * 1000)) + 1;
+    if (!Number.isFinite(days) || days < 1) return 1;
+    return Math.min(days, 35);
+  } catch {
+    return null;
+  }
+}
+
+function tenGodBonusForElement(dmElement: Element, other: Element): number {
+  if (other === dmElement) return 16;
+  if (other === GENERATED_BY[dmElement]) return 12;
+  if (other === CONTROLLED_BY[dmElement]) return -10;
+  if (other === GENERATES[dmElement]) return -7;
+  if (other === CONTROLS[dmElement]) return -5;
+  return 0;
+}
+
+/**
+ * 月令对日主的「得令 / 失令」加权。
+ * 优先「人元司令」（分日），否则月支本气；中余气轻量修正 + 四季弱修正。
+ */
+function getMonthOrderBonus(
+  monthZhi: string,
+  dmElement: Element,
+  siling?: SilingYuan | null,
+): number {
+  const hidden = ZHI_CANG_GAN[monthZhi] || [];
+  const commandGan = siling?.gan || hidden[0];
+  const commandEl = siling?.element || (commandGan ? toElement(commandGan) : null);
 
   let bonus = 0;
-  if (mainEl) {
-    if (mainEl === dmElement) {
-      bonus = 16; // 比劫当令 · 得令
-    } else if (mainEl === GENERATED_BY[dmElement]) {
-      bonus = 12; // 印星当令
-    } else if (mainEl === CONTROLLED_BY[dmElement]) {
-      bonus = -10; // 官杀当令
-    } else if (mainEl === GENERATES[dmElement]) {
-      bonus = -7; // 食伤当令
-    } else if (mainEl === CONTROLS[dmElement]) {
-      bonus = -5; // 财星当令
+  if (commandEl) {
+    bonus = tenGodBonusForElement(dmElement, commandEl);
+    // 司令若非本气（余气/中气用事），权重略减
+    if (siling?.fromSiling && siling.role !== '本气') {
+      bonus *= 0.85;
     }
   }
 
-  // 中气 / 余气：轻量加减（不盖过本气）
-  hidden.slice(1).forEach((gan, i) => {
+  // 非司令藏干：轻量背景
+  hidden.forEach((gan, i) => {
+    if (gan === commandGan) return;
     const el = toElement(gan);
     if (!el) return;
-    const w = i === 0 ? 3.5 : 2;
+    const w = i === 0 ? 2.5 : i === 1 ? 1.8 : 1.2;
     if (el === dmElement || el === GENERATED_BY[dmElement]) bonus += w;
-    else if (el === CONTROLLED_BY[dmElement]) bonus -= w * 0.8;
-    else if (el === GENERATES[dmElement] || el === CONTROLS[dmElement]) bonus -= w * 0.4;
+    else if (el === CONTROLLED_BY[dmElement]) bonus -= w * 0.75;
+    else if (el === GENERATES[dmElement] || el === CONTROLS[dmElement]) bonus -= w * 0.35;
   });
 
-  // 四季余气：弱化后作为次级修正（避免覆盖月令本气）
   const season = MONTH_TO_SEASON[monthZhi] || 'spring';
-  const seasonal = (SEASON_STATE[season][dmElement] || 0) * 0.25;
+  const seasonal = (SEASON_STATE[season][dmElement] || 0) * 0.2;
   bonus += seasonal;
 
   return Math.round(bonus * 10) / 10;
 }
 
-/** @deprecated use getMonthOrderBonus — kept name for call-site clarity in reason chain */
+/** @deprecated use getMonthOrderBonus */
 function getSeasonBonus(monthZhi: string, dmElement: Element): number {
-  return getMonthOrderBonus(monthZhi, dmElement);
+  return getMonthOrderBonus(monthZhi, dmElement, null);
 }
 
 function calculateRootStrength(pillars: ReturnType<typeof parseBazi>, dmElement: Element): number {
@@ -204,35 +420,55 @@ function calculateRootStrength(pillars: ReturnType<typeof parseBazi>, dmElement:
   return score;
 }
 
+/** 地支藏干并入帮扶/克泄的柱权重（日支通根另计，此处不再重复） */
+const BRANCH_PILLAR_SCALE = [0.28, 0.55, 0, 0.32]; // 年 月 日 时
+
+function applyHelpDrainForElement(
+  el: Element,
+  dmElement: Element,
+  scale: number,
+  acc: { help: number; drain: number },
+) {
+  if (el === dmElement) acc.help += STEM_WEIGHTS.helpSame * scale;
+  else if (el === GENERATED_BY[dmElement]) acc.help += STEM_WEIGHTS.helpGenerate * scale;
+  else if (el === GENERATES[dmElement]) acc.drain += STEM_WEIGHTS.drainOutput * scale;
+  else if (el === CONTROLS[dmElement]) acc.drain += STEM_WEIGHTS.drainWealth * scale;
+  else if (el === CONTROLLED_BY[dmElement]) acc.drain += STEM_WEIGHTS.drainControl * scale;
+}
+
 function calculateStemHelpDrain(
   pillars: ReturnType<typeof parseBazi>,
   dayMaster: string,
   dmElement: Element,
 ): { help: number; drain: number } {
   if (!pillars) return { help: 0, drain: 0 };
-  let help = 0;
-  let drain = 0;
+  const acc = { help: 0, drain: 0 };
 
+  // 1) 天干（日干本身不计）
   pillars.forEach((pillar, idx) => {
     if (idx === 2) return;
-    const gan = pillar.gan;
-    const el = toElement(gan);
+    const el = toElement(pillar.gan);
     if (!el) return;
-
-    if (el === dmElement) help += STEM_WEIGHTS.helpSame;
-    else if (el === GENERATED_BY[dmElement]) help += STEM_WEIGHTS.helpGenerate;
-    else if (el === GENERATES[dmElement]) drain += STEM_WEIGHTS.drainOutput;
-    else if (el === CONTROLS[dmElement]) drain += STEM_WEIGHTS.drainWealth;
-    else if (el === CONTROLLED_BY[dmElement]) drain += STEM_WEIGHTS.drainControl;
+    applyHelpDrainForElement(el, dmElement, 1, acc);
   });
 
-  const dayStem = pillars[2].gan;
-  if (dayStem !== dayMaster) {
-    const el = toElement(dayStem);
-    if (el === dmElement) help += STEM_WEIGHTS.helpSame * 0.5;
-  }
+  // 2) 地支藏干（月令权重大，年/时次之；日支由通根处理）
+  pillars.forEach((pillar, idx) => {
+    const pillarScale = BRANCH_PILLAR_SCALE[idx] ?? 0;
+    if (pillarScale <= 0) return;
+    const hidden = ZHI_CANG_GAN[pillar.zhi] || [];
+    hidden.forEach((gan, hIdx) => {
+      const el = toElement(gan);
+      if (!el) return;
+      const scale = pillarScale * (HIDDEN_WEIGHTS[hIdx] ?? 0.3);
+      applyHelpDrainForElement(el, dmElement, scale, acc);
+    });
+  });
 
-  return { help, drain };
+  return {
+    help: Math.round(acc.help * 10) / 10,
+    drain: Math.round(acc.drain * 10) / 10,
+  };
 }
 
 function calculateElementScores(bazi: string[]): Record<Element, number> {
@@ -485,7 +721,10 @@ function buildAnalysisText(
   return parts.join('；') + '。';
 }
 
-export function determineYongShen(bazi: string[]): YongShenResult | null {
+export function determineYongShen(
+  bazi: string[],
+  options?: DetermineYongShenOptions | null,
+): YongShenResult | null {
   const pillars = parseBazi(bazi);
   if (!pillars) return null;
 
@@ -497,7 +736,10 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
   const monthHidden = ZHI_CANG_GAN[monthZhi] || [];
   const monthMainGan = monthHidden[0] || '';
   const monthMainEl = monthMainGan ? toElement(monthMainGan) : null;
-  const seasonBonus = getMonthOrderBonus(monthZhi, dmElement);
+
+  const dayInMonth = resolveDayInMonthOption(options);
+  const siling = resolveSilingYuan(monthZhi, dayInMonth);
+  const seasonBonus = getMonthOrderBonus(monthZhi, dmElement, siling);
   const rootStrength = calculateRootStrength(pillars, dmElement);
   const { help, drain } = calculateStemHelpDrain(pillars, dayMaster, dmElement);
 
@@ -505,7 +747,7 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
   let score = Math.max(5, Math.min(95, Math.round(rawScore)));
   let { strength, strengthDesc } = resolveStrengthLevel(score);
 
-  // 天干克泄明显大于帮扶、且分数贴近强弱分界时，禁止硬判身偏旺/偏弱（防喜忌翻转）
+  // 克泄明显大于帮扶、且分数贴近强弱分界时，禁止硬判身偏旺/偏弱（防喜忌翻转）
   if (drain > help * 1.15 && score >= 56 && score <= 66 && strength === 'strong') {
     score = Math.min(score, 55);
     ({ strength, strengthDesc } = resolveStrengthLevel(score));
@@ -530,13 +772,16 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
   );
 
   const confidence = buildConfidence(score);
-  const monthOrderNote = monthMainEl
-    ? `月令${monthZhi}本气${monthMainGan}${EN_TO_CN[monthMainEl]}，日主${EN_TO_CN[dmElement]}${seasonBonus >= 8 ? '得令/得助' : seasonBonus < 0 ? '失令偏' : '平令'}（令气${seasonBonus > 0 ? '+' : ''}${seasonBonus}）`
-    : `月令${monthZhi}，令气${seasonBonus > 0 ? '+' : ''}${seasonBonus}`;
+  const commandLabel = siling.fromSiling
+    ? `司令${siling.role}${siling.gan}${EN_TO_CN[siling.element]}（月内第${siling.dayInMonth}日）`
+    : `本气${monthMainGan || siling.gan}${monthMainEl ? EN_TO_CN[monthMainEl] : EN_TO_CN[siling.element]}`;
+  const orderWord =
+    seasonBonus >= 8 ? '得令/得助' : seasonBonus < 0 ? '失令偏' : '平令';
+  const monthOrderNote = `月令${monthZhi}${commandLabel}，日主${EN_TO_CN[dmElement]}${orderWord}（令气${seasonBonus > 0 ? '+' : ''}${seasonBonus}）`;
   const threeGain: YongShenResult['threeGain'] = {
     reasonChain: [
       monthOrderNote,
-      `通根${Math.round(rootStrength)}，天干帮扶${help}、克泄${drain}${drain > help ? '（克泄重于帮扶）' : help > drain ? '（帮扶重于克泄）' : ''}`,
+      `通根${Math.round(rootStrength)}，干支帮扶${help}、克泄${drain}${drain > help ? '（克泄重于帮扶）' : help > drain ? '（帮扶重于克泄）' : ''}`,
       tiaohuo ? `调候：${tiaohuo.reason}` : '调候需求不显',
       tongguan ? `通关：${tongguan.reason}` : '无明显两神交战',
       `综合取用：${yongShen.map((e) => EN_TO_CN[e as Element]).join('、')}`,
@@ -563,6 +808,13 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
       helpStrength: Math.round(help * 10) / 10,
       drainStrength: Math.round(drain * 10) / 10,
       seasonBonus,
+      siling: {
+        gan: siling.gan,
+        element: EN_TO_CN[siling.element],
+        role: siling.role,
+        dayInMonth: siling.dayInMonth,
+        fromSiling: siling.fromSiling,
+      },
     },
     priority,
   };

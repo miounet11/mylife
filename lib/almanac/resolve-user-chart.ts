@@ -69,7 +69,13 @@ export function buildChartFromBirth(input: {
     });
     const bazi = pillars.map((p) => `${p.celestialStem}${p.earthlyBranch}`);
     const day = pillars[2];
-    const ys = determineYongShen(bazi);
+    const hour = Number(timeNorm.split(':')[0] || 12);
+    const minute = Number(timeNorm.split(':')[1] || 0);
+    const ys = determineYongShen(bazi, {
+      birthDate: date,
+      birthHour: Number.isFinite(hour) ? hour : 12,
+      birthMinute: Number.isFinite(minute) ? minute : 0,
+    });
     return {
       source: 'engine',
       dayMaster: day.celestialStem,
@@ -113,7 +119,10 @@ export function chartFromStoredFortune(fortune: {
     let analysisSnippet: string | undefined;
     if (bazi.length === 4) {
       try {
-        const ys = determineYongShen(bazi);
+        const ys = determineYongShen(bazi, {
+          birthDate: fortune.birthDate || undefined,
+          birthHour: fortune.birthTime ? Number(`${fortune.birthTime}`.split(':')[0]) : undefined,
+        });
         if (ys) {
           if (!yong.length) yong = mapYongList(ys.yongShen);
           strengthDesc = ys.strengthDesc;

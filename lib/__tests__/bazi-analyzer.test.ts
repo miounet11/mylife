@@ -2,6 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   determineYongShen,
+  resolveSilingYuan,
   generateBaziShiShenAnalysis,
   getLuckyElements,
   calculateWuxingStrength,
@@ -9,6 +10,69 @@ import {
 } from '../bazi-analyzer';
 
 const EN_ELEMENTS = ['wood', 'fire', 'earth', 'metal', 'water'];
+
+describe('resolveSilingYuan (司令分日)', () => {
+  it('falls back to 本气 when dayInMonth missing', () => {
+    const s = resolveSilingYuan('丑', null);
+    assert.equal(s.gan, '己');
+    assert.equal(s.role, '本气');
+    assert.equal(s.fromSiling, false);
+  });
+
+  it('丑月: day 1–9 癸余气, 10–12 辛中气, 13+ 己本气', () => {
+    const early = resolveSilingYuan('丑', 5);
+    assert.equal(early.gan, '癸');
+    assert.equal(early.role, '余气');
+    assert.equal(early.fromSiling, true);
+
+    const mid = resolveSilingYuan('丑', 11);
+    assert.equal(mid.gan, '辛');
+    assert.equal(mid.role, '中气');
+
+    const late = resolveSilingYuan('丑', 20);
+    assert.equal(late.gan, '己');
+    assert.equal(late.role, '本气');
+    assert.equal(late.fromSiling, true);
+  });
+
+  it('寅月: late days 甲本气当令', () => {
+    const late = resolveSilingYuan('寅', 25);
+    assert.equal(late.gan, '甲');
+    assert.equal(late.role, '本气');
+  });
+});
+
+describe('determineYongShen + 司令 / 藏干', () => {
+  it('丑月甲木: 余气司令(癸) 比本气(己) 更扶身', () => {
+    const chart = ['丙戌', '辛丑', '甲辰', '乙丑'] as string[];
+    const base = determineYongShen(chart); // 本气己
+    const waterCmd = determineYongShen(chart, { dayInMonth: 5 }); // 癸司令
+    assert.ok(base && waterCmd);
+    // 癸水印令 vs 己土财令 → 令气应更高（失令更轻 / 得助）
+    assert.ok(
+      waterCmd!.details.seasonBonus > base!.details.seasonBonus,
+      `癸司令 seasonBonus ${waterCmd!.details.seasonBonus} should exceed 本气 ${base!.details.seasonBonus}`,
+    );
+    assert.equal(waterCmd!.details.siling?.gan, '癸');
+    assert.ok(
+      waterCmd!.threeGain?.reasonChain?.some((line) => /司令|余气|癸/.test(line)),
+      'reason chain should mention 司令/癸',
+    );
+  });
+
+  it('includes branch 藏干 in help/drain (not stems-only)', () => {
+    // 庚坐子，子水泄金；若仅计天干，帮扶/克泄应明显偏小
+    const withBranch = determineYongShen(['甲子', '丙子', '庚子', '壬子']);
+    assert.ok(withBranch);
+    assert.ok(
+      withBranch!.details.drainStrength > 4,
+      `branch drain should push drainStrength, got ${withBranch!.details.drainStrength}`,
+    );
+    assert.ok(
+      withBranch!.threeGain?.reasonChain?.some((line) => /干支帮扶|克泄/.test(line)),
+    );
+  });
+});
 
 describe('determineYongShen', () => {
   it('returns null for invalid bazi input', () => {

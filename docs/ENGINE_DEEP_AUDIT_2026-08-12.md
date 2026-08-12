@@ -27,14 +27,15 @@ Classical Zi Ping:
 - **得势** = 天干印比帮扶 vs 克泄耗
 - 「得时不旺、失时不衰」：令气是主轴，但根与党众可翻转
 
-**Our implementation (post-fix):**
+**Our implementation (post-fix + siling-branch-v2):**
 
-- `getMonthOrderBonus` uses **月支本气** (first hidden stem) + light mid/residual + 0.25× season
-- Stems help/drain on 天干 only
+- `getMonthOrderBonus` uses **人元司令分日** when `dayInMonth` / birthDate is available; else 月支本气
+- Help/drain: **天干 + 地支藏干** (年/月/时柱 scales; 日支由通根处理)
 - Roots via 藏干 weighted
 - Boundary soft-clamp when drain≫help near strong threshold
+- Engine stamp: `2026-08-12-siling-branch-v2`
 
-**Verdict:** Aligns with 月令优先 + 三维度. Gap: no 司令按日分界 (advanced).
+**Verdict:** Aligns with 月令优先 + 三维度 + 司令分野 + 得势含藏干.
 
 ### 1.2 用神（扶抑 + 调候 + 通关）
 
@@ -86,22 +87,31 @@ Sources (2024–2026 summaries): 子平真诠-style 月令优先; Baidu/百科 �
 ### 3.1 Score formula
 
 ```
-raw = 50 + monthOrderBonus + rootStrength + stemHelp − stemDrain
+raw = 50 + monthOrderBonus + rootStrength + help − drain
+// help/drain = 天干 + 年/月/时支藏干
 score ∈ [5, 95]
 ```
 
 Levels: ≥72 极旺 · ≥58 偏旺 · ≥42 中和 · ≥28 偏弱 · else 极弱  
 Soft clamp: drain>1.15×help & score∈[56,66] → cap 55.
 
-### 3.2 Fixture results (post 从格 fix)
+### 3.2 Fixture results (siling-branch-v2, 无 dayInMonth = 本气)
 
 | Chart | Score | Strength | Yong | Math OK |
 |-------|------:|----------|------|---------|
-| 丙戌辛丑甲辰乙丑 (user) | 52 | 中和偏弱 | 水木火 | ✅ |
-| 寅月甲多比 | 95 | 极旺 | 木… | ✅ |
-| 午月庚金 | 23 | 极弱 | 土金 | ✅ |
-| 酉月甲寅乙卯 (有根) | 68 | 偏旺 **正格** | 金土火 | ✅ (was 从旺) |
-| 酉月少根 | 31 | 偏弱 | 水木 | ✅ |
+| 丙戌辛丑甲辰乙丑 (user) | 43 | 中和偏弱 | 水木火 | ✅ (藏干加大克泄) |
+| 同上 + dayInMonth=5 (癸司令) | 56 | 中和偏弱 | 水木火 | ✅ 令气高于本气 |
+| 寅月甲多比 | 95 | 极旺 | 金土火 | ✅ |
+| 午月庚金 | 17 | 极弱 | 土金 | ✅ |
+| 酉月甲寅乙卯 (有根) | 67 | 偏旺 **正格** | 金土火 | ✅ |
+
+### 3.2b 司令分日 (丑)
+
+| dayInMonth | 司令 | role |
+|-----------:|------|------|
+| 1–9 | 癸 | 余气 |
+| 10–12 | 辛 | 中气 |
+| 13–30 | 己 | 本气 |
 
 ### 3.3 Month order monotonicity (甲, fixed peers)
 

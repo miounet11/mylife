@@ -163,7 +163,13 @@ function buildOneSample(seed: DemoSeed): KlineShowcaseSample | null {
       sect: 2,
     });
     const baziStr = pillars.map((p) => `${p.celestialStem}${p.earthlyBranch}`);
-    const yongShen = determineYongShen(baziStr);
+    const hour = Number(`${seed.birthTime || '12:00'}`.split(':')[0] || 12);
+    const minute = Number(`${seed.birthTime || '12:00'}`.split(':')[1] || 0);
+    const yongShen = determineYongShen(baziStr, {
+      birthDate,
+      birthHour: Number.isFinite(hour) ? hour : 12,
+      birthMinute: Number.isFinite(minute) ? minute : 0,
+    });
     const dayun = calculateDayun(
       birthDate,
       seed.birthTime,

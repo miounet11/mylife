@@ -231,8 +231,17 @@ async function getResult(reportId: string, options?: { publicView?: boolean }) {
     const bazi = pillars
       .map((pillar) => `${pillar?.celestialStem || ''}${pillar?.earthlyBranch || ''}`)
       .filter((item) => item.length === 2);
-    const yongShenResult = bazi.length === 4 ? determineYongShen(bazi) : null;
     const parsedBirthDate = parseLocalDate(fortuneData.birthDate);
+    const birthHour = Number(`${fortuneData.birthTime || '12:00'}`.split(':')[0] || 12);
+    const birthMinute = Number(`${fortuneData.birthTime || '12:00'}`.split(':')[1] || 0);
+    const yongShenResult =
+      bazi.length === 4
+        ? determineYongShen(bazi, {
+            birthDate: parsedBirthDate || fortuneData.birthDate || undefined,
+            birthHour: Number.isFinite(birthHour) ? birthHour : 12,
+            birthMinute: Number.isFinite(birthMinute) ? birthMinute : 0,
+          })
+        : null;
     const dayun = fortuneData.dayun || (pillars.length >= 2 && parsedBirthDate && fortuneData.birthTime
       ? calculateDayun(
           parsedBirthDate,
