@@ -348,6 +348,25 @@ export function buildChatExperienceContext(params: {
       recentEvents.length > 0
         ? `用户最近事件：${recentEvents.map((item) => `${item.date} ${item.title}`).join('；')}。`
         : '当前还没有已记录的现实事件，可提醒用户把关键节点存成事件，后续复盘。',
+      (() => {
+        try {
+          const { pickWeeklyCalibrationItems } = require('@/lib/weekly-calibration') as typeof import('@/lib/weekly-calibration');
+          const due = pickWeeklyCalibrationItems(
+            events.map((e) => ({
+              id: e.id,
+              title: e.title,
+              date: e.date,
+              userFeedback: e.userFeedback as { wasAccurate?: boolean | null } | undefined,
+            })),
+          );
+          if (!due.length) return '';
+          return `本周待回访（先问准了还是偏了，再给新建议）：${due
+            .map((d) => `「${d.title}」${d.daysAgo}天前`)
+            .join('；')}`;
+        } catch {
+          return '';
+        }
+      })(),
       confirmedPastEvents.length > 0
         ? `用户已经亲自确认过 ${confirmedPastEvents.length} 条过去印证：${confirmedPastEvents.slice(0, 3).map((item) => item.title).join('；')}。回答时要把这些已验证的人生轨迹当成硬证据，而不是当成普通猜测。`
         : '',

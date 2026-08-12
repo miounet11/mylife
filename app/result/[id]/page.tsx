@@ -989,6 +989,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     fiveElements={(result as any).fiveElements}
                     tenGods={(result as any).tenGods}
                     shenSha={(result as any).shenSha}
+                    weeklyEvents={linkedEvents.map((event) => {
+                      const rawDate = (event as { date?: string | Date }).date;
+                      const dateStr =
+                        rawDate instanceof Date
+                          ? rawDate.toISOString().slice(0, 10)
+                          : typeof rawDate === 'string'
+                            ? rawDate.slice(0, 10)
+                            : '';
+                      return {
+                        id: event.id,
+                        title: event.title,
+                        date: dateStr,
+                        userFeedback: event.userFeedback as { wasAccurate?: boolean | null } | undefined,
+                      };
+                    })}
                   />
                   <ProUserCalibration
                     reportId={id}

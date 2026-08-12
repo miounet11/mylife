@@ -118,7 +118,7 @@ export function buildChatMemoryLayers(input: {
     layers.push({
       key: 'working_memory',
       priority: 2,
-      text: `【会话工作记忆 · 承接上一轮】${trimLayer(wm, 600)}`,
+      text: `【会话故事 · 必须承接】${trimLayer(wm, 1_200)}`,
       minChars: 24,
     });
   }

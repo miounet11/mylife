@@ -37,6 +37,10 @@ import AccountSavePanel from '@/components/auth/account-save-panel';
 import ReportShareViral from '@/components/share/report-share-viral';
 import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
 import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
+import ProOpeningTension from '@/components/report-pro/pro-opening-tension';
+import ProWeeklyLoop from '@/components/report-pro/pro-weekly-loop';
+import { buildReportOpeningTension } from '@/lib/report-opening-tension';
+import type { WeeklyCalibrationInput } from '@/lib/weekly-calibration';
 
 /**
  * 正常用户主报告（默认阅读）：
@@ -67,6 +71,7 @@ export default function ProReportShell({
   fiveElements,
   tenGods,
   shenSha,
+  weeklyEvents,
 }: {
   view: ProReportView;
   klineData?: FortuneAnalysisResult['klineData'] | null;
@@ -106,6 +111,8 @@ export default function ProReportShell({
   fiveElements?: unknown;
   tenGods?: unknown;
   shenSha?: unknown;
+  /** Events for weekly right/wrong loop */
+  weeklyEvents?: WeeklyCalibrationInput[];
 }) {
   const decisionSheet = buildDecisionSheet(view);
   const decisionPacks = buildDecisionPacks(view, reportId);
@@ -122,6 +129,8 @@ export default function ProReportShell({
       currentDayun,
     }),
   });
+
+  const openingTension = buildReportOpeningTension(view, reportId);
 
   const enginePack = buildEngineSurfaceFromProView({
     view,
@@ -170,6 +179,13 @@ export default function ProReportShell({
           yongShen={view.elements.yongShen}
         />
       ) : null}
+
+      <ProOpeningTension tension={openingTension} reportId={reportId} />
+
+      {weeklyEvents?.length ? (
+        <ProWeeklyLoop reportId={reportId} events={weeklyEvents} />
+      ) : null}
+
       <section className="border-b border-[color:var(--hairline)] pb-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
