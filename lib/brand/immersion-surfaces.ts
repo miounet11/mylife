@@ -26,7 +26,10 @@ export type ImmersionSurfaceKey =
   | 'almanac'
   | 'naming'
   | 'fengshui'
-  | 'predictions';
+  | 'predictions'
+  | 'events'
+  | 'membership'
+  | 'cases';
 
 export type ImmersionSurface = {
   key: ImmersionSurfaceKey;
@@ -163,6 +166,36 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     overlay: 'deep-ink',
     artId: 'surface-predictions',
     alt: '预测回访：验证时间线',
+  },
+  events: {
+    key: 'events',
+    route: '/events',
+    eyebrow: '事件日历',
+    mood: '记录节点，验证判断',
+    accent: 'teal',
+    overlay: 'light-paper',
+    artId: 'surface-events',
+    alt: '事件日历：验证闭环时间线',
+  },
+  membership: {
+    key: 'membership',
+    route: '/membership',
+    eyebrow: '会员',
+    mood: '研究深度与提醒，不是命运保证',
+    accent: 'amber',
+    overlay: 'light-paper',
+    artId: 'surface-membership',
+    alt: '会员：研究访问意象',
+  },
+  cases: {
+    key: 'cases',
+    route: '/cases',
+    eyebrow: '案例库',
+    mood: '结构落到现实的路径',
+    accent: 'rose',
+    overlay: 'light-paper',
+    artId: 'surface-cases',
+    alt: '案例库：证据面板意象',
   },
 };
 

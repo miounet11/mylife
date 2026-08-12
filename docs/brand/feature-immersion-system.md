@@ -57,4 +57,14 @@ Overlay: `light-paper` (default) | `deep-ink` (analyze / teachers / predictions)
 - `components/brand/brand-lockup.tsx` — header lockup
 - `components/brand/feature-immersion-hero.tsx` — media + FocusHero composition
 
+## 6. Continuity (v1.1)
+
+| Surface | Asset / path |
+|---------|----------------|
+| Favicon / PWA | `public/favicon.ico`, `public/icons/icon-192.png`, `icon-512.png`, `app/apple-icon.png` |
+| OG default | `/images/brand-immersion/og-default.jpg` + `app/opengraph-image.jpg` |
+| Share PNG | teal plate + four-pillar mark in `download-share-image.tsx` |
+| Report cover | teal plate BrandMark lockup |
+| events / membership / cases | immersion heroes (v1.1 surfaces) |
+
 See implementation files for live wiring.

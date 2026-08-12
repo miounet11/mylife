@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { membershipPageCopy } from '@/lib/i18n/membership-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
@@ -71,10 +71,12 @@ export default async function MembershipPage({ searchParams }: MembershipPagePro
       />
       <AnalyticsPageView eventName="membership_page_viewed" page="/membership" />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="membership"
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}
+          compact
         />
         <PageIllustrationStrip
           surface="membership/hub"

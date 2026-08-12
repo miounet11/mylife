@@ -147,7 +147,7 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
   ctx.fillRect(0, 0, width, height);
 
   // Subtle top brand strip
-  ctx.fillStyle = 'rgba(67, 56, 202, 0.06)';
+  ctx.fillStyle = 'rgba(11, 95, 85, 0.06)';
   ctx.fillRect(0, 0, width, Math.round(height * 0.018));
 
   // Bottom chart area: real sparkline when provided, else abstract bars
@@ -161,17 +161,47 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
     sparklineHereIndex,
   });
 
-  // Brand mark square
+  // Brand mark square — teal plate + four-pillar K-line geometry
   const markSize = Math.round(width * 0.055);
   const markY = Math.round(height * 0.07);
-  ctx.fillStyle = '#4338ca';
+  ctx.fillStyle = '#0b5f55';
   roundRect(ctx, padX, markY, markSize, markSize, 8);
   ctx.fill();
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `700 ${Math.round(markSize * 0.48)}px ui-sans-serif, system-ui, "PingFang SC", "Noto Sans SC", sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('K', padX + markSize / 2, markY + markSize / 2 + 1);
+  // Four pillars (year/month/day solid/hour) in paper white
+  const pillarInk = '#f5f7f2';
+  const pW = markSize * 0.1;
+  const pillars = [
+    { x: 0.18, h: 0.42 },
+    { x: 0.36, h: 0.58 },
+    { x: 0.54, h: 0.72 }, // day pillar — solid "self"
+    { x: 0.72, h: 0.38 },
+  ];
+  for (let i = 0; i < pillars.length; i++) {
+    const p = pillars[i];
+    const px = padX + markSize * p.x;
+    const ph = markSize * p.h;
+    const py = markY + markSize * 0.78 - ph;
+    if (i === 2) {
+      ctx.fillStyle = pillarInk;
+      ctx.fillRect(px, py, pW, ph);
+    } else {
+      ctx.strokeStyle = pillarInk;
+      ctx.lineWidth = Math.max(1.5, markSize * 0.06);
+      ctx.strokeRect(px, py, pW, ph);
+    }
+  }
+  // Gold signal diamond
+  const dx = padX + markSize * 0.82;
+  const dy = markY + markSize * 0.68;
+  const dr = markSize * 0.08;
+  ctx.fillStyle = '#c9a14a';
+  ctx.beginPath();
+  ctx.moveTo(dx, dy - dr);
+  ctx.lineTo(dx + dr, dy);
+  ctx.lineTo(dx, dy + dr);
+  ctx.lineTo(dx - dr, dy);
+  ctx.closePath();
+  ctx.fill();
 
   // Brand text
   ctx.textAlign = 'left';
@@ -185,7 +215,7 @@ export function drawShareImageCanvas(props: ShareImageDrawProps): HTMLCanvasElem
 
   // Accent rule
   const ruleY = markY + markSize + Math.round(height * 0.04);
-  ctx.fillStyle = 'rgba(67, 56, 202, 0.55)';
+  ctx.fillStyle = 'rgba(11, 95, 85, 0.55)';
   ctx.fillRect(padX, ruleY, Math.round(width * 0.08), 2);
 
   // Title

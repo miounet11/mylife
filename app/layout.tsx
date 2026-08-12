@@ -53,6 +53,8 @@ export const metadata: Metadata = {
     icon: [
       { url: '/favicon.ico', sizes: 'any' },
       { url: '/icon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
     ],
     apple: [{ url: '/apple-icon', sizes: '180x180', type: 'image/png' }],
   },
@@ -86,11 +88,20 @@ export const metadata: Metadata = {
     siteName,
     title: 'Life K-Line 命运K线｜八字命理结构分析与人生运势曲线',
     description: siteDescription,
+    images: [
+      {
+        url: '/images/brand-immersion/og-default.jpg',
+        width: 1200,
+        height: 630,
+        alt: 'Life K-Line 人生K线',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'Life K-Line 命运K线｜八字命理结构分析与人生运势曲线',
     description: siteDescription,
+    images: ['/images/brand-immersion/og-default.jpg'],
   },
   robots: {
     index: true,
@@ -109,7 +120,7 @@ export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
-  themeColor: '#f7f8f9',
+  themeColor: '#0b5f55',
 };
 
 const organizationJsonLd = {
@@ -117,6 +128,8 @@ const organizationJsonLd = {
   '@type': 'Organization',
   name: siteName,
   url: siteUrl,
+  logo: `${siteUrl}/icons/icon-512.png`,
+  image: `${siteUrl}/images/brand-immersion/og-default.jpg`,
 };
 
 const websiteJsonLd = {

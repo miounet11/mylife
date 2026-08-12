@@ -106,7 +106,19 @@ export function ReportCover({
       <div className="relative">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex items-center gap-3">
-            <BrandMark size={44} withSignal withBaseline={false} />
+            <span
+              className="inline-flex shrink-0 items-center justify-center rounded-[10px] bg-[color:var(--brand-strong,#0b5f55)] p-2 shadow-sm"
+              style={
+                {
+                  ['--brand-deep']: '#f5f7f2',
+                  ['--brand-strong']: '#f5f7f2',
+                  ['--signal']: '#c9a14a',
+                } as React.CSSProperties
+              }
+              aria-hidden
+            >
+              <BrandMark size={36} withSignal withBaseline />
+            </span>
             <div>
               <Eyebrow tone="brand">{copy.eyebrow}</Eyebrow>
               <div className="mt-1 font-mono text-xs uppercase tracking-[0.16em] text-[color:var(--ink-5)]">

@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AppPage } from '@/components/layout/app-page';
 import EventsHub from '@/components/events/events-hub';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { eventsPageCopy } from '@/lib/i18n/events-copy';
 import { buildPageMetadata, withLocalePrefix } from '@/lib/seo';
@@ -32,10 +32,12 @@ export default async function EventsPage({ searchParams }: EventsPageProps) {
   return (
     <AppPage header={{ ctaHref: '/predictions', ctaLabel: copy.headerCta, compact: true }}>
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="events"
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}
+          compact
           actions={
             <>
               <Link href="/predictions" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

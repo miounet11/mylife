@@ -8,14 +8,44 @@
       "h": 512
     },
     {
+      "id": "logo-icon",
+      "src": "/images/brand-immersion/logo-icon.webp",
+      "w": 512,
+      "h": 512
+    },
+    {
       "id": "logo-wordmark",
       "src": "/images/brand-immersion/logo-wordmark.jpg",
       "w": 1280,
       "h": 720
     },
     {
-      "id": "surface-home",
-      "src": "/images/brand-immersion/surface-home.jpg",
+      "id": "logo-wordmark",
+      "src": "/images/brand-immersion/logo-wordmark.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "og-default",
+      "src": "/images/brand-immersion/og-default.jpg",
+      "w": 1200,
+      "h": 630
+    },
+    {
+      "id": "og-default",
+      "src": "/images/brand-immersion/og-default.webp",
+      "w": 1200,
+      "h": 630
+    },
+    {
+      "id": "surface-almanac",
+      "src": "/images/brand-immersion/surface-almanac.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-almanac",
+      "src": "/images/brand-immersion/surface-almanac.webp",
       "w": 1280,
       "h": 720
     },
@@ -26,8 +56,20 @@
       "h": 720
     },
     {
-      "id": "surface-tools",
-      "src": "/images/brand-immersion/surface-tools.jpg",
+      "id": "surface-analyze",
+      "src": "/images/brand-immersion/surface-analyze.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-cases",
+      "src": "/images/brand-immersion/surface-cases.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-cases",
+      "src": "/images/brand-immersion/surface-cases.webp",
       "w": 1280,
       "h": 720
     },
@@ -38,26 +80,20 @@
       "h": 720
     },
     {
-      "id": "surface-hehun",
-      "src": "/images/brand-immersion/surface-hehun.jpg",
+      "id": "surface-dimensions",
+      "src": "/images/brand-immersion/surface-dimensions.webp",
       "w": 1280,
       "h": 720
     },
     {
-      "id": "surface-almanac",
-      "src": "/images/brand-immersion/surface-almanac.jpg",
+      "id": "surface-events",
+      "src": "/images/brand-immersion/surface-events.jpg",
       "w": 1280,
       "h": 720
     },
     {
-      "id": "surface-naming",
-      "src": "/images/brand-immersion/surface-naming.jpg",
-      "w": 1280,
-      "h": 720
-    },
-    {
-      "id": "surface-teachers",
-      "src": "/images/brand-immersion/surface-teachers.jpg",
+      "id": "surface-events",
+      "src": "/images/brand-immersion/surface-events.webp",
       "w": 1280,
       "h": 720
     },
@@ -68,8 +104,80 @@
       "h": 720
     },
     {
+      "id": "surface-fengshui",
+      "src": "/images/brand-immersion/surface-fengshui.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-hehun",
+      "src": "/images/brand-immersion/surface-hehun.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-hehun",
+      "src": "/images/brand-immersion/surface-hehun.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-home",
+      "src": "/images/brand-immersion/surface-home.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-home",
+      "src": "/images/brand-immersion/surface-home.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
       "id": "surface-knowledge",
       "src": "/images/brand-immersion/surface-knowledge.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-knowledge",
+      "src": "/images/brand-immersion/surface-knowledge.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-membership",
+      "src": "/images/brand-immersion/surface-membership.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-membership",
+      "src": "/images/brand-immersion/surface-membership.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-naming",
+      "src": "/images/brand-immersion/surface-naming.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-naming",
+      "src": "/images/brand-immersion/surface-naming.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-predictions",
+      "src": "/images/brand-immersion/surface-predictions.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-predictions",
+      "src": "/images/brand-immersion/surface-predictions.webp",
       "w": 1280,
       "h": 720
     },
@@ -80,8 +188,32 @@
       "h": 720
     },
     {
-      "id": "surface-predictions",
-      "src": "/images/brand-immersion/surface-predictions.jpg",
+      "id": "surface-profile",
+      "src": "/images/brand-immersion/surface-profile.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-teachers",
+      "src": "/images/brand-immersion/surface-teachers.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-teachers",
+      "src": "/images/brand-immersion/surface-teachers.webp",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-tools",
+      "src": "/images/brand-immersion/surface-tools.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-tools",
+      "src": "/images/brand-immersion/surface-tools.webp",
       "w": 1280,
       "h": 720
     }

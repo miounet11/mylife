@@ -5,7 +5,8 @@ import type { DimensionSlug } from '@/lib/dimensions/types';
 export const SITE_URL = 'https://www.life-kline.com';
 export const SITE_NAME = 'Life K-Line 命运K线';
 export const SITE_LOCALE = 'zh_CN';
-export const DEFAULT_OG_IMAGE = `${SITE_URL}/opengraph-image`;
+/** Default social share image — brand wordmark immersion (also app/opengraph-image.jpg). */
+export const DEFAULT_OG_IMAGE = `${SITE_URL}/images/brand-immersion/og-default.jpg`;
 
 /**
  * Product-page language strategy (see docs/GLOBALIZATION_STANDARD.md):

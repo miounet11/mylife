@@ -97,7 +97,7 @@ export function ShareImageCard({
               width="18"
               height={h}
               rx="2"
-              fill={active ? '#4338ca' : '#d0d4db'}
+              fill={active ? '#0b5f55' : '#d0d4db'}
               opacity={active ? 0.9 : 0.55}
             />
           );
@@ -119,7 +119,7 @@ export function ShareImageCard({
         <div className="flex items-center gap-2.5">
           <span
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-[13px] font-black tracking-tight text-white"
-            style={{ background: '#4338ca' }}
+            style={{ background: '#0b5f55' }}
             aria-hidden
           >
             K
@@ -137,7 +137,7 @@ export function ShareImageCard({
         {/* Divider accent */}
         <div
           className="mt-6 h-px w-12"
-          style={{ background: '#4338ca', opacity: 0.55 }}
+          style={{ background: '#0b5f55', opacity: 0.55 }}
         />
 
         {/* Title */}
