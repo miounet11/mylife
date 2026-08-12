@@ -6,7 +6,7 @@ import { ArrowRight, BellRing, Bot, CalendarClock, History, Sparkles } from 'luc
 import { useLocale } from '@/components/i18n/locale-provider';
 import { AppPage } from '@/components/layout/app-page';
 import { AlertBanner } from '@/components/layout/alert-banner';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { PortalLayout } from '@/components/layout/portal-layout';
 import { SectionHeader } from '@/components/layout/section-header';
 import { StatGrid } from '@/components/layout/stat-grid';
@@ -261,7 +261,9 @@ export default function ProfilePage() {
           hasSubscription: !!updatesSummary?.subscription,
         }}
       />
-      <FocusHero
+      <FeatureImmersionHero
+        surfaceKey="profile"
+        compact
         eyebrow={copy.heroEyebrow}
         title={copy.heroTitle}
         description={copy.heroDescription}

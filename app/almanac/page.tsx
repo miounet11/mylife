@@ -5,7 +5,7 @@ import AlmanacApp from '@/components/almanac/almanac-app';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
 import { todayDateString } from '@/lib/almanac/day-pack';
 import { almanacHubCopy } from '@/lib/i18n/almanac-copy';
@@ -86,7 +86,9 @@ export default async function AlmanacPage({
         meta={{ surfaceKey: 'almanac', date, locale, geoReady: true }}
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="almanac"
+          compact
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}

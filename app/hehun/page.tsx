@@ -4,7 +4,7 @@ import { Suspense } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import HehunWorkspace from '@/components/hehun/hehun-workspace';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
@@ -41,7 +41,9 @@ export default async function HehunPage({
         meta={{ surfaceKey: 'hehun', kind: 'workspace' }}
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="hehun"
+          compact
           eyebrow={en ? 'Compatibility' : '合婚'}
           title={en ? 'Dual-chart compare' : '双盘对照'}
           description={

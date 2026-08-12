@@ -1,0 +1,89 @@
+{
+  "version": 1,
+  "assets": [
+    {
+      "id": "logo-icon",
+      "src": "/images/brand-immersion/logo-icon.jpg",
+      "w": 512,
+      "h": 512
+    },
+    {
+      "id": "logo-wordmark",
+      "src": "/images/brand-immersion/logo-wordmark.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-home",
+      "src": "/images/brand-immersion/surface-home.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-analyze",
+      "src": "/images/brand-immersion/surface-analyze.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-tools",
+      "src": "/images/brand-immersion/surface-tools.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-dimensions",
+      "src": "/images/brand-immersion/surface-dimensions.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-hehun",
+      "src": "/images/brand-immersion/surface-hehun.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-almanac",
+      "src": "/images/brand-immersion/surface-almanac.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-naming",
+      "src": "/images/brand-immersion/surface-naming.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-teachers",
+      "src": "/images/brand-immersion/surface-teachers.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-fengshui",
+      "src": "/images/brand-immersion/surface-fengshui.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-knowledge",
+      "src": "/images/brand-immersion/surface-knowledge.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-profile",
+      "src": "/images/brand-immersion/surface-profile.jpg",
+      "w": 1280,
+      "h": 720
+    },
+    {
+      "id": "surface-predictions",
+      "src": "/images/brand-immersion/surface-predictions.jpg",
+      "w": 1280,
+      "h": 720
+    }
+  ]
+}

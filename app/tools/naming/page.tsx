@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ImmersionMediaBand } from '@/components/brand/feature-immersion-hero';
 import { AppPage } from '@/components/layout/app-page';
 import { NamingLabApp } from '@/components/naming/naming-lab-app';
 import { ToolSeoGeoSection } from '@/components/tools/tool-seo-geo-section';
@@ -25,6 +26,9 @@ export default function NamingToolPage() {
   const pack = getToolSeoGeoPack('naming');
   return (
     <AppPage header={{ ctaHref: '/tools/fengshui-space', ctaLabel: '空间场', compact: true }}>
+      <div className="page-content pt-4">
+        <ImmersionMediaBand surfaceKey="naming" compact />
+      </div>
       <NamingLabApp />
       {pack ? (
         <div className="page-content-wide pb-12">

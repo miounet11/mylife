@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { ImmersionMediaBand } from '@/components/brand/feature-immersion-hero';
 import { AppPage } from '@/components/layout/app-page';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import { SpaceLabApp } from '@/components/fengshui/space-lab/space-lab-app';
@@ -39,6 +40,7 @@ export default async function FengshuiSpacePage({
         meta={{ surfaceKey: 'tools', tool: 'fengshui-space', geoReady: true, locale }}
       />
       <div className="mx-auto max-w-[1680px] px-2 md:px-3">
+        <ImmersionMediaBand surfaceKey="fengshui" compact className="mb-2" />
         <SpaceLabApp locale={locale} />
       </div>
       <div className="page-content mt-8 pb-12">

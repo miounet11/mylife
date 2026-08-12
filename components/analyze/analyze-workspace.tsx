@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useState } from 'react';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { AlertBanner } from '@/components/layout/alert-banner';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { PortalLayout } from '@/components/layout/portal-layout';
 import { PortalRailLeft, PortalRailRight } from '@/components/analyze/portal-rail';
 import FreeMembershipClaimBanner from '@/components/membership/free-membership-claim-banner';
@@ -444,8 +444,11 @@ export default function AnalyzeWorkspace({
 
           {/* 主表单：页面唯一重块 */}
           <section id="analyze-workspace" className="fb-card overflow-hidden">
-            <FocusHero
-              embedded
+            <FeatureImmersionHero
+              surfaceKey="analyze"
+              priority
+              compact
+              className="mb-0 [&>div:last-child]:px-4 md:[&>div:last-child]:px-5"
               eyebrow={copy.heroEyebrow}
               title={copy.heroTitle}
               description={

@@ -8,7 +8,7 @@ import ContentLocaleFilter, {
 } from '@/components/content/content-locale-filter';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import ContentListPagination from '@/components/content/content-list-pagination';
 import {
   articleGeoFields,
@@ -107,7 +107,9 @@ export default async function KnowledgePage({ searchParams }: PageProps) {
         }}
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="knowledge"
+          compact
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}

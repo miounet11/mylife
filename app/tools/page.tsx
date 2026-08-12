@@ -6,7 +6,7 @@ import JourneyStrip from '@/components/content/journey-strip';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import ToolEntryLink from '@/components/tools/tool-entry-link';
 import ToolsHubBirthForm from '@/components/tools/tools-hub-birth-form';
 import SecondSystemRail from '@/components/product/second-system-rail';
@@ -79,10 +79,12 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         meta={{ surfaceKey: 'tools', funnel: 'tools_hub', geoReady: true, reorganized: true }}
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="tools"
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}
+          compact
           actions={
             <>
               <ToolEntryLink

@@ -9,6 +9,7 @@ import LocaleSwitcher from '@/components/i18n/locale-switcher';
 import { useLocale } from '@/components/i18n/locale-provider';
 import TextScaleToggle from '@/components/text-scale-toggle';
 import ToolEntryLink from '@/components/tools/tool-entry-link';
+import { BrandLockup } from '@/components/brand/brand-lockup';
 import { getPriorityGrowthToolLinks } from '@/lib/tools';
 import { cn } from '@/lib/utils';
 
@@ -60,7 +61,7 @@ export default function SiteHeader({
   ctaAnalytics,
 }: SiteHeaderProps) {
   const pathname = usePathname();
-  const { t, L, locale } = useLocale();
+  const { t, L } = useLocale();
   const resolvedCta = ctaLabel ? L(ctaLabel) : t('ctaStart');
 
   const isActive = (href: string) => {
@@ -76,41 +77,14 @@ export default function SiteHeader({
   const ctaClass =
     'inline-flex h-9 min-h-[var(--control-h)] items-center gap-1.5 rounded-[var(--radius)] bg-[color:var(--brand)] px-3.5 text-[14px] font-medium text-white no-underline transition hover:bg-[color:var(--brand-strong)] hover:no-underline';
 
-  const brandName = t('brandName');
   const birthQuickLabel = t('birthQuick');
-  // 避免中文品牌名被错误切片成多行「人 / K / 线」
-  const brandMain =
-    locale === 'en' ? (
-      <>
-        Life <span className="font-serif">K</span>-Line
-      </>
-    ) : (
-      <span className="whitespace-nowrap">{brandName || '人生K线'}</span>
-    );
 
   return (
     <header className="sticky top-0 z-50 border-b border-[color:var(--hairline-strong)] bg-[color:var(--paper)] shadow-sm">
       {/* Top bar — Astro-style light utility chrome */}
       <div className="border-b border-[color:var(--hairline)] bg-[color:var(--bg)]">
         <div className="page-frame flex h-14 items-center gap-3">
-          <Link
-            href="/"
-            aria-label={t('brandAria')}
-            className="flex shrink-0 items-center gap-2.5 text-[color:var(--ink-1)] hover:opacity-90 hover:no-underline"
-          >
-            <span className="brand-mark text-[13px] leading-none">
-              <span className="font-serif">K</span>
-            </span>
-            <span className="flex flex-col leading-none">
-              <span className="text-[14px] font-semibold tracking-[-0.02em]">{brandMain}</span>
-              <span
-                className="mt-0.5 text-[10px] font-medium uppercase text-[color:var(--brand)]"
-                style={{ letterSpacing: '0.14em' }}
-              >
-                LIFE KLINE
-              </span>
-            </span>
-          </Link>
+          <BrandLockup size={26} />
 
           <form
             action="/community/search"

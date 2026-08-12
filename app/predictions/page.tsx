@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Suspense } from 'react';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import PredictionsListPage from '@/components/predictions/predictions-list-page';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { predictionsPageCopy } from '@/lib/i18n/predictions-copy';
@@ -36,7 +36,9 @@ export default async function PredictionsPage({ searchParams }: PredictionsPageP
   return (
     <AppPage header={{ ctaHref: '/dimensions', ctaLabel: copy.headerCta, compact: true }}>
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="predictions"
+          compact
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}

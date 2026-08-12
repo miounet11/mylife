@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { AppPage } from '@/components/layout/app-page';
 import TeacherPicker from '@/components/teachers/teacher-picker';
 import AnalyticsPageView from '@/components/analytics-page-view';
@@ -101,38 +102,38 @@ export default async function TeachersPage({ searchParams }: TeachersPageProps) 
       />
 
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <header className="border-b border-[color:var(--hairline)] pb-4">
-          <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)]">
-            {copy.title}
-          </h1>
-          <p className="mt-2 text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
-            {copy.description}
-          </p>
-          <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13px]">
-            <Link
-              href="/analyze"
-              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-            >
-              {copy.ctaGenerate}
-            </Link>
-            <Link
-              href={buildTeacherChatHref({
-                teacherId: 'overview',
-                reportId,
-                source: `${source}:direct_opening`,
-              })}
-              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-            >
-              {copy.linkOverviewOpen}
-            </Link>
-            <Link
-              href="/profile"
-              className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-            >
-              {copy.linkProfile}
-            </Link>
-          </div>
-        </header>
+        <FeatureImmersionHero
+          surfaceKey="teachers"
+          compact
+          title={copy.title}
+          description={copy.description}
+          actions={
+            <>
+              <Link
+                href="/analyze"
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                {copy.ctaGenerate}
+              </Link>
+              <Link
+                href={buildTeacherChatHref({
+                  teacherId: 'overview',
+                  reportId,
+                  source: `${source}:direct_opening`,
+                })}
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                {copy.linkOverviewOpen}
+              </Link>
+              <Link
+                href="/profile"
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
+              >
+                {copy.linkProfile}
+              </Link>
+            </>
+          }
+        />
 
         <PageIllustrationStrip
           surface="teachers/hub"

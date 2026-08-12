@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { ImmersionMediaBand } from '@/components/brand/feature-immersion-hero';
 
 type Props = {
   locale?: string | null;
@@ -6,8 +7,8 @@ type Props = {
 };
 
 /**
- * Homepage top band — clear value prop, then one primary scroll CTA into the form.
- * Linear-clean: no icon spam, muted secondary paths.
+ * Homepage top band — immersion media + value prop + primary CTA into the form.
+ * Linear-clean: branded room feel without icon spam.
  */
 export function HomeHero({ ctaLabel = '免费开始测算' }: Props) {
   return (
@@ -16,6 +17,7 @@ export function HomeHero({ ctaLabel = '免费开始测算' }: Props) {
       aria-label="产品介绍"
     >
       <div className="page-content-wide py-7 md:py-10">
+        <ImmersionMediaBand surfaceKey="home" priority compact={false} className="mb-6" />
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             Life K-Line · 人生K线

@@ -5,7 +5,7 @@ import DimensionGrid from '@/components/dimensions/dimension-grid';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import JsonLd from '@/components/seo/json-ld';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { listDimensionsByPriority, MVP_DIMENSION_SLUGS, DIMENSIONS } from '@/lib/dimensions/config';
 import type { DimensionSlug } from '@/lib/dimensions/types';
 import { parseSourceIntent } from '@/lib/dimensions/intent-source';
@@ -119,7 +119,9 @@ export default async function DimensionsPage({ searchParams }: DimensionsPagePro
       <JsonLd data={service} />
       <JsonLd data={faq} />
       <div className="page-content space-y-5 py-6 pb-16 md:space-y-6 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="dimensions"
+          compact
           eyebrow={copy.eyebrow}
           title={intent === 'general' ? copy.titleGeneral : intentLabel}
           description={intentCopy.hints[intent]}
