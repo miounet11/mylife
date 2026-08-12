@@ -108,6 +108,7 @@ export default function AnalyzeWorkspace({
   const [error, setError] = useState<string | null>(null);
   const [entryBanner, setEntryBanner] = useState<string | null>(null);
   const [timeTouched, setTimeTouched] = useState(false);
+  const [ymdDraft, setYmdDraft] = useState({ y: '', m: '', d: '' });
 
   const quickCities = useMemo(() => getQuickPickCities(), []);
   const resolvedLon = useMemo(() => resolveCityLongitude(birthPlace), [birthPlace]);
@@ -480,6 +481,46 @@ export default function AnalyzeWorkspace({
                       onChange={(e) => setBirthDate(e.target.value)}
                       className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
                     />
+                    <div className="grid grid-cols-3 gap-1.5">
+                      {(['y', 'm', 'd'] as const).map((part) => {
+                        const bits = (birthDate || '').split('-');
+                        const synced = {
+                          y: ymdDraft.y || bits[0] || '',
+                          m: ymdDraft.m || bits[1] || '',
+                          d: ymdDraft.d || bits[2] || '',
+                        };
+                        const ph = part === 'y' ? '年 1984' : part === 'm' ? '月' : '日';
+                        const maxL = part === 'y' ? 4 : 2;
+                        return (
+                          <input
+                            key={part}
+                            inputMode="numeric"
+                            maxLength={maxL}
+                            placeholder={ph}
+                            value={synced[part]}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/\D/g, '').slice(0, maxL);
+                              const next = { ...synced, [part]: raw };
+                              setYmdDraft(next);
+                              if (next.y.length === 4 && next.m.length >= 1 && next.d.length >= 1) {
+                                const mm = Number(next.m);
+                                const dd = Number(next.d);
+                                if (mm >= 1 && mm <= 12 && dd >= 1 && dd <= 31) {
+                                  setBirthDate(
+                                    `${next.y}-${String(mm).padStart(2, '0')}-${String(dd).padStart(2, '0')}`,
+                                  );
+                                }
+                              }
+                            }}
+                            className="fb-input h-9 w-full px-2 text-[12px] tabular-nums"
+                            aria-label={ph}
+                          />
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-[color:var(--ink-5)]">
+                      年份较早时，可直接输入数字（如 1984 10 08）。晚子时 23:00–23:59 换日请勾选下方。
+                    </p>
                     {!timeUnknown ? (
                       <input
                         type="time"

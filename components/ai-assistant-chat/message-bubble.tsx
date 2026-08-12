@@ -230,7 +230,7 @@ export function MessageBubble({
               {t('开场', 'Opening')}
             </span>
           ) : null}
-          {!isOpening && message.llmUsed === false && (
+          {!isOpening && message.llmUsed === false && (displayContent || '').trim().length < 80 && (
             <span className="rounded-[3px] bg-[#fff7e6] px-1.5 py-0.5 font-semibold text-[#a87f2c]">
               {t('待重试', 'Retry later')}
             </span>

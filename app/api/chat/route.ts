@@ -774,6 +774,40 @@ const baseMessages: Array<{ role: 'system' | 'user' | 'assistant'; content: Chat
       traceLabel: 'chat:main',
     });
     console.error(`[LLM Chat] Single model ${model} failed:`, error);
+    // One silent retry — production users were hitting empty replies and clicking 重生成
+    try {
+      const retryController = new AbortController();
+      const retry = await createOpenAiCompatibleChatCompletion(
+        openai,
+        {
+          model,
+          messages: baseMessages,
+          temperature: 0.65,
+          maxTokens: isFollowupTurn ? 1600 : 1200,
+          reasoningEffort: 'low',
+        },
+        {
+          signal: retryController.signal,
+          timeout: Math.min(chatTimeoutMs, 60_000),
+          maxRetries: 0,
+        },
+      );
+      const retried = `${retry.choices?.[0]?.message?.content || ''}`.trim();
+      if (retried.length >= 40) {
+        console.log('[LLM Chat] silent retry recovered');
+        return {
+          answer: retried,
+          llmUsed: true,
+          fallbackReason: 'silent_retry',
+          efcOk: true,
+          efcIssues: [],
+          ttftMs,
+          latencyMs: Date.now() - startedAt,
+        };
+      }
+    } catch (retryErr) {
+      console.warn('[LLM Chat] silent retry failed', retryErr);
+    }
     return {
       answer: fallbackAnswer,
       llmUsed: false,
@@ -1314,6 +1348,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Production chat logs: classify real user phrasing (A/B, 何时, 用神矛盾, 截断发送)
+    let userSignal: ReturnType<typeof classifyUserQuestion> | null = null;
+    try {
+      const { classifyUserQuestion } = require('@/lib/chat-user-signal') as typeof import('@/lib/chat-user-signal');
+      userSignal = classifyUserQuestion(question);
+      if (userSignal.forceIntent && !requestedIntent) {
+        requestedIntent = userSignal.forceIntent;
+      }
+    } catch {
+      userSignal = null;
+    }
+
     const wantsStream = request.headers.get('x-chat-stream') === '1';
     const preferHint = requestedTeacherId || requestedIntent || null;
 
@@ -1361,6 +1407,7 @@ export async function POST(request: NextRequest) {
         ? '【系统】本轮未绑定引擎真值。若用户提及「这份报告/用神/日主」，先说明需从报告页进入，禁止编造命盘。'
         : '',
       tacitSummary ? `用户本轮补充了一层默会信息：${tacitSummary}。回答时要把这些没有被完整说清的信号视为有效输入。` : '',
+      userSignal?.systemAddon || '',
     ].filter(Boolean).join('\n');
 
     // Stream TTFT path: skip heavy foundation bundle (often 50–200ms+); keep light supplements only
@@ -1408,6 +1455,74 @@ export async function POST(request: NextRequest) {
       city: requestedCity || null,
       profileLines: profileLinesForTeacher || [],
     };
+
+    if (userSignal?.localAnswer) {
+      const turnId = generateId();
+      const userMessageId = generateId();
+      const assistantMessageId = generateId();
+      const localAnswer = userSignal.localAnswer;
+      questionOperations.create({
+        id: userMessageId,
+        userId,
+        question,
+        category: 'chat_user',
+        analysis: {
+          source: 'chat_api',
+          reportId: context.report?.id || requestedReportId || null,
+          turnId,
+          intent: requestedIntent || null,
+          userQuestionKind: userSignal.kind,
+        },
+      });
+      questionOperations.create({
+        id: assistantMessageId,
+        userId,
+        question: localAnswer,
+        category: 'chat_assistant',
+        analysis: {
+          source: 'local_signal',
+          answer: localAnswer,
+          llmUsed: true,
+          userQuestionKind: userSignal.kind,
+          reportId: context.report?.id || requestedReportId || null,
+          turnId,
+          responseToQuestionId: userMessageId,
+        },
+      });
+      if (wantsStream) {
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream<Uint8Array>({
+          start(controller) {
+            const send = (event: Record<string, unknown>) => {
+              controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+            };
+            send({ type: 'start', reportBound: Boolean(context.report?.id) });
+            send({ type: 'delta', text: localAnswer });
+            send({
+              type: 'done',
+              answer: localAnswer,
+              llmUsed: true,
+              userQuestionKind: userSignal.kind,
+            });
+            controller.close();
+          },
+        });
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'application/x-ndjson; charset=utf-8',
+            'Cache-Control': 'no-store',
+          },
+        });
+      }
+      return NextResponse.json({
+        success: true,
+        data: {
+          answer: localAnswer,
+          llmUsed: true,
+          userQuestionKind: userSignal.kind,
+        },
+      });
+    }
 
     // ── Experience Kernel streaming path (NDJSON) ──────────────────────────
     if (wantsStream) {

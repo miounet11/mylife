@@ -319,6 +319,7 @@ export function buildChatExperienceContext(params: {
             live.tiaohuoNote ? `调候（辅助，非主用）：${live.tiaohuoNote}` : '',
             live.reasonChain?.[0] ? `月令读法：${live.reasonChain[0]}` : '',
             '对话纪律：先扶抑主用神，调候单独说；追问轮深挖一条线，不要重复套「今天/7天/30天」表。',
+            '十神（正官等）是角色；忌神列表是五行。用户问「正官是水为何忌火木」时拆开讲，不要两套忌神对打。',
           ]
             .filter(Boolean)
             .join('\n');

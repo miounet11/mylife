@@ -240,6 +240,14 @@ export function buildReportFollowupSuggestions(params: {
     });
   }
 
+  // ────── 优先级 1.4：二选一（生产对话最高频决策句式）──────
+  suggestions.push({
+    label: '城市/行业怎么选',
+    question:
+      `${name}现在如果只能二选一：继续当前城市和赛道，还是换一座城/一条赛道？请直接给倾向、依据（主用神怎么合），以及另一选项在什么条件下更好。不要各打五十大板。`,
+    intent: 'next-action',
+  });
+
   // ────── 优先级 1.5：喜忌张力（最容易聊下去、也最容易误读的点）──────
   const yong = (params.yongShen || []).filter(Boolean);
   if (yong.length && params.strengthDesc) {
