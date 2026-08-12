@@ -324,6 +324,8 @@ export default function ProReportShell({
         />
       </div>
 
+      <ReportIllustrationCite keys={['dayun', 'timing']} title="大运与节奏" limit={1} />
+
       {/* 人生 K 线：client island，校准后即时标到图上（无需刷新） */}
       <ProKlineLiveIsland
         reportId={reportId}

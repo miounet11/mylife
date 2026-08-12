@@ -1,6 +1,5 @@
 /**
- * Branded HTML email shell aligned with www.life-kline.com
- * (FB-blue chrome header + white card + light footer).
+ * Branded HTML email shell — Life K-Line teal brand (matches www.life-kline.com).
  */
 
 import {
@@ -19,22 +18,37 @@ export function escapeHtml(value: string) {
     .replaceAll("'", '&#39;');
 }
 
-/** Site brand tokens (email-safe hex, matching app/globals.css). */
+/**
+ * Site brand tokens for email (hex only — CSS vars unreliable in clients).
+ * Aligned with logo plate #0b5f55 + signal gold + paper.
+ */
 export const EMAIL_BRAND = {
-  blue: '#3b5998',
-  blueStrong: '#365899',
-  blueDeep: '#29487d',
-  blueButton: '#4267b2',
-  ink1: '#1c1e21',
-  ink2: '#444950',
-  ink3: '#65676b',
-  ink4: '#8a8d91',
-  border: '#dddfe2',
-  bg: '#f0f2f5',
+  /** Brand strong (header plate / primary) */
+  teal: '#0b5f55',
+  tealStrong: '#0b5f55',
+  tealDeep: '#074840',
+  tealButton: '#127d6f',
+  /** Legacy aliases so older callers using .blue still compile */
+  blue: '#0b5f55',
+  blueStrong: '#0b5f55',
+  blueDeep: '#074840',
+  blueButton: '#127d6f',
+  ink1: '#0a120e',
+  ink2: '#3a4a44',
+  ink3: '#5c6b64',
+  ink4: '#8a9690',
+  border: '#d8e0dc',
+  bg: '#f0f3f1',
   white: '#ffffff',
-  softBlue: '#e7f0ff',
-  gold: '#f7d3a1',
+  softBlue: '#e8f5f2',
+  softTeal: '#e8f5f2',
+  gold: '#c9a14a',
+  paper: '#f5f7f2',
 } as const;
+
+/** Absolute logo for email clients (must be public HTTPS). */
+export const EMAIL_LOGO_URL =
+  'https://www.life-kline.com/images/brand-immersion/email-logo.png';
 
 export type EmailCta = { href: string; label: string };
 
@@ -78,7 +92,7 @@ function stripTags(html: string) {
 export function renderPrimaryButton(href: string, label: string) {
   return `
     <a href="${escapeHtml(href)}"
-       style="display:inline-block;padding:11px 18px;border-radius:4px;background:${EMAIL_BRAND.blueButton};color:${EMAIL_BRAND.white};text-decoration:none;font-weight:700;font-size:14px;line-height:1.2;border:1px solid ${EMAIL_BRAND.blueDeep}">
+       style="display:inline-block;padding:11px 18px;border-radius:6px;background:${EMAIL_BRAND.tealButton};color:${EMAIL_BRAND.white};text-decoration:none;font-weight:700;font-size:14px;line-height:1.2;border:1px solid ${EMAIL_BRAND.tealDeep}">
       ${escapeHtml(label)}
     </a>
   `;
@@ -87,7 +101,7 @@ export function renderPrimaryButton(href: string, label: string) {
 export function renderSecondaryButton(href: string, label: string) {
   return `
     <a href="${escapeHtml(href)}"
-       style="display:inline-block;padding:11px 18px;border-radius:4px;background:${EMAIL_BRAND.white};color:${EMAIL_BRAND.blue};text-decoration:none;font-weight:700;font-size:14px;line-height:1.2;border:1px solid ${EMAIL_BRAND.border}">
+       style="display:inline-block;padding:11px 18px;border-radius:6px;background:${EMAIL_BRAND.white};color:${EMAIL_BRAND.teal};text-decoration:none;font-weight:700;font-size:14px;line-height:1.2;border:1px solid ${EMAIL_BRAND.border}">
       ${escapeHtml(label)}
     </a>
   `;
@@ -101,7 +115,7 @@ export function renderInfoCard(opts: {
 }) {
   const tones = {
     neutral: { bg: '#f7f8fa', border: EMAIL_BRAND.border, title: EMAIL_BRAND.ink3 },
-    blue: { bg: EMAIL_BRAND.softBlue, border: '#c5d8f5', title: EMAIL_BRAND.blue },
+    blue: { bg: EMAIL_BRAND.softTeal, border: '#b8d9d1', title: EMAIL_BRAND.teal },
     amber: { bg: '#fdf8f0', border: '#e8d5b8', title: '#b56a1a' },
     green: { bg: '#f3faf6', border: '#d8efe3', title: '#2f9e6b' },
     rose: { bg: '#fef2f2', border: '#fecaca', title: '#b91c1c' },
@@ -147,6 +161,7 @@ export function renderBrandedEmail(input: RenderBrandedEmailInput): { html: stri
   const unsubUrl = input.email
     ? `${baseUrl}/unsubscribe?email=${encodeURIComponent(input.email)}`
     : `${baseUrl}/updates`;
+  const logoUrl = EMAIL_LOGO_URL;
 
   const html = `<!DOCTYPE html>
 <html lang="${htmlLang(locale)}">
@@ -162,18 +177,25 @@ export function renderBrandedEmail(input: RenderBrandedEmailInput): { html: stri
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${EMAIL_BRAND.bg};padding:24px 12px">
     <tr>
       <td align="center">
-        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:${EMAIL_BRAND.white};border:1px solid ${EMAIL_BRAND.border};border-radius:8px;overflow:hidden">
-          <!-- Brand chrome (matches site header) -->
+        <table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="max-width:600px;width:100%;background:${EMAIL_BRAND.white};border:1px solid ${EMAIL_BRAND.border};border-radius:10px;overflow:hidden">
+          <!-- Brand chrome — teal plate + logo + wordmark (matches site BrandLockup) -->
           <tr>
-            <td style="background:${EMAIL_BRAND.blue};padding:14px 20px">
+            <td style="background:${EMAIL_BRAND.teal};padding:14px 20px">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
                 <tr>
-                  <td style="vertical-align:middle">
-                    <span style="display:inline-block;width:28px;height:28px;line-height:28px;text-align:center;border-radius:4px;background:rgba(255,255,255,0.14);color:#fff;font-weight:900;font-size:15px;font-family:Georgia,'Times New Roman',serif">K</span>
-                    <span style="display:inline-block;vertical-align:middle;margin-left:10px">
+                  <td style="vertical-align:middle;width:40px">
+                    <a href="${escapeHtml(baseUrl)}" style="text-decoration:none">
+                      <img src="${escapeHtml(logoUrl)}" width="32" height="32" alt="" style="display:block;width:32px;height:32px;border-radius:8px;border:0" />
+                    </a>
+                  </td>
+                  <td style="vertical-align:middle;padding-left:10px">
+                    <a href="${escapeHtml(baseUrl)}" style="text-decoration:none">
                       <span style="display:block;color:#fff;font-size:15px;font-weight:800;letter-spacing:0.02em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','PingFang TC','Microsoft YaHei',sans-serif">${escapeHtml(brand)}</span>
-                      <span style="display:block;color:rgba(255,255,255,0.78);font-size:10px;font-weight:700;letter-spacing:0.16em;margin-top:2px">${escapeHtml(chrome.brandSub)}</span>
-                    </span>
+                      <span style="display:block;color:rgba(245,247,242,0.82);font-size:10px;font-weight:700;letter-spacing:0.16em;margin-top:2px">LIFE KLINE</span>
+                    </a>
+                  </td>
+                  <td style="vertical-align:middle;text-align:right">
+                    <span style="display:inline-block;width:8px;height:8px;background:${EMAIL_BRAND.gold};transform:rotate(45deg)"></span>
                   </td>
                 </tr>
               </table>
@@ -182,7 +204,7 @@ export function renderBrandedEmail(input: RenderBrandedEmailInput): { html: stri
           <!-- Body -->
           <tr>
             <td style="padding:28px 24px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','PingFang TC','Microsoft YaHei',sans-serif;color:${EMAIL_BRAND.ink1};line-height:1.75">
-              ${eyebrow ? `<div style="margin:0 0 8px;color:${EMAIL_BRAND.blue};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase">${escapeHtml(eyebrow)}</div>` : ''}
+              ${eyebrow ? `<div style="margin:0 0 8px;color:${EMAIL_BRAND.teal};font-size:11px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase">${escapeHtml(eyebrow)}</div>` : ''}
               <h1 style="margin:0 0 16px;font-size:22px;line-height:1.35;font-weight:800;color:${EMAIL_BRAND.ink1}">${escapeHtml(title)}</h1>
               <div style="font-size:14.5px;color:${EMAIL_BRAND.ink2}">
                 ${bodyHtml}
@@ -192,10 +214,10 @@ export function renderBrandedEmail(input: RenderBrandedEmailInput): { html: stri
           </tr>
           <!-- Footer -->
           <tr>
-            <td style="background:#f6f7f9;border-top:1px solid ${EMAIL_BRAND.border};padding:16px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','PingFang TC','Microsoft YaHei',sans-serif">
+            <td style="background:${EMAIL_BRAND.paper};border-top:1px solid ${EMAIL_BRAND.border};padding:16px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','PingFang TC','Microsoft YaHei',sans-serif">
               ${footerExtra ? `<div style="margin:0 0 10px;font-size:12px;color:${EMAIL_BRAND.ink3};line-height:1.6">${footerExtra}</div>` : ''}
               <div style="font-size:12px;color:${EMAIL_BRAND.ink3};line-height:1.6">
-                <a href="${escapeHtml(updatesUrl)}" style="color:${EMAIL_BRAND.blue};text-decoration:none;font-weight:600">${escapeHtml(chrome.manageSubscription)}</a>
+                <a href="${escapeHtml(updatesUrl)}" style="color:${EMAIL_BRAND.teal};text-decoration:none;font-weight:600">${escapeHtml(chrome.manageSubscription)}</a>
                 ${input.showUnsubscribe !== false && input.email
                   ? ` &nbsp;·&nbsp; <a href="${escapeHtml(unsubUrl)}" style="color:${EMAIL_BRAND.ink4};text-decoration:none">${escapeHtml(chrome.unsubscribe)}</a>`
                   : ''}

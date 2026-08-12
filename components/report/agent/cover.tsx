@@ -1,5 +1,7 @@
 'use client';
 
+import type { CSSProperties } from 'react';
+import { BrandMark } from '@/components/ui/brand-mark';
 import { Tag } from '@/components/ui/tag';
 
 const INTENT_LABEL: Record<string, string> = {
@@ -38,11 +40,33 @@ export function ReportCover({
     : null;
 
   return (
-    <section className="fb-card p-5 md:p-6">
+    <section className="fb-card overflow-hidden p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <div className="lk-section-eyebrow">判断报告</div>
-          <h1 className="mt-1.5 text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[26px]">
+          <div className="flex items-center gap-2.5">
+            <span
+              className="inline-flex shrink-0 items-center justify-center rounded-[8px] bg-[color:var(--brand-strong,#0b5f55)] p-1.5"
+              style={
+                {
+                  ['--brand-deep']: '#f5f7f2',
+                  ['--brand-strong']: '#f5f7f2',
+                  ['--signal']: '#c9a14a',
+                } as CSSProperties
+              }
+              aria-hidden
+            >
+              <BrandMark size={22} withSignal withBaseline />
+            </span>
+            <div>
+              <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
+                Life Kline · 判断报告
+              </div>
+              <div className="text-[10px] font-medium tracking-[0.12em] text-[color:var(--ink-5)]">
+                LIFE KLINE
+              </div>
+            </div>
+          </div>
+          <h1 className="mt-3 text-[22px] font-semibold tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[26px]">
             {intentLabel}
           </h1>
           {createdAt ? (

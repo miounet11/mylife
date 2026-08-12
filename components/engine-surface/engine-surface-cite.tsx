@@ -38,7 +38,7 @@ export default function EngineSurfaceCite({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-strong)]">
-            Engine Cite
+            Life Kline · Engine Cite
           </p>
           <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
             {label}

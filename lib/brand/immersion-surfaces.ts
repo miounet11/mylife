@@ -29,7 +29,8 @@ export type ImmersionSurfaceKey =
   | 'predictions'
   | 'events'
   | 'membership'
-  | 'cases';
+  | 'cases'
+  | 'login';
 
 export type ImmersionSurface = {
   key: ImmersionSurfaceKey;
@@ -196,6 +197,16 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     overlay: 'light-paper',
     artId: 'surface-cases',
     alt: '案例库：证据面板意象',
+  },
+  login: {
+    key: 'login',
+    route: '/login',
+    eyebrow: '登录',
+    mood: '长期会话 · 可选邮箱订阅',
+    accent: 'teal',
+    overlay: 'light-paper',
+    artId: 'surface-login',
+    alt: '登录：账户与结构底座入口',
   },
 };
 
