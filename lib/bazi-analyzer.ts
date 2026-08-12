@@ -141,9 +141,52 @@ function uniqElements(elements: Element[]): Element[] {
   return [...new Set(elements)];
 }
 
-function getSeasonBonus(monthZhi: string, dmElement: Element): number {
+/**
+ * 月令对日主的「得令 / 失令」加权。
+ * 以月支本气（藏干第一位）为主，不以粗四季表代替月令。
+ * 例：丑月本气己土，甲木不得令；仅用「冬木 +10」会把身弱/中和误判成身偏旺。
+ */
+function getMonthOrderBonus(monthZhi: string, dmElement: Element): number {
+  const hidden = ZHI_CANG_GAN[monthZhi] || [];
+  const mainGan = hidden[0];
+  const mainEl = mainGan ? toElement(mainGan) : null;
+
+  let bonus = 0;
+  if (mainEl) {
+    if (mainEl === dmElement) {
+      bonus = 16; // 比劫当令 · 得令
+    } else if (mainEl === GENERATED_BY[dmElement]) {
+      bonus = 12; // 印星当令
+    } else if (mainEl === CONTROLLED_BY[dmElement]) {
+      bonus = -10; // 官杀当令
+    } else if (mainEl === GENERATES[dmElement]) {
+      bonus = -7; // 食伤当令
+    } else if (mainEl === CONTROLS[dmElement]) {
+      bonus = -5; // 财星当令
+    }
+  }
+
+  // 中气 / 余气：轻量加减（不盖过本气）
+  hidden.slice(1).forEach((gan, i) => {
+    const el = toElement(gan);
+    if (!el) return;
+    const w = i === 0 ? 3.5 : 2;
+    if (el === dmElement || el === GENERATED_BY[dmElement]) bonus += w;
+    else if (el === CONTROLLED_BY[dmElement]) bonus -= w * 0.8;
+    else if (el === GENERATES[dmElement] || el === CONTROLS[dmElement]) bonus -= w * 0.4;
+  });
+
+  // 四季余气：弱化后作为次级修正（避免覆盖月令本气）
   const season = MONTH_TO_SEASON[monthZhi] || 'spring';
-  return SEASON_STATE[season][dmElement] || 0;
+  const seasonal = (SEASON_STATE[season][dmElement] || 0) * 0.25;
+  bonus += seasonal;
+
+  return Math.round(bonus * 10) / 10;
+}
+
+/** @deprecated use getMonthOrderBonus — kept name for call-site clarity in reason chain */
+function getSeasonBonus(monthZhi: string, dmElement: Element): number {
+  return getMonthOrderBonus(monthZhi, dmElement);
 }
 
 function calculateRootStrength(pillars: ReturnType<typeof parseBazi>, dmElement: Element): number {
@@ -321,6 +364,7 @@ function buildYongXiJiQiu(
   normalized: Record<Element, number>,
   tiaohuo?: YongShenResult['tiaohuo'],
   tongguan?: YongShenResult['tongguan'],
+  _opts?: { help?: number; drain?: number },
 ): Pick<YongShenResult, 'yongShen' | 'xiShen' | 'jiShen' | 'qiuShen' | 'priority'> {
   let yong: Element[] = [];
   let xi: Element[] = [];
@@ -350,16 +394,41 @@ function buildYongXiJiQiu(
     ji = uniqElements([GENERATES[dmElement], CONTROLS[dmElement], CONTROLLED_BY[dmElement]]);
     qiu = uniqElements([CONTROLS[dmElement], CONTROLLED_BY[dmElement]]);
   } else {
-    const weakest = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => a.pct - b.pct)[0].el;
-    const strongest = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => b.pct - a.pct)[0].el;
-    yong = [weakest];
-    xi = [weakest, GENERATED_BY[weakest]];
-    ji = [strongest];
-    qiu = [GENERATES[strongest]];
+    // 中和：按五行偏枯补缺；若印比偏弱则仍以扶身为先（避免调候火盖过水木）
+    const selfGroup = normalized[dmElement] + normalized[GENERATED_BY[dmElement]];
+    const drainGroup =
+      normalized[GENERATES[dmElement]] +
+      normalized[CONTROLS[dmElement]] +
+      normalized[CONTROLLED_BY[dmElement]];
+    if (selfGroup + 6 < drainGroup) {
+      // 中和偏弱：扶身（印/比）
+      yong = uniqElements([GENERATED_BY[dmElement], dmElement]);
+      xi = uniqElements([GENERATED_BY[dmElement], dmElement, GENERATES[dmElement]]);
+      ji = uniqElements([CONTROLLED_BY[dmElement], CONTROLS[dmElement]]);
+      qiu = uniqElements([CONTROLLED_BY[dmElement]]);
+    } else if (selfGroup > drainGroup + 6) {
+      // 中和偏旺：抑身
+      yong = uniqElements([CONTROLLED_BY[dmElement], GENERATES[dmElement], CONTROLS[dmElement]]);
+      xi = uniqElements([GENERATES[dmElement], CONTROLS[dmElement]]);
+      ji = uniqElements([dmElement, GENERATED_BY[dmElement]]);
+      qiu = uniqElements([GENERATED_BY[dmElement]]);
+    } else {
+      const weakest = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => a.pct - b.pct)[0].el;
+      const strongest = ELEMENTS.map((el) => ({ el, pct: normalized[el] })).sort((a, b) => b.pct - a.pct)[0].el;
+      yong = [weakest];
+      xi = uniqElements([weakest, GENERATED_BY[weakest]]);
+      ji = [strongest];
+      qiu = [GENERATES[strongest]];
+    }
   }
 
-  if (tiaohuo && !yong.includes(tiaohuo.element as Element)) {
-    yong = uniqElements([tiaohuo.element as Element, ...yong]);
+  // 调候：并入用神，但不挤掉扶抑主线的前两位（冬木仍要火，但不能只剩火）
+  if (tiaohuo) {
+    const te = tiaohuo.element as Element;
+    if (!yong.includes(te)) {
+      if (yong.length >= 2) yong = uniqElements([yong[0], yong[1], te]).slice(0, 3);
+      else yong = uniqElements([...yong, te]).slice(0, 3);
+    }
   }
   if (tongguan && !xi.includes(tongguan.element as Element)) {
     xi = uniqElements([tongguan.element as Element, ...xi]);
@@ -415,13 +484,31 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
   if (!dmElement) return null;
 
   const monthZhi = pillars[1].zhi;
-  const seasonBonus = getSeasonBonus(monthZhi, dmElement);
+  const monthHidden = ZHI_CANG_GAN[monthZhi] || [];
+  const monthMainGan = monthHidden[0] || '';
+  const monthMainEl = monthMainGan ? toElement(monthMainGan) : null;
+  const seasonBonus = getMonthOrderBonus(monthZhi, dmElement);
   const rootStrength = calculateRootStrength(pillars, dmElement);
   const { help, drain } = calculateStemHelpDrain(pillars, dayMaster, dmElement);
 
   const rawScore = 50 + seasonBonus + rootStrength + help - drain;
-  const score = Math.max(5, Math.min(95, Math.round(rawScore)));
-  const { strength, strengthDesc } = resolveStrengthLevel(score);
+  let score = Math.max(5, Math.min(95, Math.round(rawScore)));
+  let { strength, strengthDesc } = resolveStrengthLevel(score);
+
+  // 天干克泄明显大于帮扶、且分数贴近强弱分界时，禁止硬判身偏旺/偏弱（防喜忌翻转）
+  if (drain > help * 1.15 && score >= 56 && score <= 66 && strength === 'strong') {
+    score = Math.min(score, 55);
+    ({ strength, strengthDesc } = resolveStrengthLevel(score));
+  } else if (help > drain * 1.15 && score >= 34 && score <= 44 && strength === 'weak') {
+    score = Math.max(score, 45);
+    ({ strength, strengthDesc } = resolveStrengthLevel(score));
+  }
+
+  // 中和区间内标注偏旺/偏弱，避免用户读成「绝对身强」
+  if (strength === 'neutral') {
+    if (drain > help * 1.1) strengthDesc = '中和偏弱';
+    else if (help > drain * 1.1) strengthDesc = '中和偏旺';
+  }
 
   const elementScores = calculateElementScores(bazi);
   const normalized = normalizeElementScores(elementScores);
@@ -429,14 +516,17 @@ export function determineYongShen(bazi: string[]): YongShenResult | null {
   const tiaohuo = detectTiaohuo(monthZhi);
   const tongguan = detectTongguan(normalized);
   const { yongShen, xiShen, jiShen, qiuShen, priority } = buildYongXiJiQiu(
-    dmElement, strength, pattern, normalized, tiaohuo, tongguan,
+    dmElement, strength, pattern, normalized, tiaohuo, tongguan, { help, drain },
   );
 
   const confidence = buildConfidence(score);
+  const monthOrderNote = monthMainEl
+    ? `月令${monthZhi}本气${monthMainGan}${EN_TO_CN[monthMainEl]}，日主${EN_TO_CN[dmElement]}${seasonBonus >= 8 ? '得令/得助' : seasonBonus < 0 ? '失令偏' : '平令'}（令气${seasonBonus > 0 ? '+' : ''}${seasonBonus}）`
+    : `月令${monthZhi}，令气${seasonBonus > 0 ? '+' : ''}${seasonBonus}`;
   const threeGain: YongShenResult['threeGain'] = {
     reasonChain: [
-      `月令${monthZhi}令，季节加成${seasonBonus > 0 ? '+' : ''}${seasonBonus}`,
-      `通根${Math.round(rootStrength)}，天干帮扶${help}、克泄${drain}`,
+      monthOrderNote,
+      `通根${Math.round(rootStrength)}，天干帮扶${help}、克泄${drain}${drain > help ? '（克泄重于帮扶）' : help > drain ? '（帮扶重于克泄）' : ''}`,
       tiaohuo ? `调候：${tiaohuo.reason}` : '调候需求不显',
       tongguan ? `通关：${tongguan.reason}` : '无明显两神交战',
       `综合取用：${yongShen.map((e) => EN_TO_CN[e as Element]).join('、')}`,
