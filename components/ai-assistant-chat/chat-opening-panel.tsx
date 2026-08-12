@@ -85,7 +85,7 @@ export function ChatOpeningPanel({
         type="button"
         disabled={disabled}
         onClick={onSwapGreeting}
-        className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium text-[#3b5998] hover:bg-white/80 active:opacity-70 disabled:opacity-50"
+        className="inline-flex items-center gap-1 rounded-[4px] px-1.5 py-0.5 text-[11px] font-medium text-[#0b5f55] hover:bg-white/80 active:opacity-70 disabled:opacity-50"
       >
         <RefreshCw className="h-3 w-3" />
         {t('换开场', 'Swap opening')} {greetingIndex + 1}/{greetingCount}
@@ -125,7 +125,7 @@ export function ChatOpeningPanel({
       {memoryLine ? (
         <div className="flex justify-start px-0.5">
           <div
-            className="inline-flex max-w-[min(100%,28rem)] items-start gap-1.5 rounded-full border border-[#c5d9f7] bg-[#e7f3ff] px-2.5 py-1 text-[11px] leading-[1.4] text-[#3b5998]"
+            className="inline-flex max-w-[min(100%,28rem)] items-start gap-1.5 rounded-full border border-[#b8d9d1] bg-[#e8f5f2] px-2.5 py-1 text-[11px] leading-[1.4] text-[#0b5f55]"
             title={t(
               '根据你的回访与事件记录校准，不编造命中率',
               'Calibrated from your revisits and event records — no invented hit rates',
@@ -140,7 +140,7 @@ export function ChatOpeningPanel({
       {chips.length > 0 && hasReportSlots ? (
         <div className="px-0.5">
           <div className="mb-1.5 inline-flex items-center gap-1 text-[11px] font-semibold text-[#606770]">
-            <Sparkles className="h-3 w-3 text-[#3b5998]" />
+            <Sparkles className="h-3 w-3 text-[#0b5f55]" />
             {t('议题', 'Topics')}
           </div>
           <div className="flex flex-wrap gap-1.5">
@@ -155,8 +155,8 @@ export function ChatOpeningPanel({
                   onClick={() => onChip(chip)}
                   className={`min-h-[36px] touch-manipulation rounded-full border px-2.5 py-1 text-[12px] font-medium transition active:opacity-70 disabled:opacity-50 ${
                     active
-                      ? 'border-[#3b5998] bg-[#e7f3ff] text-[#3b5998]'
-                      : 'border-[#e4e6eb] bg-white text-[#1d2129] hover:border-[#3b5998]'
+                      ? 'border-[#0b5f55] bg-[#e8f5f2] text-[#0b5f55]'
+                      : 'border-[#e4e6eb] bg-white text-[#1d2129] hover:border-[#0b5f55]'
                   }`}
                 >
                   {chip.label}
@@ -222,7 +222,7 @@ export function ChatOpeningPanel({
                 : t('或先随便聊聊', 'Or chat first')}
             </div>
             {pulseFirst && hasReport ? (
-              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#3b5998]">
+              <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-[#0b5f55]">
                 <Zap className="h-3 w-3" />
                 {t('推荐先点第一条', 'Try the first one')}
               </span>
@@ -250,7 +250,7 @@ export function ChatOpeningPanel({
             }}
             className={`flex min-h-[44px] w-full touch-manipulation items-center justify-between gap-2 rounded-[10px] px-3.5 py-2.5 text-left text-[13px] font-semibold leading-[1.4] transition active:opacity-90 disabled:opacity-50 ${
               hasReport
-                ? 'border border-[#3b5998] bg-[#3b5998] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
+                ? 'border border-[#0b5f55] bg-[#0b5f55] text-white shadow-[0_1px_2px_rgba(0,0,0,0.08)]'
                 : 'border border-[#e4e6eb] bg-[#f7f8fa] text-[#1d2129]'
             }`}
           >
@@ -276,7 +276,7 @@ export function ChatOpeningPanel({
                     source: foundationSourceByText.get(text) || 'opening_starter',
                   });
                 }}
-                className="min-h-[40px] w-full touch-manipulation rounded-[8px] border border-[#e4e6eb] bg-[#f7f8fa] px-3 py-2 text-left text-[13px] leading-[1.45] text-[#1d2129] transition hover:border-[#3b5998] hover:bg-[#e7f3ff] active:opacity-70 disabled:opacity-50"
+                className="min-h-[40px] w-full touch-manipulation rounded-[8px] border border-[#e4e6eb] bg-[#f7f8fa] px-3 py-2 text-left text-[13px] leading-[1.45] text-[#1d2129] transition hover:border-[#0b5f55] hover:bg-[#e8f5f2] active:opacity-70 disabled:opacity-50"
               >
                 {text}
               </button>

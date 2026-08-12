@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import {
   communityPageCopy,
   presentCommunityCategories,
@@ -44,10 +44,12 @@ export default async function CommunityPage({ searchParams }: CommunityPageProps
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
       {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="community"
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}
+          compact
           actions={
             <>
               <Link href="/community/search" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

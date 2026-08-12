@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import HistoryClient from '@/components/history/history-client';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { historyPageCopy } from '@/lib/i18n/history-copy';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
@@ -35,10 +35,12 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: copy.headerCta, compact: true }}>
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="history"
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}
+          compact
           actions={
             <>
               <Link href="/tools" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

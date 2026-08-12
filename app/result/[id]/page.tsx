@@ -1036,7 +1036,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </div>
 
               {/* ① 核心结论：只保留驾驶舱 + 一条紧凑行动条 */}
-              <section id="cockpit" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+              <section id="cockpit" className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
                     {pageCopy.coreVerdictTitle}
@@ -1090,13 +1090,13 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   <a href="#report-consultants" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
                     {pageCopy.jumpAskConsultant}
                   </a>
-                  <a href="#timing-map" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
+                  <a href="#timing-map" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#0b5f55] hover:bg-[#eef3f1]">
                     {pageCopy.jumpTimingMap}
                   </a>
                   <a href="#deep-structure" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
                     {pageCopy.jumpStructure}
                   </a>
-                  <a href={reportChatHref} className="rounded-[3px] border border-[#3b5998]/25 bg-white px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
+                  <a href={reportChatHref} className="rounded-[3px] border border-[#0b5f55]/25 bg-white px-3 py-2 text-[12px] font-semibold text-[#0b5f55] hover:bg-[#eef3f1]">
                     {sourceCtaStrategy.reportPrimaryLabel || pageCopy.jumpAiDeepAsk}
                   </a>
                 </div>
@@ -1113,7 +1113,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
               {/* ② 时间地图：独立成章，不再塞进结论卡 */}
               {timingRecord ? (
-                <section id="timing-map" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <section id="timing-map" className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
                   <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
                     {pageCopy.timingTitle}
                   </div>
@@ -1133,7 +1133,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               ) : null}
 
               {!timingRecord ? (
-                <section id="era-environment" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <section id="era-environment" className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
                   <ReportEraEnvironmentBlock
                     year={new Date().getFullYear()}
                     locale={uiLocale}
@@ -1142,7 +1142,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               ) : null}
 
               {/* ③ 结构节奏：单列清晰阅读（宽屏再双列） */}
-              <section id="deep-structure" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+              <section id="deep-structure" className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
                 <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
                   {pageCopy.structureTitle}
                 </div>
@@ -1173,7 +1173,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               </section>
 
               {/* ④ 行动方案：只放行动/验证/阶段，不塞专项推销 */}
-              <section id="deep-action" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+              <section id="deep-action" className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
                 <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
                   {pageCopy.actionTitle}
                 </div>
@@ -1233,7 +1233,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   </div>
                 ) : null}
                 <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-2">
-                  <a href="#event-samples" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]">
+                  <a href="#event-samples" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#0b5f55] hover:bg-[#eef3f1]">
                     {pageCopy.jumpSampleCalibration}
                   </a>
                   <a href="#services" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
@@ -1244,7 +1244,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
               {/* ⑤ 样本回填：从窄侧栏挪到正文，避免中文竖排与碎片感 */}
               {(result.actionSuggestions?.length || result.analysis?.pastEventTemplates?.length) ? (
-                <section id="event-samples" className="fb-card scroll-mt-header border-t-2 border-t-[#3b5998] p-4 md:p-5">
+                <section id="event-samples" className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
                   <div className="fb-section-title text-[15px] font-bold text-[color:var(--ink-1)]">
                     {pageCopy.sampleTitle}
                   </div>
@@ -1308,7 +1308,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
 
               {/* 回访与服务：正常页与专业版均可 */}
               <div id="services" className="scroll-mt-header space-y-4">
-                <div className="fb-card border-t-2 border-t-[#3b5998] px-4 py-3 md:px-5">
+                <div className="fb-card border-t-2 border-t-[#0b5f55] px-4 py-3 md:px-5">
                   <div className="text-[15px] font-bold text-[color:var(--ink-1)]">{pageCopy.servicesTitle}</div>
                   <p className="mt-0.5 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">
                     {pageCopy.servicesSubtitle}
@@ -1469,21 +1469,21 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               {stateVectorCards.length > 0 && (
                 <div className="fb-card p-4">
                   <div className="flex items-center gap-2">
-                    <Compass className="h-4 w-4 text-[#3b5998]" />
+                    <Compass className="h-4 w-4 text-[#0b5f55]" />
                     <div className="text-[14px] font-bold text-[color:var(--ink-1)]">天时地利人和</div>
                   </div>
                   <div className="mt-3 grid grid-cols-3 gap-2">
                     {stateVectorCards.map((item) => (
                       <div key={item.label} className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-1.5 py-2 text-center">
                         <div className="text-[10px] text-[color:var(--ink-4)] tracking-[0.08em]">{item.label}</div>
-                        <div className="mt-1 text-[16px] font-bold tabular-nums text-[#3b5998]">{item.value.toFixed(1)}</div>
+                        <div className="mt-1 text-[16px] font-bold tabular-nums text-[#0b5f55]">{item.value.toFixed(1)}</div>
                       </div>
                     ))}
                   </div>
                   {referenceAuthority ? (
                     <div className="mt-3 rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[#3b5998]">
+                        <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[#0b5f55]">
                           {`权威度 ${referenceAuthority.authorityScore}`}
                         </span>
                         <span className="rounded-[3px] bg-[color:var(--paper)] px-2 py-0.5 text-xs font-semibold text-[color:var(--ink-4)]">
@@ -1497,7 +1497,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   ) : null}
                   <a
                     href={isClassicOnly ? '#event-samples' : '#pro-calibration'}
-                    className="mt-3 flex h-9 items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-white text-[12px] font-semibold text-[#3b5998] hover:bg-[#e9ebee]"
+                    className="mt-3 flex h-9 items-center justify-center rounded-[3px] border border-[color:var(--hairline)] bg-white text-[12px] font-semibold text-[#0b5f55] hover:bg-[#eef3f1]"
                   >
                     {isClassicOnly ? pageCopy.sidebarSampleBackfill : pageCopy.sidebarCalibration}
                   </a>

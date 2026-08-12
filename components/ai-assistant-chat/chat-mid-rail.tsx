@@ -23,7 +23,7 @@ export function ChatMidRail({
   const en = isEnglishUiLocale(locale);
 
   return (
-    <div className="rounded-[3px] border border-[#e9ebee] bg-[#f7f8fa] px-2.5 py-2">
+    <div className="rounded-[3px] border border-[#eef3f1] bg-[#f7f8fa] px-2.5 py-2">
       <div className="flex flex-wrap items-center justify-between gap-1.5">
         <div className="text-[11px] font-semibold text-[#606770]">
           {en ? 'Now · ' : '当前 · '}
@@ -44,7 +44,7 @@ export function ChatMidRail({
               onClick={() => onChip(chip)}
               className={`min-h-[44px] touch-manipulation rounded-full border px-3 py-2 text-[11px] font-semibold active:opacity-70 disabled:opacity-50 sm:min-h-0 sm:px-2 sm:py-0.5 ${
                 active
-                  ? 'border-[#3b5998] bg-[#e7f3ff] text-[#3b5998]'
+                  ? 'border-[#0b5f55] bg-[#e8f5f2] text-[#0b5f55]'
                   : 'border-[#dddfe2] bg-white text-[#4b4f56]'
               }`}
             >
@@ -60,7 +60,7 @@ export function ChatMidRail({
             type="button"
             disabled={disabled}
             onClick={() => onStarter(text, { source: 'mid_continuation' })}
-            className="min-h-[44px] w-full touch-manipulation rounded-[6px] border border-[#dddfe2] bg-white px-2.5 py-2.5 text-left text-[12px] leading-[1.45] text-[#1d2129] hover:border-[#3b5998] active:opacity-70 disabled:opacity-50 sm:min-h-0 sm:py-1.5"
+            className="min-h-[44px] w-full touch-manipulation rounded-[6px] border border-[#dddfe2] bg-white px-2.5 py-2.5 text-left text-[12px] leading-[1.45] text-[#1d2129] hover:border-[#0b5f55] active:opacity-70 disabled:opacity-50 sm:min-h-0 sm:py-1.5"
           >
             {text}
           </button>

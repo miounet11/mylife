@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import LifeFoundationHub from '@/components/profile/life-foundation-hub';
 import { buildPageMetadata } from '@/lib/seo';
 
@@ -28,10 +28,12 @@ export default async function LifeFoundationPage({ searchParams }: Props) {
       mainClassName="page-content py-6 pb-20 md:py-8 md:pb-24"
     >
       <div className="space-y-5 px-4 md:px-0">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="foundation"
           eyebrow="Profile · Foundation"
           title="人生数据底座"
           description="固定数值与重要参数越健全，结构报告、对话与工具越贴你的现实。按层补齐：生辰 → 星座 → 面相手相 → 问答 → 互动 → 工具。"
+          compact
           actions={
             <>
               <Link

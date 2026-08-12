@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { Code2, Send } from 'lucide-react';
+import { BrandLockup } from '@/components/brand/brand-lockup';
 import SystemCapabilityFooterSignalsClient from '@/components/system-capability-footer-signals-client';
 import { useLocale } from '@/components/i18n/locale-provider';
 import LocaleSwitcher from '@/components/i18n/locale-switcher';
@@ -28,34 +29,14 @@ const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: strin
 ];
 
 export default function SiteFooter() {
-  const { t, locale } = useLocale();
-  const brand = t('brandName');
+  const { t } = useLocale();
 
   return (
     <footer className="mt-auto border-t border-[color:var(--hairline)] bg-[color:var(--paper)]">
       <div className="page-frame py-10 md:py-12">
         <div className="lk-grid-2 gap-8 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
           <div>
-            <div className="text-[14px] font-semibold tracking-[-0.015em] text-[color:var(--ink-1)]">
-              {locale === 'en' ? (
-                <>
-                  Life <span className="font-serif">K</span>-Line · LIFE KLINE
-                </>
-              ) : (
-                <>
-                  {brand.includes('K') ? (
-                    <>
-                      {brand.slice(0, brand.indexOf('K'))}
-                      <span className="font-serif">K</span>
-                      {brand.slice(brand.indexOf('K') + 1)}
-                    </>
-                  ) : (
-                    brand
-                  )}{' '}
-                  · LIFE KLINE
-                </>
-              )}
-            </div>
+            <BrandLockup size={28} className="!items-start" />
             <p className="mt-3 max-w-md text-[14px] leading-[1.65] text-[color:var(--ink-3)]">
               {t('footerTagline')}
             </p>

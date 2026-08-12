@@ -101,7 +101,7 @@ export function MaterialChip({
         // eslint-disable-next-line @next/next/no-img-element
         <img src={material.previewUrl} alt={material.label} className="h-7 w-7 rounded-[3px] object-cover" />
       ) : (
-        <span className="flex h-7 w-7 items-center justify-center rounded-[3px] bg-[#e9ebee] text-[#3b5998]">
+        <span className="flex h-7 w-7 items-center justify-center rounded-[3px] bg-[#eef3f1] text-[#0b5f55]">
           <Icon className="h-3.5 w-3.5" />
         </span>
       )}

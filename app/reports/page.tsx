@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import {
   listPublicQuestionFeedItems,
@@ -26,10 +26,12 @@ export default function ReportsPage() {
       {seoPack ? <PageJsonLd pack={seoPack} /> : null}
       <AnalyticsPageView eventName="public_content_hub_viewed" page="/reports" meta={{ geoReady: true }} />
       <div className="page-content space-y-8 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="reports"
           eyebrow="持续公开 · 内容飞轮"
           title="用户测算与工具结果，脱敏后不断更新"
           description="高质量匿名报告与工具案例会进入本页与搜索索引。只展示结构读法，不暴露隐私。看懂别人的场景后，一键生成你自己的判断。"
+          compact
           actions={
             <>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">

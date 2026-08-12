@@ -24,7 +24,7 @@ import { splitEfcNoticeFromAnswer } from '@/lib/chat-efc-verify';
 import { isEnglishUiLocale } from '@/lib/i18n/teacher-copy';
 
 // v5-D60: FB Messenger 2017 风气泡
-// 用户：靠右 #3b5998 白字圆角 18px
+// 用户：靠右 #0b5f55 白字圆角 18px
 // AI：靠左 #f1f0f0 黑字圆角 18px
 
 interface MessageBubbleProps {
@@ -48,7 +48,7 @@ interface MessageBubbleProps {
   locale?: string | null;
 }
 
-const FB_BLUE = '#3b5998';
+const BRAND_TEAL = '#0b5f55';
 const AI_BUBBLE_BG = '#f1f0f0';
 
 export function MessageBubble({
@@ -103,7 +103,7 @@ export function MessageBubble({
       <div className="flex justify-end">
         <div
           className="max-w-[80%] rounded-[18px] px-4 py-2 text-[14px] leading-5 text-white"
-          style={{ background: FB_BLUE }}
+          style={{ background: BRAND_TEAL }}
         >
           {isEditing ? (
             <div className="space-y-2">
@@ -131,7 +131,7 @@ export function MessageBubble({
                     type="button"
                     onClick={() => onSubmitEdit(message.id)}
                     disabled={isActing}
-                    className="inline-flex items-center gap-1 rounded-[3px] bg-white px-2 py-1 text-xs font-bold text-[#3b5998] disabled:cursor-not-allowed disabled:opacity-60"
+                    className="inline-flex items-center gap-1 rounded-[3px] bg-white px-2 py-1 text-xs font-bold text-[#0b5f55] disabled:cursor-not-allowed disabled:opacity-60"
                   >
                     <Check className="h-3 w-3" />
                     {isActing ? t('提交中...', 'Submitting…') : t('重新提交', 'Resubmit')}
@@ -269,7 +269,7 @@ export function MessageBubble({
             </div>
             {structured.conclusion ? (
               <div className="text-[12px] leading-[1.45] text-[#1d2129]">
-                <span className="font-semibold text-[#3b5998]">{t('结论', 'Conclusion')}</span>
+                <span className="font-semibold text-[#0b5f55]">{t('结论', 'Conclusion')}</span>
                 <span className="ml-1.5">{structured.conclusion}</span>
               </div>
             ) : null}
@@ -307,7 +307,7 @@ export function MessageBubble({
           </div>
         ) : null}
         {verifyHint ? (
-          <div className="mt-2 rounded-[6px] border border-[#d4e4f7] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
+          <div className="mt-2 rounded-[6px] border border-[#d4e4f7] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#0b5f55]">
             <span className="font-semibold">{t('验证点', 'Verify')}</span>
             <span className="ml-1">{verifyHint}</span>
           </div>

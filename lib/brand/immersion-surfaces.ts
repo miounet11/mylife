@@ -30,7 +30,14 @@ export type ImmersionSurfaceKey =
   | 'events'
   | 'membership'
   | 'cases'
-  | 'login';
+  | 'login'
+  | 'history'
+  | 'docs'
+  | 'community'
+  | 'reports'
+  | 'chat'
+  | 'foundation'
+  | 'notfound';
 
 export type ImmersionSurface = {
   key: ImmersionSurfaceKey;
@@ -207,6 +214,76 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     overlay: 'light-paper',
     artId: 'surface-login',
     alt: '登录：账户与结构底座入口',
+  },
+  history: {
+    key: 'history',
+    route: '/history',
+    eyebrow: '历史',
+    mood: '报告与测算记录',
+    accent: 'ink',
+    overlay: 'light-paper',
+    artId: 'surface-profile',
+    alt: '历史记录：个人测算档案',
+  },
+  docs: {
+    key: 'docs',
+    route: '/docs',
+    eyebrow: '文档',
+    mood: '出生信息与报告读法',
+    accent: 'slate',
+    overlay: 'light-paper',
+    artId: 'surface-knowledge',
+    alt: '文档：方法与读法',
+  },
+  community: {
+    key: 'community',
+    route: '/community',
+    eyebrow: '社区',
+    mood: '结构化讨论与问答',
+    accent: 'indigo',
+    overlay: 'light-paper',
+    artId: 'surface-cases',
+    alt: '社区：结构问答',
+  },
+  reports: {
+    key: 'reports',
+    route: '/reports',
+    eyebrow: '我的报告',
+    mood: '完整结构报告列表',
+    accent: 'teal',
+    overlay: 'light-paper',
+    artId: 'surface-analyze',
+    alt: '报告列表：结构判断',
+  },
+  chat: {
+    key: 'chat',
+    route: '/chat',
+    eyebrow: '顾问开场',
+    mood: '结合报告持续追问',
+    accent: 'teal',
+    overlay: 'deep-ink',
+    artId: 'surface-teachers',
+    alt: '对话：老师开场',
+  },
+  foundation: {
+    key: 'foundation',
+    route: '/profile/foundation',
+    eyebrow: '人生底座',
+    mood: '生辰 · 星座 · 相学信号',
+    accent: 'ink',
+    overlay: 'light-paper',
+    artId: 'surface-profile',
+    alt: '人生数据底座',
+  },
+  notfound: {
+    key: 'notfound',
+    route: '/404',
+    eyebrow: '404',
+    mood: '回到主路径',
+    accent: 'slate',
+    overlay: 'light-paper',
+    artId: 'surface-home',
+    alt: '页面未找到',
   },
 };
 

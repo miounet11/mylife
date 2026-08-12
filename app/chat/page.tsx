@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import type { CSSProperties } from 'react';
 import { Suspense } from 'react';
 import { AppPage } from '@/components/layout/app-page';
 import ChatPageClient from '@/components/chat/chat-page-client';
 import { ChatCapabilityShell } from '@/components/chat/chat-capability-shell';
 import { ChatShareButton } from '@/components/chat/chat-share-button';
 import { CapabilityIllustrationPanel } from '@/components/content/capability-illustration-panel';
+import { BrandMark } from '@/components/ui/brand-mark';
 import {
   chatOpeningSurface,
   isCapabilityTeacherId,
@@ -71,18 +73,33 @@ export default async function ChatPage({
           paddingBottom: 'max(0.35rem, env(safe-area-inset-bottom))',
         }}
       >
-        {/* Slim page chrome — single row when possible */}
+        {/* Slim page chrome — brand mark + teacher */}
         <header className="mb-1.5 flex shrink-0 items-center justify-between gap-2">
-          <div className="min-w-0">
-            <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)] sm:text-[15px]">
-              {teacher.name}
-              <span className="font-normal text-[color:var(--ink-5)]">
-                {en ? ' · Opening' : ' · 开场'}
-              </span>
-            </h1>
-            <p className="mt-0.5 truncate text-[11px] leading-[1.3] text-[color:var(--ink-5)] sm:text-[12px]">
-              {teacher.tagline}
-            </p>
+          <div className="flex min-w-0 items-center gap-2">
+            <span
+              className="inline-flex shrink-0 items-center justify-center rounded-[7px] bg-[color:var(--brand-strong,#0b5f55)] p-1"
+              style={
+                {
+                  ['--brand-deep']: '#f5f7f2',
+                  ['--brand-strong']: '#f5f7f2',
+                  ['--signal']: '#c9a14a',
+                } as CSSProperties
+              }
+              aria-hidden
+            >
+              <BrandMark size={18} withSignal withBaseline />
+            </span>
+            <div className="min-w-0">
+              <h1 className="truncate text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)] sm:text-[15px]">
+                {teacher.name}
+                <span className="font-normal text-[color:var(--ink-5)]">
+                  {en ? ' · Opening' : ' · 开场'}
+                </span>
+              </h1>
+              <p className="mt-0.5 truncate text-[11px] leading-[1.3] text-[color:var(--ink-5)] sm:text-[12px]">
+                {teacher.tagline}
+              </p>
+            </div>
           </div>
           <nav className="flex shrink-0 items-center gap-x-2.5 text-[11px] text-[color:var(--ink-3)] sm:gap-x-3 sm:text-[12px]">
             <ChatShareButton

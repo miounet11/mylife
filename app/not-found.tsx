@@ -1,26 +1,28 @@
 import Link from 'next/link';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { AppPage } from '@/components/layout/app-page';
-import { FocusHero } from '@/components/layout/focus-hero';
 
 export default function NotFound() {
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: '开始分析', compact: true }}>
       <div className="mx-auto max-w-2xl space-y-6 px-4 py-10 pb-20 md:py-14">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="notfound"
           eyebrow="404"
           title="页面未找到"
           description="链接可能已失效、地址写错，或内容已迁移。你可以从下面入口回到主流程。"
+          compact
           actions={
             <>
               <Link
                 href="/"
-                className="rounded-full bg-[color:var(--brand)] px-4 py-2 text-sm font-medium text-white"
+                className="rounded-full bg-[color:var(--brand)] px-4 py-2 text-sm font-medium text-white no-underline hover:no-underline"
               >
                 返回首页
               </Link>
               <Link
                 href="/analyze"
-                className="rounded-full border border-[color:var(--line)] px-4 py-2 text-sm text-[color:var(--ink-1)]"
+                className="rounded-full border border-[color:var(--line)] px-4 py-2 text-sm text-[color:var(--ink-1)] no-underline hover:no-underline"
               >
                 免费八字分析
               </Link>

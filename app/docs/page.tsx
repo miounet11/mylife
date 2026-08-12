@@ -4,7 +4,7 @@ import AnalyticsPageView from '@/components/analytics-page-view';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
-import { FocusHero } from '@/components/layout/focus-hero';
+import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { docsPageCopy, presentDocEntries } from '@/lib/i18n/docs-copy';
 import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { toIllustLocale } from '@/lib/page-illustrations/locale';
@@ -47,10 +47,12 @@ export default async function DocsPage({ searchParams }: DocsPageProps) {
         meta={{ surfaceKey: 'docs', geoReady: true }}
       />
       <div className="page-content space-y-6 py-6 pb-16 md:py-8">
-        <FocusHero
+        <FeatureImmersionHero
+          surfaceKey="docs"
           eyebrow={copy.eyebrow}
           title={copy.title}
           description={copy.description}
+          compact
           actions={
             <>
               <Link href="/analyze" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
