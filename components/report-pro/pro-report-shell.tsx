@@ -39,7 +39,9 @@ import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount
 import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
 import ProOpeningTension from '@/components/report-pro/pro-opening-tension';
 import ProWeeklyLoop from '@/components/report-pro/pro-weekly-loop';
+import ProChartAudit from '@/components/report-pro/pro-chart-audit';
 import { buildReportOpeningTension } from '@/lib/report-opening-tension';
+import { buildChartAudit } from '@/lib/chart-audit';
 import type { WeeklyCalibrationInput } from '@/lib/weekly-calibration';
 
 /**
@@ -131,6 +133,13 @@ export default function ProReportShell({
   });
 
   const openingTension = buildReportOpeningTension(view, reportId);
+  const chartAudit = buildChartAudit({
+    birthDate,
+    birthTime,
+    birthPlace,
+    storedFingerprint: view.pillars.map((p) => p.ganZhi).filter(Boolean).join(' '),
+    reportId,
+  });
 
   const enginePack = buildEngineSurfaceFromProView({
     view,
@@ -181,6 +190,8 @@ export default function ProReportShell({
       ) : null}
 
       <ProOpeningTension tension={openingTension} reportId={reportId} />
+
+      {chartAudit ? <ProChartAudit audit={chartAudit} /> : null}
 
       {weeklyEvents?.length ? (
         <ProWeeklyLoop reportId={reportId} events={weeklyEvents} />

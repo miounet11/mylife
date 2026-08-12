@@ -158,7 +158,10 @@ export default function AnalyzeWorkspace({
     if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) setBirthDate(date);
 
     const time = searchParams.get('birthTime') || searchParams.get('time');
-    if (time && /^\d{1,2}:\d{2}/.test(time)) setBirthTime(time.slice(0, 5));
+    if (time && /^\d{1,2}:\d{2}/.test(time)) {
+      setBirthTime(time.slice(0, 5));
+      setTimeTouched(true);
+    }
 
     const g = searchParams.get('gender');
     if (g === 'male' || g === 'female') setGender(g);

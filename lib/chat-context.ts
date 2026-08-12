@@ -320,6 +320,27 @@ export function buildChatExperienceContext(params: {
             live.reasonChain?.[0] ? `月令读法：${live.reasonChain[0]}` : '',
             '对话纪律：先扶抑主用神，调候单独说；追问轮深挖一条线，不要重复套「今天/7天/30天」表。',
             '十神（正官等）是角色；忌神列表是五行。用户问「正官是水为何忌火木」时拆开讲，不要两套忌神对打。',
+            (() => {
+              try {
+                const { buildChartAudit, chartAuditToChatAddon } = require('@/lib/chart-audit') as typeof import('@/lib/chart-audit');
+                const pillars = (report.bazi as { pillars?: Array<{ celestialStem?: string; earthlyBranch?: string }> } | undefined)?.pillars;
+                const stored = Array.isArray(pillars)
+                  ? pillars
+                      .slice(0, 4)
+                      .map((p) => `${p.celestialStem || ''}${p.earthlyBranch || ''}`)
+                      .join(' ')
+                  : '';
+                const audit = buildChartAudit({
+                  birthDate: report.birthDate,
+                  birthTime: report.birthTime,
+                  birthPlace: report.birthPlace,
+                  storedFingerprint: stored,
+                });
+                return audit ? chartAuditToChatAddon(audit) : '';
+              } catch {
+                return '';
+              }
+            })(),
           ]
             .filter(Boolean)
             .join('\n');

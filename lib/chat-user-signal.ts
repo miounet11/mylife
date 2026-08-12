@@ -66,6 +66,17 @@ export function classifyUserQuestion(question: string): UserQuestionSignal {
     };
   }
 
+  if (/四柱|排盘|八字错|八字不对|晚子|换日|寒露|节气.*错|应该是甲|应为甲/.test(q)) {
+    return {
+      kind: 'general',
+      systemAddon: [
+        '【排盘核对】用户在质疑四柱。先问：填写的是公历还是农历、时辰是否确定。',
+        '同一天可能跨节气（如寒露上午），早上和下午月柱不同。不要另起一套八字。',
+        '引导看报告「排盘核对」表，或用同一公历+时辰重算。',
+      ].join('\n'),
+    };
+  }
+
   if (/用神|忌神|喜神|从强|从弱|从旺|不得令|正官|正印|七杀|为什么还忌|也是从/.test(q)) {
     return {
       kind: 'yongshen_why',
