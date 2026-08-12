@@ -144,3 +144,14 @@ export function formatWuxingList(values: string[] | null | undefined, fallback =
   const normalized = normalizeWuxingList(values);
   return normalized.length ? normalized.join('、') : fallback;
 }
+
+/** Compact engine facts for dimension report chrome. */
+export function engineMetaFromYongShen(yongShen: { dayMaster?: string; yongShen?: string[]; xiShen?: string[]; jiShen?: string[] } | null | undefined, pillars?: Array<{ celestialStem?: string }>): Record<string, string> {
+  const dayMaster = `${yongShen?.dayMaster || pillars?.[2]?.celestialStem || ''}`.trim();
+  return {
+    ...(dayMaster ? { dayMaster } : {}),
+    yongShen: formatWuxingList(yongShen?.yongShen || [], ''),
+    xiShen: formatWuxingList(yongShen?.xiShen || [], ''),
+    jiShen: formatWuxingList(yongShen?.jiShen || [], ''),
+  };
+}

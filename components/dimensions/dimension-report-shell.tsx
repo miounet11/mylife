@@ -39,10 +39,31 @@ export default function DimensionReportShell({
   const yongShen = asStringArray(report.meta?.yongShen);
   const xiShen = asStringArray(report.meta?.xiShen);
   const jiShen = asStringArray(report.meta?.jiShen);
+  const dayMaster = `${report.meta?.dayMaster || ''}`.trim();
   const showTiming90 = report.slug === 'timing-selection';
+  const showEngineBar = Boolean(dayMaster || yongShen.length || xiShen.length);
 
   return (
     <div className="space-y-4">
+      {showEngineBar ? (
+        <div className="rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 px-3 py-2 text-[12px] leading-[1.5] text-[color:var(--ink-3)]">
+          <span className="font-medium text-[color:var(--ink-2)]">同一套命盘主链</span>
+          {dayMaster ? ` · 日主 ${dayMaster}` : ''}
+          {yongShen.length ? ` · 用神 ${yongShen.join('、')}` : ''}
+          {jiShen.length ? ` · 忌神 ${jiShen.join('、')}` : ''}
+          <span className="mx-1.5 text-[color:var(--ink-6)]">·</span>
+          <Link href="/engines" className="underline-offset-2 hover:underline">
+            引擎目录
+          </Link>
+        </div>
+      ) : (
+        <p className="text-[11px] text-[color:var(--ink-5)]">
+          十维切片走四柱→用神→大运→K线主链，不另起盘。
+          <Link href="/engines" className="ml-1 underline-offset-2 hover:underline">
+            看引擎
+          </Link>
+        </p>
+      )}
       {showTiming90 ? (
         <TimingWindowPanel yongShen={yongShen} xiShen={xiShen} jiShen={jiShen} />
       ) : null}
@@ -128,6 +149,10 @@ export default function DimensionReportShell({
 }
 
 function asStringArray(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value.map((item) => String(item || '').trim()).filter(Boolean);
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item || '').trim()).filter(Boolean);
+  }
+  const text = `${value || ''}`.trim();
+  if (!text) return [];
+  return text.split(/[,，、\s]+/).map((s) => s.trim()).filter(Boolean);
 }

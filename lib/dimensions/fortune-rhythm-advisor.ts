@@ -7,6 +7,7 @@ import {
   buildPrediction,
   clampConfidence,
   findKlinePoint,
+  engineMetaFromYongShen,
   formatDateOffset,
   formatWuxingList,
   quarterOfDate,
@@ -213,6 +214,7 @@ export function buildFortuneRhythmReport(input: DimensionAdvisorInput): Dimensio
       strongestLine: ranked[0]?.label || '',
       weakestLine: ranked[ranked.length - 1]?.label || '',
       priority: 'p0',
+      ...engineMetaFromYongShen(truthInput.yongShen, truthInput.pillars),
     },
   };
 }

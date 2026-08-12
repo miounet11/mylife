@@ -2,6 +2,7 @@ import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { rankIndustriesForElements } from './data/industries';
 import {
+  engineMetaFromYongShen,
   buildPrediction,
   clampConfidence,
   findKlinePoint,
@@ -161,6 +162,7 @@ export function buildCareerIndustryReport(input: DimensionAdvisorInput): Dimensi
       careerScore: Math.round(careerScore),
       topIndustry: top?.name || '',
       priority: 'p0',
+      ...engineMetaFromYongShen(yongShen, truthInput.pillars),
     },
   };
 }

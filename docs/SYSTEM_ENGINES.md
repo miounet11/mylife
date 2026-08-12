@@ -155,6 +155,19 @@ Without date, 月令 falls back to 本气 (丑月 = 己土 all month). Dimension
 
 ---
 
+## Surface utilization
+
+| Surface | Compute | Display |
+|---------|---------|---------|
+| Report `/result` | `analyzeFortune` + live 用神 | Engine Surface + 排盘核对 + K线 desk |
+| Expert desk | same pack | Engine Surface (dense) |
+| Tool result | GroundTruthPack from report/birth | Engine Surface |
+| Chat | EFC + live 用神 + 排盘核对 in **system prompt** | Opening strip + follow-up **引擎锁定** card; full desk stays on report |
+| 十维 | `buildFortuneContextInput` | 日主/用神 bar + advisor text (not full desk) |
+| 合婚 / 起名 / 通书 | natal or 用神 overlay | Layer scores / 日运, not the report desk |
+
+Chat must not invent 日主/用神 when unbound. When bound, it **cites** the natal chain and deep-dives on the report structure台.
+
 ## Quick lookup
 
 ```ts

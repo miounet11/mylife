@@ -480,7 +480,23 @@ export function buildChatExperienceContext(params: {
       pattern: report.pattern?.type || '以当前结构为准',
       currentDaYun: report.fortune?.currentDaYun || '以当前阶段判断为准',
       currentLiuNian: report.fortune?.currentLiuNian || '以当年节奏继续校验',
-      yongShen: report.advice?.yongShen || [],
+      yongShen: (() => {
+        try {
+          const { resolveYongShenPresentation } = require('@/lib/yongshen-live') as typeof import('@/lib/yongshen-live');
+          const live = resolveYongShenPresentation({
+            basic: report.bazi,
+            pillars: report.bazi?.pillars,
+            advice: report.advice,
+            yongShen: (report as { yongShen?: unknown }).yongShen,
+            birthDate: report.birthDate,
+            birthTime: report.birthTime,
+          });
+          if (live.yongShen?.length) return live.yongShen;
+        } catch {
+          /* stored advice */
+        }
+        return report.advice?.yongShen || [];
+      })(),
       topScenario: topScenario?.title || '优先结合当前主线展开',
       bestWindow: bestWindow?.label || '继续按月度节奏观察',
       riskWindow: riskWindow?.label || '优先保守推进并持续验证',
