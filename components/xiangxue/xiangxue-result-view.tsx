@@ -8,7 +8,9 @@
 
 import { useMemo, useState } from 'react';
 import Link from 'next/link';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
 import type { XiangxueLayer, XiangxueSessionResult } from '@/lib/xiangxue';
+import { runWorldYiEngineFromLoose } from '@/lib/world-yi-engine';
 
 type Props = {
   sessionId: string;
@@ -249,6 +251,20 @@ export function XiangxueResultView({ sessionId, result }: Props) {
             </Link>
           </div>
         )}
+
+        {result.birth?.dayMaster || result.birth?.yongShen?.length ? (
+          <ReportWorldYiDual
+            id="world-yi-engine-xiangxue"
+            title="相学交叉 · 易学事实 · 世界易判断"
+            reading={runWorldYiEngineFromLoose({
+              dayMaster: result.birth?.dayMaster,
+              yongShen: {
+                dayMaster: result.birth?.dayMaster,
+                yongShen: result.birth?.yongShen,
+              },
+            })}
+          />
+        ) : null}
       </div>
 
       {/* Strengths / watchpoints */}

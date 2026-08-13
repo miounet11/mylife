@@ -46,6 +46,19 @@ export async function POST(
     const engineReport = runDimensionAdvisor(slug, advisorInput);
     const llmEnhance = body?.llmEnhance !== false && body?.llm !== 0 && body?.llm !== '0';
     const pack = buildDimensionEnginePack(advisorInput);
+    try {
+      const { runWorldYiEngineFromLoose } = await import('@/lib/world-yi-engine');
+      const truth = pack.truthInput || {};
+      engineReport.worldYi = runWorldYiEngineFromLoose({
+        dayMaster: truth.yongShen?.dayMaster,
+        yongShen: truth.yongShen,
+        pattern: truth.pattern,
+        pillars: truth.pillars,
+        dayun: truth.dayun,
+      });
+    } catch {
+      // World Yi layer is additive; dimension report still ships.
+    }
     const report = await enhanceDimensionReport(slug as DimensionSlug, engineReport, {
       pack,
       name: advisorInput.name,

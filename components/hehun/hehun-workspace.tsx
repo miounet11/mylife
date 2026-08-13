@@ -11,6 +11,8 @@ import {
 } from '@/lib/hehun-engine';
 import { presentHehunResult } from '@/lib/hehun/present-result';
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
+import { runWorldYiEngineFromLoose, worldYiPairNote } from '@/lib/world-yi-engine';
 import {
   buildHehunHref,
   hehunBirthPairFromQuery,
@@ -397,6 +399,26 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
     [result, locale],
   );
 
+  const worldYiA = useMemo(
+    () =>
+      runWorldYiEngineFromLoose({
+        dayMaster: a.dayMaster,
+        yongShen: { dayMaster: a.dayMaster, yongShen: a.yongShen, jiShen: a.jiShen },
+        fortune: { currentDaYun: a.currentDayunGanZhi || displayResult?.personA.dayun || '' },
+      }),
+    [a.dayMaster, a.yongShen, a.jiShen, a.currentDayunGanZhi, displayResult?.personA.dayun],
+  );
+  const worldYiB = useMemo(
+    () =>
+      runWorldYiEngineFromLoose({
+        dayMaster: b.dayMaster,
+        yongShen: { dayMaster: b.dayMaster, yongShen: b.yongShen, jiShen: b.jiShen },
+        fortune: { currentDaYun: b.currentDayunGanZhi || displayResult?.personB.dayun || '' },
+      }),
+    [b.dayMaster, b.yongShen, b.jiShen, b.currentDayunGanZhi, displayResult?.personB.dayun],
+  );
+  const pairNote = useMemo(() => worldYiPairNote(worldYiA, worldYiB), [worldYiA, worldYiB]);
+
   function applyFortune(side: 'a' | 'b', fortuneId: string) {
     const f = fortunes.find((x) => x.id === fortuneId);
     if (!f) return;
@@ -758,6 +780,17 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
                 mono: true,
               },
             ]}
+          />
+          <p className="text-[13px] leading-relaxed text-[color:var(--ink-2)]">{pairNote}</p>
+          <ReportWorldYiDual
+            id="world-yi-engine-a"
+            title={`${displayResult.personA.name || copy.sideA} · 易学事实 · 世界易判断`}
+            reading={worldYiA}
+          />
+          <ReportWorldYiDual
+            id="world-yi-engine-b"
+            title={`${displayResult.personB.name || copy.sideB} · 易学事实 · 世界易判断`}
+            reading={worldYiB}
           />
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>

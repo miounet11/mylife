@@ -2,7 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, BookOpenText, Bot, LockKeyhole, ScrollText, Sparkles, Target, FileQuestion, Layers, Wrench, BookOpen } from 'lucide-react';
+import { ArrowRight, BookOpenText, Bot, Compass, LockKeyhole, ScrollText, Sparkles, Target, FileQuestion, Layers, Wrench, BookOpen } from 'lucide-react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import NewsletterSignup from '@/components/newsletter-signup';
 import PriorityDisclosure from '@/components/priority-disclosure';
@@ -34,6 +34,8 @@ import {
 } from '@/lib/engine-surface';
 import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
 import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
+import { runWorldYiEngineFromLoose } from '@/lib/world-yi-engine';
 
 export default async function ToolResultPage({
   params,
@@ -163,8 +165,38 @@ export default async function ToolResultPage({
   })();
 
   // v5-D60 timeline 锚点
+  const worldYiReading = (() => {
+    try {
+      const r = (report || {}) as Record<string, unknown>;
+      const analysis = (r.analysis || r.result || r) as Record<string, unknown>;
+      return runWorldYiEngineFromLoose({
+        dayMaster:
+          sessionMeta.dayMaster ||
+          (result.dayMaster as string) ||
+          (analysis.dayMaster as string) ||
+          undefined,
+        yongShen: analysis.yongShen || r.yongShen || result.yongShen || result.advice,
+        pattern: analysis.pattern || r.pattern || result.pattern,
+        pillars: (analysis as { basic?: { pillars?: unknown } }).basic?.pillars || result.bazi || result.basic,
+        dayun: analysis.dayun || r.dayun || result.dayun,
+        fortune: (analysis.fortune || r.fortune || result.fortune) as {
+          currentDaYun?: string;
+          currentLiuNian?: string;
+          interaction?: string;
+        },
+        advice: (analysis.advice || r.advice || result.advice) as {
+          yongShen?: string[];
+          jiShen?: string[];
+        },
+      });
+    } catch {
+      return null;
+    }
+  })();
+
   const railItems: ReportAnchorRailItem[] = [
     { id: 'tr-cockpit', label: '结果总览', icon: Sparkles },
+    { id: 'tr-world-yi', label: '世界易', icon: Compass },
     { id: 'tr-summary', label: '免费摘要', icon: ScrollText },
     { id: 'tr-engine', label: '引擎结构', icon: Layers },
     { id: 'tr-next', label: '下一步承接', icon: Target },
@@ -251,6 +283,12 @@ export default async function ToolResultPage({
                 />
               </div>
             </section>
+
+            {worldYiReading ? (
+              <div id="tr-world-yi" className="scroll-mt-header">
+                <ReportWorldYiDual reading={worldYiReading} />
+              </div>
+            ) : null}
 
             <section
               id="tr-summary"

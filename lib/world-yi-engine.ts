@@ -9,7 +9,121 @@ import { buildEraEnvironmentSnapshot } from '@/lib/world-yi-era-snapshot';
 import { WORLD_YI_MOTHER_TONGUE } from '@/lib/world-yi-architecture';
 import { resolveYongShenPresentation, type YongShenPresentation } from '@/lib/yongshen-live';
 
-export const WORLD_YI_ENGINE_VERSION = 'world-yi-interpret-v1';
+export const WORLD_YI_ENGINE_VERSION = 'world-yi-interpret-v2';
+
+export type WorldYiEngineLooseInput = {
+  dayMaster?: string;
+  yongShen?: unknown;
+  pattern?: unknown;
+  tenGods?: FortuneAnalysisResult['tenGods'];
+  pillars?: unknown;
+  fortune?: Partial<FortuneAnalysisResult['fortune']>;
+  dayun?: unknown;
+  analysis?: Partial<FortuneAnalysisResult['analysis']>;
+  advice?: Partial<FortuneAnalysisResult['advice']>;
+};
+
+function asYongShenBlob(value: unknown): FortuneAnalysisResult['yongShen'] {
+  if (!value || typeof value !== 'object') return null;
+  const row = value as Record<string, unknown>;
+  return {
+    dayMaster: `${row.dayMaster || ''}`.trim() || undefined,
+    dayMasterElement: `${row.dayMasterElement || ''}`.trim() || undefined,
+    strength: `${row.strength || ''}`.trim() || undefined,
+    strengthDesc: `${row.strengthDesc || ''}`.trim() || undefined,
+    yongShen: Array.isArray(row.yongShen) ? (row.yongShen as string[]) : undefined,
+    xiShen: Array.isArray(row.xiShen) ? (row.xiShen as string[]) : undefined,
+    jiShen: Array.isArray(row.jiShen) ? (row.jiShen as string[]) : undefined,
+    analysis: `${row.analysis || ''}`.trim() || undefined,
+  };
+}
+
+function patternFromLoose(value: unknown): FortuneAnalysisResult['pattern'] {
+  if (typeof value === 'string' && value.trim()) {
+    return { type: value.trim(), strength: '', quality: '', description: value.trim() };
+  }
+  const row = (value || {}) as Record<string, unknown>;
+  const type = `${row.type || row.pattern || row.name || ''}`.trim();
+  return {
+    type,
+    strength: `${row.strength || ''}`.trim(),
+    quality: `${row.quality || ''}`.trim(),
+    description: `${row.description || type}`.trim(),
+  };
+}
+
+function dayunLabel(value: unknown): string {
+  if (!value || typeof value !== 'object') return '';
+  const row = value as Record<string, unknown>;
+  const current = (row.currentDayun || row.current || {}) as Record<string, unknown>;
+  return `${current.ganZhi || current.ganzhi || row.ganZhi || ''}`.trim();
+}
+
+export function fortuneLikeFromLoose(input: WorldYiEngineLooseInput): FortuneAnalysisResult {
+  const ys = asYongShenBlob(input.yongShen);
+  const pattern = patternFromLoose(input.pattern);
+  const dayun = dayunLabel(input.dayun);
+  return {
+    basic: {
+      dayMaster: input.dayMaster || ys?.dayMaster || '',
+      pillars: Array.isArray(input.pillars) ? (input.pillars as FortuneAnalysisResult['basic']['pillars']) : [],
+    },
+    yongShen: ys,
+    fiveElements: {} as FortuneAnalysisResult['fiveElements'],
+    tenGods: input.tenGods || { self: '', output: [], input: [], control: [], controlled: [] },
+    pattern,
+    fortune: {
+      currentDaYun: input.fortune?.currentDaYun || dayun,
+      currentLiuNian: input.fortune?.currentLiuNian || '',
+      interaction: input.fortune?.interaction || '',
+      nextYear: input.fortune?.nextYear || '',
+      trend: input.fortune?.trend,
+    },
+    advice: (input.advice || {
+      career: {} as FortuneAnalysisResult['advice']['career'],
+      wealth: {} as FortuneAnalysisResult['advice']['wealth'],
+      marriage: {} as FortuneAnalysisResult['advice']['marriage'],
+      health: {} as FortuneAnalysisResult['advice']['health'],
+      colors: [],
+      directions: [],
+      timing: [],
+      yongShen: ys?.yongShen,
+      jiShen: ys?.jiShen,
+    }) as FortuneAnalysisResult['advice'],
+    evidence: { statistics: {} as FortuneAnalysisResult['evidence']['statistics'], celebrities: [], similarCases: [] },
+    analysis: {
+      opening: `${input.analysis?.opening || ''}`,
+      explanation: `${input.analysis?.explanation || ''}`,
+    },
+  } as FortuneAnalysisResult;
+}
+
+export function runWorldYiEngineFromLoose(input: WorldYiEngineLooseInput, year?: number): WorldYiEngineReading {
+  return runWorldYiEngine(fortuneLikeFromLoose(input), year);
+}
+
+/** Compact prompt block so chat / agents cite the same engine output. */
+export function formatWorldYiEnginePrompt(reading: WorldYiEngineReading): string {
+  const y = reading.yixue;
+  const layers = reading.layers.map((layer) => `${layer.name}：${layer.headline}。${layer.body}`).join('\n');
+  return [
+    `【世界易引擎 · ${reading.version}】`,
+    `发挥偏「${reading.playType}」· ${reading.stage}期`,
+    `易学事实：日主 ${y.dayMaster || '—'} · 强弱 ${y.strengthDesc || y.strength || '—'} · 格局 ${y.pattern || '—'} · 用神 ${(y.yongShen || []).join('、') || '—'} · 忌神 ${(y.jiShen || []).join('、') || '—'} · 大运 ${y.dayun || '—'} · 流年 ${y.liunian || '—'}`,
+    layers,
+    reading.refuse,
+    '对话时引用这套判断语言，不得改写日主/扶抑用神。调候单独说。',
+  ].join('\n');
+}
+
+/** Two charts, one environment — World Yi pair note for 合婚. */
+export function worldYiPairNote(left: WorldYiEngineReading, right: WorldYiEngineReading): string {
+  const sameStage = left.stage === right.stage;
+  const stageLine = sameStage
+    ? `双方都在「${left.stage}」期：共同动作要对齐这个阶段，不要一方抬升、一方硬守。`
+    : `一方「${left.stage}」、一方「${right.stage}」：先对齐进退顺序，再谈承诺。`;
+  return `两个出厂设置（${left.playType} × ${right.playType}）共一块硬约束。${stageLine}世界易不把合婚写成吉凶，只写结构是否匹配、阶段是否同向、环境是否付得起。`;
+}
 
 export type WorldYiPlayType = '建设' | '表达' | '协调' | '收敛';
 export type WorldYiStage = '抬升' | '收敛' | '过渡';

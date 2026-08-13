@@ -84,6 +84,7 @@ export async function POST(request: NextRequest) {
       mode,
       surname: body?.surname ? String(body.surname).slice(0, 4) : undefined,
       gender: body?.gender ? String(body.gender) : undefined,
+      dayMaster: birthCtx.dayMaster ? String(birthCtx.dayMaster) : undefined,
       yongShen: engineBody.yongShen as string[],
       jiShen: engineBody.jiShen as string[],
       generationChar: body?.generationChar

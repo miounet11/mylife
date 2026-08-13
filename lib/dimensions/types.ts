@@ -1,5 +1,6 @@
 import type { Prediction } from '@/lib/predictions/types';
 import type { BirthInput } from '@/lib/fortune-context-builder';
+import type { WorldYiEngineReading } from '@/lib/world-yi-engine';
 
 export type DimensionSlug =
   | 'naming'
@@ -49,6 +50,8 @@ export interface DimensionReport {
   predictions: Prediction[];
   disclaimers: string[];
   meta?: Record<string, string | number>;
+  /** World Yi interpretive reading, parallel to 易学 lock strip. */
+  worldYi?: WorldYiEngineReading;
 }
 
 export interface DimensionAdvisorInput extends BirthInput {

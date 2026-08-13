@@ -34,6 +34,7 @@ const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
   { href: '/astro', labelKey: 'navAstro' },
   { href: '/hehun', labelKey: 'navHehun' },
   { href: '/tools/naming', labelKey: 'navNaming' },
+  { href: '/world-yi', labelKey: 'navWorldYiShort' },
   { href: '/cases', labelKey: 'navCases' },
   { href: '/events', labelKey: 'navEvents' },
 ];

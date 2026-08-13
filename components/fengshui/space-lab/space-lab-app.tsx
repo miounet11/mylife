@@ -37,7 +37,9 @@ import { CadPlanEditor } from './cad-plan-editor';
 import { spaceLabCopy } from '@/lib/i18n/space-lab-copy';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
 import { buildBaziSpaceBridge, mergeBridgeIntoActions } from '@/lib/fengshui/space/bazi-space-bridge';
+import { runWorldYiEngineFromLoose } from '@/lib/world-yi-engine';
 
 const SpaceViewport3D = dynamic(
   () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
@@ -97,6 +99,19 @@ export function SpaceLabApp({
 
   const sim = useMemo(() => simulateSpaceField(state), [state, tick]);
   const bridge = useMemo(() => buildBaziSpaceBridge(state), [state]);
+  const worldYiReading = useMemo(() => {
+    const link = state.profileLink;
+    if (!link?.dayMaster && !(link?.yongShen || []).length) return null;
+    return runWorldYiEngineFromLoose({
+      dayMaster: link?.dayMaster,
+      yongShen: {
+        dayMaster: link?.dayMaster,
+        yongShen: link?.yongShen,
+        xiShen: link?.xiShen,
+        jiShen: link?.jiShen,
+      },
+    });
+  }, [state.profileLink]);
   const result = useMemo(() => {
     const merged = mergeBridgeIntoActions(sim, bridge);
     return {
@@ -665,6 +680,16 @@ export function SpaceLabApp({
                   : []
               }
             />
+            {worldYiReading ? (
+              <div className="mt-2">
+                <ReportWorldYiDual
+                  compact
+                  id="world-yi-engine-space"
+                  title="宅主 · 易学事实 · 世界易判断"
+                  reading={worldYiReading}
+                />
+              </div>
+            ) : null}
             {bridge.linked ? (
               <div className="mt-1.5 space-y-1 text-[11px] leading-snug text-[color:var(--ink-3)]">
                 <p>{bridge.entranceNote}</p>

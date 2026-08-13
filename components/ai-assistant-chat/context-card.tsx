@@ -1,6 +1,7 @@
 'use client';
 
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
 import type { ChatExperienceContext } from '@/lib/chat-context';
 import type { ChatIntentPreset } from '@/lib/chat-intent';
 import type { ReportActionSuggestion } from '@/lib/report-v2';
@@ -52,6 +53,15 @@ export function ContextCard({
             : []
         }
       />
+
+      {context.worldYi ? (
+        <ReportWorldYiDual
+          compact
+          id="world-yi-engine-chat"
+          title="本盘 · 易学事实 · 世界易判断"
+          reading={context.worldYi}
+        />
+      ) : null}
 
       {report?.bestWindow || report?.riskWindow ? (
         <p className="mt-1.5 text-[11px] leading-[1.45] text-[color:var(--ink-4)]">

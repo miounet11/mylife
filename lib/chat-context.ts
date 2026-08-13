@@ -26,6 +26,7 @@ import { CHAT_NO_REPORT_CONTRACT, ENGINE_HARD_CONTRACT } from '@/lib/ground-trut
 import { buildVerifyEventFields } from '@/lib/chat-answer-contract';
 import type { FortuneAnalysisResult } from '@/lib/user-types';
 import type { PredictionRevisitStats } from '@/lib/predictions/revisit-stats';
+import type { WorldYiEngineReading } from '@/lib/world-yi-engine';
 
 export interface ChatContextEvent {
   id: string;
@@ -88,6 +89,8 @@ export interface ChatExperienceContext {
   confirmedPastEventCount?: number;
   focusedEvent?: ChatContextEvent;
   report?: ChatReportContext;
+  /** Parallel World Yi engine reading — same facts as 易学, different judgment language */
+  worldYi?: WorldYiEngineReading;
   /** Structured seven-day actions for memory budget (not only in summary text) */
   sevenDayActions?: string[];
   /** Closed-loop calibration 40–100 */
@@ -289,6 +292,35 @@ export function buildChatExperienceContext(params: {
     engineFactBlock = '';
   }
 
+  let worldYi: WorldYiEngineReading | undefined;
+  let worldYiPrompt = '';
+  try {
+    const { runWorldYiEngine, formatWorldYiEnginePrompt } = require('@/lib/world-yi-engine') as typeof import('@/lib/world-yi-engine');
+    worldYi = runWorldYiEngine({
+      basic: report.bazi,
+      fiveElements: report.fiveElements,
+      tenGods: report.tenGods,
+      pattern: report.pattern,
+      fortune: report.fortune,
+      advice: report.advice,
+      evidence: report.evidence,
+      analysis: report.analysis,
+      klineData: report.klineData,
+      dayun: report.dayun,
+      shenSha: report.shenSha,
+      yongShen: (report as { yongShen?: unknown }).yongShen || {
+        yongShen: report.advice?.yongShen,
+        xiShen: report.advice?.xiShen,
+        jiShen: report.advice?.jiShen,
+        dayMaster: report.bazi?.dayMaster,
+      },
+    } as FortuneAnalysisResult);
+    worldYiPrompt = formatWorldYiEnginePrompt(worldYi);
+  } catch {
+    worldYi = undefined;
+    worldYiPrompt = '';
+  }
+
   return {
     intent: params.intent,
     engineFactBlock: engineFactBlock || undefined,
@@ -431,6 +463,7 @@ export function buildChatExperienceContext(params: {
       engineFactBlock
         ? '回答必须对齐上方引擎真值锁定字段；不得改写日主、四柱、用神/忌神、大运干支与年龄。'
         : '',
+      worldYiPrompt,
     ]
       .filter(Boolean)
       .join('\n'),
@@ -473,6 +506,7 @@ export function buildChatExperienceContext(params: {
         .filter(Boolean)
         .slice(0, 6);
     })(),
+    worldYi,
     report: {
       id: report.id,
       name: report.name,

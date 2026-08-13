@@ -28,6 +28,7 @@ const MESSAGES: Record<string, { 'zh-CN': string; 'zh-Hant'?: string; en: string
   navSpace: { 'zh-CN': '空间场', 'zh-Hant': '空間場', en: 'Space Lab' },
   navDocs: { 'zh-CN': '文档', 'zh-Hant': '文檔', en: 'Docs' },
   navWorldYi: { 'zh-CN': '世界易学说', 'zh-Hant': '世界易學說', en: 'World Yi' },
+  navWorldYiShort: { 'zh-CN': '世界易', 'zh-Hant': '世界易', en: 'World Yi' },
   navLearn: { 'zh-CN': '学习地图', 'zh-Hant': '學習地圖', en: 'Learn' },
   navMembership: { 'zh-CN': '会员', 'zh-Hant': '會員', en: 'Membership' },
   navMovement: { 'zh-CN': '运动与传播', 'zh-Hant': '運動與傳播', en: 'Movement' },

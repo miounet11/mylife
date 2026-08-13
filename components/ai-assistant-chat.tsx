@@ -13,6 +13,7 @@ import { trackClientEvent } from '@/lib/analytics-client';
 import { trackGoogleAnalyticsEvent } from '@/lib/analytics-client'; // Stub for now; check prod sync for full implementation
 import { ContextCard } from '@/components/ai-assistant-chat/context-card';
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
 import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/material-evidence-composer';
 import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materials';
@@ -1225,6 +1226,14 @@ export default function AIAssistantChat({
                   { label: t('流年', 'Year pillar'), value: context.report.currentLiuNian, mono: true },
                 ]}
               />
+              {context.worldYi ? (
+                <ReportWorldYiDual
+                  compact
+                  id="world-yi-engine-chat-opening"
+                  title="本盘 · 易学事实 · 世界易判断"
+                  reading={context.worldYi}
+                />
+              ) : null}
               {/* first_mes is injected as MessageBubble below; panel keeps chips + starters */}
               {!hideOpeningFirstMes ? (
                 <ChatOpeningPanel

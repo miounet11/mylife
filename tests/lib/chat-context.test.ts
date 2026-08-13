@@ -1,3 +1,5 @@
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
 import { buildChatEventDraft, buildChatExperienceContext } from '@/lib/chat-context';
 import { buildReportActionSuggestions } from '@/lib/report-v2';
 
@@ -152,22 +154,26 @@ describe('chat-context helpers', () => {
       now: new Date(Date.UTC(2026, 2, 12)),
     });
 
-    expect(context.report?.id).toBe('report_001');
-    expect(context.summary).toContain('乙亥大运');
-    expect(context.focusAreas.length).toBeGreaterThan(2);
-    expect(context.suggestedPrompts.length).toBeGreaterThan(2);
-    expect(context.suggestedEventDrafts.length).toBeGreaterThan(0);
-    expect(context.validationSummary?.accurateCount).toBe(1);
-    expect(context.summary).toContain('事件验证状态');
+    assert.equal(context.report?.id, 'report_001');
+    assert.ok(context.summary.includes('乙亥大运'));
+    assert.ok(context.summary.includes('引擎硬约束') || context.summary.includes('引擎真值锁定'));
+    assert.ok(context.worldYi);
+    assert.equal(context.worldYi?.yixue.dayMaster, '甲');
+    assert.ok(context.summary.includes('世界易引擎'));
+    assert.ok(context.focusAreas.length > 2);
+    assert.ok(context.suggestedPrompts.length > 2);
+    assert.ok(context.suggestedEventDrafts.length > 0);
+    assert.equal(context.validationSummary?.accurateCount, 1);
+    assert.ok(context.summary.includes('事件验证状态'));
   });
 
   it('builds deterministic report action suggestions', () => {
     const first = buildReportActionSuggestions(reportInput, new Date(Date.UTC(2026, 2, 12)));
     const second = buildReportActionSuggestions(reportInput, new Date(Date.UTC(2026, 2, 12)));
 
-    expect(first).toHaveLength(3);
-    expect(first[0].title).toBe(second[0].title);
-    expect(first[0].date).toMatch(/^2026-\d{2}-01$/);
+    assert.equal(first.length, 3);
+    assert.equal(first[0].title, second[0].title);
+    assert.match(first[0].date, /^2026-\d{2}-01$/);
   });
 
   it('builds a chat event draft from question and answer', () => {
@@ -183,11 +189,11 @@ describe('chat-context helpers', () => {
       now: new Date(Date.UTC(2026, 2, 12)),
     });
 
-    expect(draft.type).toBe('career');
-    expect(draft.title).toContain('跳槽');
-    expect(draft.date).toBe(context.suggestedEventDrafts[0]?.date);
-    expect(draft.fortuneAnalysis.source).toBe('chat_message');
-    expect(draft.description).toContain('问题：');
+    assert.equal(draft.type, 'career');
+    assert.ok(draft.title.includes('跳槽'));
+    assert.equal(draft.date, context.suggestedEventDrafts[0]?.date);
+    assert.equal(draft.fortuneAnalysis.source, 'chat_message');
+    assert.ok(draft.description.includes('问题：'));
   });
 
   it('uses local calendar date for chat drafts without UTC slicing', () => {
@@ -197,7 +203,7 @@ describe('chat-context helpers', () => {
       now: new Date(2026, 3, 20, 23, 45, 0),
     });
 
-    expect(draft.date).toBe('2026-04-20');
+    assert.equal(draft.date, '2026-04-20');
   });
 
   it('prioritizes focused drift event in chat context', () => {
@@ -225,12 +231,12 @@ describe('chat-context helpers', () => {
       now: new Date(Date.UTC(2026, 2, 12)),
     });
 
-    expect(context.focusedEvent?.id).toBe('evt_drift');
-    expect(context.summary).toContain('重点纠偏事件');
-    expect(context.suggestedPrompts[0]).toContain('纠偏');
-    expect(context.correctionPrompts).toHaveLength(4);
-    expect(context.correctionPrompts[0]?.question).toContain('跳槽谈判失败');
-    expect(context.correctionPrompts[0]?.helper).toContain('窗口判断偏早');
+    assert.equal(context.focusedEvent?.id, 'evt_drift');
+    assert.ok(context.summary.includes('重点纠偏事件'));
+    assert.ok(context.suggestedPrompts[0].includes('纠偏'));
+    assert.equal(context.correctionPrompts.length, 4);
+    assert.ok(context.correctionPrompts[0]?.question.includes('跳槽谈判失败'));
+    assert.ok(context.correctionPrompts[0]?.helper.includes('窗口判断偏早'));
   });
 
   it('keeps recent event ordering on local date keys without UTC drift', () => {
@@ -258,8 +264,8 @@ describe('chat-context helpers', () => {
       now: new Date(2026, 3, 19, 12, 0, 0),
     });
 
-    expect(context.recentEvents[0]?.id).toBe('evt_morning');
-    expect(context.recentEvents[1]?.id).toBe('evt_evening');
+    assert.equal(context.recentEvents[0]?.id, 'evt_morning');
+    assert.equal(context.recentEvents[1]?.id, 'evt_evening');
   });
 
   it('builds intent-aware prompts for event simulation', () => {
@@ -270,11 +276,11 @@ describe('chat-context helpers', () => {
       now: new Date(Date.UTC(2026, 2, 12)),
     });
 
-    expect(context.intent).toBe('event-simulation');
-    expect(context.summary).toContain('事件推演');
-    expect(context.summary).toContain('试探、推进、确认');
-    expect(context.focusAreas[0]).toContain('专项：事件推演');
-    expect(context.suggestedPrompts[0]).toContain('事件推演');
+    assert.equal(context.intent, 'event-simulation');
+    assert.ok(context.summary.includes('事件推演'));
+    assert.ok(context.summary.includes('试探、推进、确认'));
+    assert.ok(context.focusAreas[0].includes('专项：事件推演'));
+    assert.ok(context.suggestedPrompts[0].includes('事件推演'));
   });
 
   it('builds intent-aware prompts for event review without losing drift guidance', () => {
@@ -302,9 +308,9 @@ describe('chat-context helpers', () => {
       now: new Date(Date.UTC(2026, 2, 12)),
     });
 
-    expect(context.intent).toBe('event-review');
-    expect(context.summary).toContain('事件剖析');
-    expect(context.summary).toContain('时机、执行还是信息判断');
-    expect(context.suggestedPrompts.some((item) => item.includes('偏差'))).toBe(true);
+    assert.equal(context.intent, 'event-review');
+    assert.ok(context.summary.includes('事件剖析'));
+    assert.ok(context.summary.includes('时机、执行还是信息判断'));
+    assert.equal(context.suggestedPrompts.some((item) => item.includes('偏差')), true);
   });
 });

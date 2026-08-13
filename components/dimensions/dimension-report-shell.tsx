@@ -1,6 +1,7 @@
 import type { DimensionReport } from '@/lib/dimensions/types';
 import Link from 'next/link';
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
 import TimingWindowPanel from '@/components/timing/timing-window-panel';
 import { dimensionReportShellCopy } from '@/lib/i18n/dimensions-copy';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
@@ -56,6 +57,8 @@ export default function DimensionReportShell({
       {showTiming90 ? (
         <TimingWindowPanel yongShen={yongShen} xiShen={xiShen} jiShen={jiShen} />
       ) : null}
+
+      {report.worldYi ? <ReportWorldYiDual reading={report.worldYi} /> : null}
 
       {llmEnhanced || narrativeSummary ? (
         <div className="flex flex-wrap items-center gap-2">

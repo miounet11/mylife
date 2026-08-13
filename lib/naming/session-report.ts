@@ -5,6 +5,7 @@ export type NamingSessionInput = {
   mode: NamingMode;
   surname?: string;
   gender?: string;
+  dayMaster?: string;
   yongShen?: string[];
   jiShen?: string[];
   generationChar?: string;

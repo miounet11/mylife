@@ -5,6 +5,8 @@ import { useState } from 'react';
 import type { NamingSessionResult } from '@/lib/naming';
 import { encodeNameKey } from '@/lib/naming';
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
+import { runWorldYiEngineFromLoose } from '@/lib/world-yi-engine';
 
 type Props = {
   sessionId: string;
@@ -97,10 +99,26 @@ export function NamingResultView({ sessionId, result }: Props) {
       <EngineLockStrip
         surface="naming"
         facts={[
+          { label: '日主', value: result.input.dayMaster || '' },
           { label: '用神', value: (result.input.yongShen || []).join('、') },
           { label: '忌神', value: (result.input.jiShen || []).join('、') },
         ]}
       />
+
+      {result.input.yongShen?.length || result.input.dayMaster ? (
+        <ReportWorldYiDual
+          id="world-yi-engine-naming"
+          title="起名 · 易学事实 · 世界易判断"
+          reading={runWorldYiEngineFromLoose({
+            dayMaster: result.input.dayMaster,
+            yongShen: {
+              dayMaster: result.input.dayMaster,
+              yongShen: result.input.yongShen,
+              jiShen: result.input.jiShen,
+            },
+          })}
+        />
+      ) : null}
 
       {/* input strip */}
       <div className="flex flex-wrap gap-2 text-[11px]">
