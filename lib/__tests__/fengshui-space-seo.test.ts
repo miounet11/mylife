@@ -1,7 +1,12 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { listSpaceSeoScenarios } from '@/lib/fengshui/space/seo-catalog';
-import { buildSpaceSeoReport, spaceSeoCoverage, workbenchHref } from '@/lib/fengshui/space/seo-report';
+import {
+  buildSpaceSeoReport,
+  snapshotSpaceSeoScene,
+  spaceSeoCoverage,
+  workbenchHref,
+} from '@/lib/fengshui/space/seo-report';
 
 describe('空间场 SEO/GEO reports', () => {
   it('builds hundreds of unique decision reports', () => {
@@ -35,5 +40,15 @@ describe('空间场 SEO/GEO reports', () => {
     const report = buildSpaceSeoReport(s!);
     assert.ok(report.sections.some((sec) => sec.id === 'city-site' || /选址/.test(sec.heading)));
     assert.ok(report.answerSummary.includes('不构成'));
+  });
+
+  it('scene snapshot has rooms, heat and 用神 facings for renzhai', () => {
+    const s = listSpaceSeoScenarios().find((x) => x.slug === 'method-renzhai');
+    assert.ok(s);
+    const snap = snapshotSpaceSeoScene(s!);
+    assert.ok(snap.zones.length >= 2);
+    assert.equal(snap.heat.length, snap.heatW * snap.heatW);
+    assert.ok(snap.enhanceFacings.length >= 1);
+    assert.equal(snap.facing, '南');
   });
 });

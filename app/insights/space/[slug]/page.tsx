@@ -10,8 +10,10 @@ import {
   buildBreadcrumbJsonLd,
   buildFaqJsonLd,
 } from '@/lib/seo';
+import { SpaceSeoPlanSvg } from '@/components/fengshui/space-seo-plan-svg';
+import { SpaceSeoStage } from '@/components/fengshui/space-seo-stage';
 import { getSpaceSeoScenario, listSpaceSeoScenarios } from '@/lib/fengshui/space/seo-catalog';
-import { buildSpaceSeoReport } from '@/lib/fengshui/space/seo-report';
+import { buildSpaceSeoReport, snapshotSpaceSeoScene } from '@/lib/fengshui/space/seo-report';
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -42,6 +44,7 @@ export default async function SpaceSeoReportPage({ params }: Props) {
   const s = getSpaceSeoScenario(slug);
   if (!s) notFound();
   const report = buildSpaceSeoReport(s);
+  const snapshot = snapshotSpaceSeoScene(s);
 
   return (
     <AppPage header={{ ctaHref: report.ctaHref, ctaLabel: '打开工作台', compact: true }}>
@@ -90,6 +93,13 @@ export default async function SpaceSeoReportPage({ params }: Props) {
             </Link>
           </div>
         </header>
+
+        <SpaceSeoStage slug={s.slug} snapshot={snapshot} />
+        <noscript>
+          <div className="overflow-hidden rounded-[12px] border border-[color:var(--hairline)]">
+            <SpaceSeoPlanSvg snap={snapshot} className="h-auto w-full" />
+          </div>
+        </noscript>
 
         <dl className="grid grid-cols-2 divide-x divide-[color:var(--hairline)] border border-[color:var(--hairline)] text-center sm:grid-cols-4">
           <div className="p-3">

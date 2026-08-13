@@ -17,6 +17,7 @@ type Props = {
   entranceLabel?: string;
   highlightFacings?: string[];
   reduceFacings?: string[];
+  autoRotate?: boolean;
 };
 
 const FACING_XZ: Record<string, [number, number]> = {
@@ -311,7 +312,7 @@ function NorthArrow({ rotDeg }: { rotDeg: number }) {
   );
 }
 
-function Scene({ state, result, highlightFacings, reduceFacings }: Props) {
+function Scene({ state, result, highlightFacings, reduceFacings, autoRotate }: Props) {
   const domain = (state.activeDomain || 'residential') as SpaceActiveDomain;
   const meta = DOMAIN_MODEL_META[domain];
   const layer = pickLayerGrid(result.grids, state.activeLayer);
@@ -363,6 +364,8 @@ function Scene({ state, result, highlightFacings, reduceFacings }: Props) {
       <OrbitControls
         makeDefault
         enableDamping
+        autoRotate={autoRotate}
+        autoRotateSpeed={0.55}
         maxPolarAngle={Math.PI / 2.02}
         minDistance={2.5}
         maxDistance={cam.maxDistance}
@@ -379,6 +382,7 @@ export function SpaceViewport3D({
   entranceLabel,
   highlightFacings,
   reduceFacings,
+  autoRotate,
 }: Props) {
   const domain = (state.activeDomain || 'residential') as SpaceActiveDomain;
   const meta = DOMAIN_MODEL_META[domain];
@@ -398,6 +402,7 @@ export function SpaceViewport3D({
             result={result}
             highlightFacings={highlightFacings}
             reduceFacings={reduceFacings}
+            autoRotate={autoRotate}
           />
         </Suspense>
       </Canvas>

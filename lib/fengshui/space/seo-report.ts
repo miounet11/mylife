@@ -7,6 +7,10 @@ import { createDefaultLabState, simulateSpaceField } from './field-sim';
 import { applyPresetToState, filterPresets } from './layout-presets';
 import { buildFengshuiSpaceReport, type FengshuiSpaceReport } from './full-report';
 import { adviseSites } from './site-advisor';
+import { buildBaziSpaceBridge } from './bazi-space-bridge';
+import { ensureFloorZones } from './cad-ops';
+import { pickLayerGrid } from './field-sim';
+import type { SpaceLabState, SpaceSimResult } from './types';
 import type { SpaceSeoScenario } from './seo-catalog';
 import { measureSpaceKeywordCoverage } from './seo-keyword-map';
 import { listSpaceSeoScenarios } from './seo-catalog';
@@ -42,23 +46,41 @@ function pickPreset(s: SpaceSeoScenario) {
   );
 }
 
-export function workbenchHref(s: SpaceSeoScenario): string {
-  const q = new URLSearchParams();
-  q.set('source', `seo_space_${s.cluster}`);
-  if (s.facing) q.set('facing', s.facing);
-  const preset = pickPreset(s);
-  if (preset?.id) q.set('preset', preset.id);
-  if (s.areaSqm) q.set('area', String(s.areaSqm));
-  return `/tools/fengshui-space?${q.toString()}`;
-}
+export type SpaceSeoLab = {
+  state: SpaceLabState;
+  result: SpaceSimResult;
+  enhanceFacings: string[];
+  reduceFacings: string[];
+};
 
-export function buildSpaceSeoReport(s: SpaceSeoScenario): SpaceSeoPublicReport {
+export type SpaceSeoSceneSnapshot = {
+  slug: string;
+  domain: string;
+  widthM: number;
+  depthM: number;
+  facing: string;
+  layout: string;
+  yongLabel: string;
+  zones: Array<{ id: string; kind: string; label: string; x: number; y: number; w: number; h: number }>;
+  vents: Array<{ id: string; kind: string; x: number; y: number }>;
+  enhanceFacings: string[];
+  reduceFacings: string[];
+  heat: number[];
+  heatW: number;
+};
+
+function applyScenarioToState(s: SpaceSeoScenario): SpaceLabState {
   const preset = pickPreset(s);
   let state = createDefaultLabState();
   if (preset) {
     state = applyPresetToState(state, preset, { areaSqm: s.areaSqm });
   }
   state.room.entranceFacing = s.facing;
+  state.planOverlayMode = 'bagua8';
+  state.showCompass = true;
+  state.cadEditMode = false;
+  state.activeLayer = 'energy';
+  state.floorZones = ensureFloorZones(state);
   if (s.cityName) {
     state.geo = {
       address: `${s.cityName}（城市级观察，无门牌）`,
@@ -73,15 +95,102 @@ export function buildSpaceSeoReport(s: SpaceSeoScenario): SpaceSeoPublicReport {
       fortuneId: `demo-${s.slug}`,
       birthSignature: 'seo-demo',
       displayName: `示例 · 用神${s.yongShen.join('、')}`,
-      dayMaster: s.yongShen[0] === '木' ? '甲' : s.yongShen[0] === '火' ? '丙' : s.yongShen[0] === '土' ? '戊' : s.yongShen[0] === '金' ? '庚' : '壬',
+      dayMaster:
+        s.yongShen[0] === '木'
+          ? '甲'
+          : s.yongShen[0] === '火'
+            ? '丙'
+            : s.yongShen[0] === '土'
+              ? '戊'
+              : s.yongShen[0] === '金'
+                ? '庚'
+                : '壬',
       yongShen: s.yongShen,
       xiShen: [],
       jiShen: s.jiShen || [],
       linkedAt: '2026-01-01T00:00:00.000Z',
     };
   }
+  return state;
+}
 
-  const sim = simulateSpaceField(state);
+export function buildSpaceSeoLab(s: SpaceSeoScenario): SpaceSeoLab {
+  const state = applyScenarioToState(s);
+  const result = simulateSpaceField(state);
+  const bridge = buildBaziSpaceBridge(state);
+  return {
+    state,
+    result,
+    enhanceFacings: bridge.enhanceFacings,
+    reduceFacings: bridge.reduceFacings,
+  };
+}
+
+export function snapshotSpaceSeoScene(s: SpaceSeoScenario, lab?: SpaceSeoLab): SpaceSeoSceneSnapshot {
+  const pack = lab || buildSpaceSeoLab(s);
+  const zones = ensureFloorZones(pack.state);
+  const heatW = 12;
+  const grid = pickLayerGrid(pack.result.grids, 'energy');
+  const gw = pack.result.grids.width;
+  const gh = pack.result.grids.height;
+  const heat: number[] = [];
+  for (let y = 0; y < heatW; y++) {
+    for (let x = 0; x < heatW; x++) {
+      const gx = Math.min(gw - 1, Math.floor(((x + 0.5) / heatW) * gw));
+      const gy = Math.min(gh - 1, Math.floor(((y + 0.5) / heatW) * gh));
+      heat.push(grid[gy * gw + gx] || 0);
+    }
+  }
+  const KIND_CN: Record<string, string> = {
+    living: '客厅',
+    bedroom: '卧室',
+    bath: '卫',
+    kitchen: '厨',
+    balcony: '阳台',
+    corridor: '过道',
+    storage: '储',
+    shop: '铺',
+    office: '办公',
+    yard: '院',
+  };
+  return {
+    slug: s.slug,
+    domain: pack.state.activeDomain,
+    widthM: pack.state.room.widthM,
+    depthM: pack.state.room.depthM,
+    facing: pack.state.room.entranceFacing,
+    layout: s.layout,
+    yongLabel: (s.yongShen || []).join('、'),
+    zones: zones.map((z) => ({
+      id: z.id,
+      kind: z.kind,
+      label: z.label || KIND_CN[z.kind] || z.kind,
+      x: z.x,
+      y: z.y,
+      w: z.w,
+      h: z.h,
+    })),
+    vents: pack.state.vents.filter((v) => v.enabled).map((v) => ({ id: v.id, kind: v.kind, x: v.x, y: v.y })),
+    enhanceFacings: pack.enhanceFacings,
+    reduceFacings: pack.reduceFacings,
+    heat,
+    heatW,
+  };
+}
+
+export function workbenchHref(s: SpaceSeoScenario): string {
+  const q = new URLSearchParams();
+  q.set('source', `seo_space_${s.cluster}`);
+  if (s.facing) q.set('facing', s.facing);
+  const preset = pickPreset(s);
+  if (preset?.id) q.set('preset', preset.id);
+  if (s.areaSqm) q.set('area', String(s.areaSqm));
+  return `/tools/fengshui-space?${q.toString()}`;
+}
+
+export function buildSpaceSeoReport(s: SpaceSeoScenario): SpaceSeoPublicReport {
+  const lab = buildSpaceSeoLab(s);
+  const { state, result: sim } = lab;
   const built = buildFengshuiSpaceReport(state, sim);
 
   if (s.cityName && (s.job === '选铺' || s.domain === 'shop')) {

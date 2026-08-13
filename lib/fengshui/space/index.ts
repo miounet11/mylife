@@ -105,9 +105,13 @@ export {
 } from './seo-catalog';
 export {
   buildSpaceSeoReport,
+  buildSpaceSeoLab,
+  snapshotSpaceSeoScene,
   spaceSeoCoverage,
   workbenchHref,
   type SpaceSeoPublicReport,
+  type SpaceSeoLab,
+  type SpaceSeoSceneSnapshot,
 } from './seo-report';
 export { SPACE_SEO_SEED_KEYWORDS, measureSpaceKeywordCoverage } from './seo-keyword-map';
 export {
