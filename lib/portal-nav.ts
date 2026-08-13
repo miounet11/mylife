@@ -149,7 +149,7 @@ export const COMMUNITY_CATEGORIES: PortalEntry[] = [
 ];
 
 export const WORLD_YI_DOMAINS: PortalEntry[] = [
-  { href: '/world-yi/logic', title: '定义与处境', description: '六层定义：种子、仓库、土壤、田活。用同一套逻辑解释换工作、存钱、关系、迁城。', cta: '打开定义' },
+  { href: '/world-yi/logic', title: '定义与处境', description: '六层组织法：结构、时位、环境、动作、风险、复盘。用当代变化重读易、玄、神、心、星、哲。', cta: '打开定义' },
   { href: '/almanac', title: '万年历', description: '通书宜忌 + 十二时辰；绑定生辰看个人日运与吉时。', cta: '打开万年历' },
   { href: '/learn/intro', title: '入门轨', description: '30 分钟建立判断底座：真太阳时、报告读法与世界易总论。', cta: '开始学习' },
   { href: '/learn/career', title: '事业轨', description: '角色匹配与阶段重排，用案例验证职业推进节奏。', cta: '进入事业轨' },
@@ -157,6 +157,6 @@ export const WORLD_YI_DOMAINS: PortalEntry[] = [
   { href: '/learn/relationship', title: '关系轨', description: '节奏、边界与修复，先看排序再看合不合。', cta: '进入关系轨' },
   { href: '/world-yi/cities', title: '城市主题', description: '迁城择地：把城市当环境层压力测试，不是吉凶名单。', cta: '打开城市卡' },
   { href: '/world-yi/era-timing', title: '时代天时', description: '星象周期作宏观天气：拐点、社会压力与摩擦窗口。', cta: '打开时代天时' },
-  { href: '/knowledge/world-yi-methodology', title: '六步判断法', description: '结构、时位、环境、动作、风险五维框架的系统说明。', cta: '阅读方法论' },
+  { href: '/knowledge/world-yi-methodology', title: '六步判断法', description: '结构、时位、环境、动作、风险、复盘：从吉凶标签到判断底座。', cta: '阅读方法论' },
   { href: '/cases', title: '案例库', description: '用真实处境理解世界易如何把判断落成动作。', cta: '浏览案例' },
 ];

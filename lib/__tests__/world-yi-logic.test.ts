@@ -25,12 +25,12 @@ describe('世界易定义与处境解释', () => {
     }
   });
 
-  it('warehouse term is inventory, not a grave', () => {
+  it('warehouse term is leftover stage, not a grave', () => {
     const warehouse = WORLD_YI_TERMS.find((t) => t.id === 'warehouse');
     assert.ok(warehouse);
-    assert.match(warehouse!.definition, /库存|入库|余气/);
+    assert.match(warehouse!.definition, /余气|未兑现/);
     assert.match(warehouse!.refuse, /坟/);
-    assert.ok(!/埋骨头|龙的传人/.test(warehouse!.definition));
+    assert.ok(!/埋骨头|龙的传人|草木灰/.test(warehouse!.definition));
   });
 
   it('every situation can be explained through the five judgment lines', () => {
@@ -61,7 +61,7 @@ describe('世界易定义与处境解释', () => {
 
     const unpublished = explainWorldYiQuery('作品做完了不敢发');
     assert.equal(unpublished.situation?.id, 'unpublished');
-    assert.match(unpublished.headline, /仓库|时位|吉凶/);
+    assert.match(unpublished.headline, /时位|吉凶|阶段/);
   });
 
   it('unknown query still returns a six-layer template, not a fortune', () => {
@@ -69,7 +69,8 @@ describe('世界易定义与处境解释', () => {
     assert.equal(exp.situation, null);
     assert.match(exp.refuse, /吉凶|命该如此/);
     assert.ok(WORLD_YI_LOGIC_AXIOMS.length >= 5);
-    assert.match(WORLD_YI_LOGIC_BRIEF, /仓库/);
+    assert.match(WORLD_YI_LOGIC_BRIEF, /结构/);
+    assert.match(WORLD_YI_LOGIC_BRIEF, /像不像|判断底座/);
     assert.ok(!/龙的传人|草木灰/.test(WORLD_YI_LOGIC_BRIEF));
   });
 });

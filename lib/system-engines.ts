@@ -88,6 +88,13 @@ export const SYSTEM_SUPPORT_MODULES: SystemSupportModule[] = [
     entry: 'buildChartCalculationIdentity',
   },
   {
+    id: 'world-yi-engine',
+    name: '世界易引擎',
+    path: 'lib/world-yi-engine.ts',
+    role: '不改写日主用神。把易学事实译成发挥类型、抬升/收敛、硬约束与 30 天动作，与易学并行展示。',
+    entry: 'runWorldYiEngine',
+  },
+  {
     id: 'yongshen-live',
     name: '用神热读',
     path: 'lib/yongshen-live.ts',

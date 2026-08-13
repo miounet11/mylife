@@ -80,6 +80,8 @@ import { buildExperienceQualityReceipt } from '@/lib/experience-kernel';
 import { REPORT_USABLE_DEEP_SCORE } from '@/lib/report-quality';
 import ReportTimingTabs from '@/components/report/report-timing-tabs';
 import ReportEraEnvironmentBlock from '@/components/report/report-era-environment-block';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
+import { runWorldYiEngine } from '@/lib/world-yi-engine';
 import ReportContinueExplorationNav from '@/components/report/report-continue-exploration-nav';
 import ReportChapterDock, {
   type ReportChapterDockItem,
@@ -733,6 +735,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
     ...(result.confidence?.sensitivePoints || []),
   ].filter(Boolean).join(' ');
   const worldYiGuidedPaths = inferWorldYiGuidedPaths(worldYiSignalText);
+  const worldYiEngineReading = runWorldYiEngine(result);
   const reportFollowupQuestion = buildReportFollowupQuestion({
     actionSuggestions: result.actionSuggestions,
     defaultQuestion: result.analysis?.summary || result.analysis?.opening || decisionNowAction,
@@ -842,6 +845,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
   const chapterDockItems: ReportChapterDockItem[] = isClassicOnly
     ? [
         { id: 'report-consultants', label: pageCopy.dockAskConsultant, iconKey: 'footprints' },
+        { id: 'world-yi-engine', label: '世界易', iconKey: 'compass' },
         { id: 'expert-desk', label: pageCopy.dockPaipan, iconKey: 'layers' },
         { id: 'ex-dayun', label: pageCopy.dockDayun, iconKey: 'calendar' },
         { id: 'ex-cosmos', label: pageCopy.dockCosmos, iconKey: 'compass' },
@@ -851,6 +855,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
       ]
     : [
         { id: 'report-consultants', label: pageCopy.dockAskConsultant, iconKey: 'footprints' },
+        { id: 'world-yi-engine', label: '世界易', iconKey: 'compass' },
         { id: 'pro-action', label: pageCopy.dockAction, iconKey: 'target' },
         { id: 'pro-guide', label: pageCopy.dockGuide, iconKey: 'compass' },
         { id: 'pro-kline', label: pageCopy.dockKline, iconKey: 'layers' },
@@ -1010,6 +1015,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                     canManage={canManage}
                     pastEventTemplates={result.analysis?.pastEventTemplates || []}
                   />
+                  <ReportWorldYiDual reading={worldYiEngineReading} />
                   <ProExpertBanner mode="entry" expertHref={expertHref} />
                 </>
               ) : (
@@ -1114,6 +1120,10 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   </div>
                 ) : null}
 
+                <div className="mt-4">
+                  <ReportWorldYiDual reading={worldYiEngineReading} />
+                </div>
+
                 {/* 紧凑跳转，不再堆叠完整 ReadingPath / NextActions 双模块 */}
                 <div className="mt-4 grid gap-2 border-t border-[color:var(--hairline)] pt-3 sm:grid-cols-2 lg:grid-cols-4">
                   <a href="#report-consultants" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
@@ -1121,6 +1131,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   </a>
                   <a href="#timing-map" className="rounded-[3px] border border-[color:var(--hairline)] bg-[#f6f7f9] px-3 py-2 text-[12px] font-semibold text-[#0b5f55] hover:bg-[#eef3f1]">
                     {pageCopy.jumpTimingMap}
+                  </a>
+                  <a href="#world-yi-engine" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
+                    世界易读法
                   </a>
                   <a href="#deep-structure" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
                     {pageCopy.jumpStructure}

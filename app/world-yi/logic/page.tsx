@@ -14,11 +14,12 @@ import {
   WORLD_YI_TERMS,
   listWorldYiLayers,
 } from '@/lib/world-yi-logic';
+import { WORLD_YI_ARCHITECTURE, WORLD_YI_MOTHER_TONGUE } from '@/lib/world-yi-architecture';
 
 export const metadata: Metadata = metadataFromPagePack('/world-yi/logic', {
   title: '世界易定义与处境｜结构时位环境如何解释现实｜人生K线',
   description:
-    '世界易把结构、时位、环境、动作、风险写成可对照的定义：种子、田面、仓库、土壤、田活。用同一套逻辑说明换工作、存钱、关系、迁城等现实处境。',
+    '世界易用当代变化重读易学、玄学、神学、心理学、星座与哲学。组织法：结构、时位、环境、动作、风险、复盘。测算报告与易学事实并行展示。',
 });
 
 export default function WorldYiLogicPage() {
@@ -45,7 +46,7 @@ export default function WorldYiLogicPage() {
         <FocusHero
           eyebrow="世界易 · 定义"
           title="先有定义，才能解释眼前这件事"
-          description="结构是种子，时位是田面或仓库，环境是土壤，动作是田活。墓库是库存不是坟。用同一套逻辑说明现实处境，而不是另起一套吉凶话术。"
+          description="先问像不像，再问好不好。结构是出厂设置，时位是抬升或收敛，环境是硬约束，动作必须 30 天可回访。用这一套组织法重读历史里的易、玄、神、心、星、哲。"
           actions={
             <>
               <Link href="/world-yi" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
@@ -70,9 +71,34 @@ export default function WorldYiLogicPage() {
         <LightBirthBridge
           source="world_yi_logic"
           page="/world-yi/logic"
-          title="定义是公共的，种子是你的"
-          description="下面的层和用语对所有人一样；接到报告后，才落到你的日主、用神与大运。"
+          title="定义是公共的，结构是你的"
+          description="下面的层对所有人一样；接到报告后，易学给出日主用神，世界易引擎给出判断语言。"
         />
+
+        <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 shadow-card md:p-5">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--brand)]">
+            知识架构
+          </p>
+          <h2 className="mt-1 text-[16px] font-semibold text-[color:var(--ink-1)]">新版本怎么分层</h2>
+          <p className="mt-1 text-[13px] leading-relaxed text-[color:var(--ink-4)]">
+            {WORLD_YI_MOTHER_TONGUE.join(' ')}
+          </p>
+          <ol className="mt-4 divide-y divide-[color:var(--hairline)]">
+            {WORLD_YI_ARCHITECTURE.map((node, i) => (
+              <li key={node.id} className="grid gap-1 py-3 md:grid-cols-[88px_minmax(0,1fr)]">
+                <p className="text-[13px] font-semibold text-[color:var(--ink-1)]">
+                  {i + 1}. {node.name}
+                </p>
+                <div>
+                  <p className="text-[13px] leading-[1.65] text-[color:var(--ink-2)]">{node.role}</p>
+                  <p className="mt-1 text-[12px] text-[color:var(--ink-5)]">
+                    {node.children.map((c) => c.label).join(' · ')}
+                  </p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 shadow-card md:p-5">
           <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--brand)]">

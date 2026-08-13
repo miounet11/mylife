@@ -9,14 +9,10 @@
  * 待全部迁移完成后再删除旧导出。
  */
 
-/** 4 步判断方法，给模型一个"怎么想"的脚手架。 */
-export const JUDGMENT_METHOD = [
-  '判断方法（按顺序）：',
-  '1) 结构：先定命局结构、用忌神、五行格局，不参与改写。',
-  '2) 阶段：再定大运、流年、节气，把人放到当前时间窗口里。',
-  '3) 环境：再叠世界状态、行业周期、地理气候、家庭与关系背景。',
-  '4) 动作：最后落到"现在该做/缓做/避做什么"，必须可执行、有边界。',
-].join('\n');
+import { WORLD_YI_JUDGMENT_METHOD } from '@/lib/world-yi-logic';
+
+/** 世界易六层判断法（与总论/方法论同一套，供 analyze / agentic / chat）。 */
+export const JUDGMENT_METHOD = WORLD_YI_JUDGMENT_METHOD;
 
 /** 反模式：每一条都是真实在线上出现过的低质输出。 */
 export const ANTI_PATTERNS = [
@@ -26,6 +22,8 @@ export const ANTI_PATTERNS = [
   '- "宿命已定/无法改变" 类宿命论结论',
   '- 任何工程占位词：macro_cycle、solar_terms、geography、ENGINE_*、CONTEXT_*',
   '- 神秘表演口吻：把综合判断写成"我感应到/天机显示"',
+  '- 把墓库说成坟/灾，或把调候并进主用神',
+  '- 把梦境、种植口诀写成世界易教义',
 ].join('\n');
 
 /** 风格校准：给 3 个正例，模型对齐口吻比读形容词管用。 */

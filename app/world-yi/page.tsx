@@ -43,7 +43,7 @@ export default async function WorldYiPage({
         <FocusHero
           eyebrow="世界易"
           title="结构、时位与动作"
-          description="先有定义，再解释处境：结构是种子，时位是田面或仓库，环境是土壤。先看张力与阶段，最后落到可验证动作。"
+          description="当代解释学：用此刻的社会、认知、环境变化，重读易学、玄学、神学、心理学、星座与哲学。组织法是结构 → 时位 → 环境 → 动作 → 风险 → 复盘。"
           actions={
             <>
               <Link href="/world-yi/logic" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
@@ -112,10 +112,10 @@ export default async function WorldYiPage({
                 定义
               </p>
               <h2 className="mt-1 text-[15px] font-semibold text-[color:var(--ink-1)]">
-                六层逻辑，用来解释眼前的事
+                六层组织法，用来解释眼前的事
               </h2>
               <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-                结构是种子，时位是田面或仓库，环境是土壤。墓库是库存不是坟。先有定义，再谈换工作、存钱、关系和迁城。
+                先问像不像，再问好不好。结构是出厂设置，时位是抬升或收敛，环境是硬约束，动作必须 30 天可回访。
               </p>
             </div>
             <Link
