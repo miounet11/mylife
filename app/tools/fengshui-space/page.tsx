@@ -17,7 +17,7 @@ export const metadata: Metadata = buildToolPageMetadata('fengshui-space');
 export default async function FengshuiSpacePage({
   searchParams,
 }: {
-  searchParams?: Promise<{ lang?: string }>;
+  searchParams?: Promise<{ lang?: string; preset?: string; facing?: string; source?: string }>;
 }) {
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
@@ -41,7 +41,11 @@ export default async function FengshuiSpacePage({
       />
       <div className="mx-auto max-w-[1680px] px-2 md:px-3">
         <ImmersionMediaBand surfaceKey="fengshui" compact className="mb-2" />
-        <SpaceLabApp locale={locale} />
+        <SpaceLabApp
+          locale={locale}
+          initialPresetId={typeof sp.preset === 'string' ? sp.preset : undefined}
+          initialFacing={typeof sp.facing === 'string' ? sp.facing : undefined}
+        />
       </div>
       <div className="page-content mt-8 pb-12">
         <ToolSeoGeoSection pack={pack} compact />

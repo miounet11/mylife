@@ -142,10 +142,10 @@ const PACKS: Record<string, ToolSeoGeoPack> = {
       },
     ],
     related: [
+      { href: '/insights/space', label: '空间场结构报告', description: '户型·朝向·选铺对照' },
       { href: '/tools/fengshui-simulator', label: '商铺五行快测', description: '行业·方位·店名·色彩·择时' },
       { href: '/dimensions/living-environment', label: '居家环境研判', description: '方位摆设与搬迁窗口' },
       { href: '/tools', label: '全部工具', description: '工具中心' },
-      { href: '/knowledge', label: '知识库', description: '结构与边界说明' },
     ],
     shareText:
       '我在用人生K线「空间场」：选阳宅/铺面/阴宅，还能估人流、看热力3D。结构化选址，不贩卖恐惧。',

@@ -885,6 +885,47 @@ const HEHUN: PageSeoGeoPack = {
   ],
 };
 
+const SPACE_REPORTS: PageSeoGeoPack = {
+  path: '/insights/space',
+  slug: 'space-seo-hub',
+  name: '空间场结构报告',
+  title: '空间场报告｜户型朝向选铺人宅合参｜人生K线',
+  description:
+    '公开结构报告：三室两厅、南向、餐饮铺、城市选址与人宅合参。同一套空间场引擎，对照后再进工作台改成你的方案。',
+  keywords: ['空间场', '户型风水', '选铺面', '阳宅风水', '人宅合参', '风水热力图'],
+  answerSummary:
+    '空间场公开报告用同一套结构引擎对照户型、朝向、铺面与城市选址，并可叠日主用神做人宅合参。读数用于多案对比，不贴吉凶，不构成置业或殡葬法定意见。',
+  searchIntents: [
+    '户型风水怎么看',
+    '选铺面人流和风水',
+    '三室两厅南向怎么样',
+    '人宅合参用神方位',
+    '风水热力图免费',
+  ],
+  entityKeywords: ['空间场', '阳宅', '铺面', '朝向', '人流', '用神', '八方位', '人生K线'],
+  howTo: [
+    { step: '对照公开方案', body: '按户型、朝向或城市打开一篇结构报告。' },
+    { step: '看读数与动作', body: '峰值、滞留、通道与优先动作来自同一套引擎。' },
+    { step: '进工作台改成你的', body: '一键加载对应预设与朝向，再叠自己的命盘。' },
+  ],
+  faqs: [
+    { question: '这些报告是真户型吗？', answer: '是引擎对常见户型与朝向的结构示意，用来对照，不是某套商品房鉴定。' },
+    { question: '会不会泄露门牌？', answer: '城市篇只用城市级观察，不含精确地址。' },
+    { question: '和算命吉凶有什么差别？', answer: '只输出光、风、滞留、人流等结构读数，不贴吉凶标签。' },
+  ],
+  related: [
+    { href: '/tools/fengshui-space', label: '空间场工作台' },
+    { href: '/tools/fengshui-simulator', label: '商铺五行快测' },
+    { href: '/dimensions/living-environment', label: '居家环境研判' },
+    { href: '/insights', label: '城市洞察' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '空间场报告', path: '/insights/space' },
+  ],
+  disclaimer: '结构启发式评估，供对照与教学，不构成置业、装修或殡葬法定意见。',
+};
+
 const PACKS: Record<string, PageSeoGeoPack> = {
   home: HOME,
   '/': HOME,
@@ -924,6 +965,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/learn': LEARN,
   insights: INSIGHTS,
   '/insights': INSIGHTS,
+  'space-seo-hub': SPACE_REPORTS,
+  '/insights/space': SPACE_REPORTS,
 };
 
 export function getPageSeoGeoPack(pathOrSlug: string): PageSeoGeoPack | null {

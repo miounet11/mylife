@@ -97,6 +97,20 @@ export {
   type FengshuiReportSection,
 } from './full-report';
 export {
+  listSpaceSeoScenarios,
+  getSpaceSeoScenario,
+  listSpaceSeoClusters,
+  type SpaceSeoScenario,
+  type SpaceSeoCluster,
+} from './seo-catalog';
+export {
+  buildSpaceSeoReport,
+  spaceSeoCoverage,
+  workbenchHref,
+  type SpaceSeoPublicReport,
+} from './seo-report';
+export { SPACE_SEO_SEED_KEYWORDS, measureSpaceKeywordCoverage } from './seo-keyword-map';
+export {
   heuristicBeautify,
   validateLlmZones,
   buildBeautifyImagePrompt,

@@ -22,6 +22,7 @@ import {
 } from '@/lib/fengshui/space/opening-suggest';
 import {
   applyPresetToState,
+  getPresetById,
   type LayoutDomain,
   type LayoutPreset,
 } from '@/lib/fengshui/space/layout-presets';
@@ -53,7 +54,15 @@ const SpaceViewport3D = dynamic(
 type ViewMode = 'plan' | 'iso' | 'three';
 type WorkbenchTab = 'preset' | 'site' | 'controls';
 
-export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string }) {
+export function SpaceLabApp({
+  locale = 'zh-CN',
+  initialPresetId,
+  initialFacing,
+}: {
+  locale?: SiteLocale | string;
+  initialPresetId?: string;
+  initialFacing?: string;
+}) {
   const copy = useMemo(() => spaceLabCopy(locale), [locale]);
   const [state, setState] = useState<SpaceLabState>(() => createDefaultLabState());
   const [selectedVentId, setSelectedVentId] = useState<string | null>('vent-in-1');
@@ -298,6 +307,18 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
 
   useEffect(() => {
     void linkPrimaryBazi({ silent: true });
+    const preset = initialPresetId ? getPresetById(initialPresetId) : null;
+    if (preset) {
+      const area = preset.areaSqm || preset.room.widthM * preset.room.depthM;
+      const next = applyPresetToState(createDefaultLabState(), preset, { areaSqm: area });
+      if (initialFacing) next.room.entranceFacing = initialFacing;
+      setState(next);
+      setSelectedVentId(next.vents[0]?.id || null);
+      setTick((t) => t + 1);
+      setBanner(`已加载公开方案「${preset.title}」${initialFacing ? ` · ${initialFacing}向` : ''}`);
+    } else if (initialFacing) {
+      patch((s) => ({ ...s, room: { ...s.room, entranceFacing: initialFacing } }));
+    }
     // one-shot bind on enter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

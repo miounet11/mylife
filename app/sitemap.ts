@@ -23,6 +23,7 @@ import { imagesForSeoPath } from '@/lib/page-illustrations/seo';
 import { listIndexablePublicReportIds } from '@/lib/public-growth-feed';
 import { listPublicToolCaseIdsForSitemap } from '@/lib/public-tool-cases';
 import { listDestinyEntityHubs } from '@/lib/content-os';
+import { listSpaceSeoScenarios } from '@/lib/fengshui/space/seo-catalog';
 
 /** Always rebuild so continuous public report/tool cases enter the sitemap. */
 export const dynamic = 'force-dynamic';
@@ -189,6 +190,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/world-yi/en/tracks', priority: 0.8, changeFrequency: 'weekly', enGateway: true },
     { path: '/world-yi/global', priority: 0.78, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/insights', priority: 0.75, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/insights/space', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
+    ...listSpaceSeoScenarios().map((s) => ({
+      path: `/insights/space/${s.slug}`,
+      priority: s.cluster === 'method' || s.cluster === 'city' ? 0.8 : 0.72,
+      changeFrequency: 'monthly' as const,
+    })),
     { path: '/engines', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/docs', priority: 0.75, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/docs/birth-info', priority: 0.7, changeFrequency: 'monthly', multiLanguage: true },
