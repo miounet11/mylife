@@ -1,7 +1,7 @@
 import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { pickAvoidDays, pickBestDays, scoreUpcomingDays } from './data/daily-fortune';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildTimingSelectionReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -88,9 +88,7 @@ export function buildTimingSelectionReport(input: DimensionAdvisorInput): Dimens
     meta: {
       bestDay: top?.date || '',
       windowDays: 90,
-      yongShen: favorable,
-      jiShen: unfavorable,
-      xiShen: yongShen?.xiShen || [],
+      ...engineMetaFromYongShen(yongShen, truthInput.pillars),
     },
   };
 }

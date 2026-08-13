@@ -1,7 +1,7 @@
 import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { resolveBodySystems } from './data/body-systems';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildHealthReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -86,6 +86,6 @@ export function buildHealthReport(input: DimensionAdvisorInput): DimensionReport
     sections,
     predictions,
     disclaimers: ['生活方式参考，不能替代医疗诊断、治疗或急救判断。'],
-    meta: { healthScore: Math.round(healthScore) },
+    meta: { healthScore: Math.round(healthScore), ...engineMetaFromYongShen(yongShen, truthInput.pillars) },
   };
 }

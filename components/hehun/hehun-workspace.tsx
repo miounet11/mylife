@@ -10,6 +10,7 @@ import {
   type HehunResult,
 } from '@/lib/hehun-engine';
 import { presentHehunResult } from '@/lib/hehun/present-result';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
 import {
   buildHehunHref,
   hehunBirthPairFromQuery,
@@ -743,6 +744,23 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
 
       {displayResult ? (
         <div className="space-y-4 border-y border-[color:var(--hairline)] py-4">
+          <EngineLockStrip
+            note="合婚对照同一套四柱 / 用神 / 大运，不另起纳音体系"
+            extraHref="/analyze"
+            extraLabel="个人报告"
+            facts={[
+              {
+                label: displayResult.personA.name || copy.sideA,
+                value: [displayResult.personA.dayPillar, (a.yongShen || []).join('、')].filter(Boolean).join(' · '),
+                mono: true,
+              },
+              {
+                label: displayResult.personB.name || copy.sideB,
+                value: [displayResult.personB.dayPillar, (b.yongShen || []).join('、')].filter(Boolean).join(' · '),
+                mono: true,
+              },
+            ]}
+          />
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <div className="text-[11px] font-medium text-[color:var(--ink-5)]">

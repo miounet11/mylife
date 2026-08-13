@@ -1,7 +1,7 @@
 import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { generateBaziShiShenAnalysis } from '@/lib/bazi-analyzer';
 import { buildDimensionEnginePack } from './engine-pack';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildMarriageReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -88,6 +88,10 @@ export function buildMarriageReport(input: DimensionAdvisorInput): DimensionRepo
     sections,
     predictions,
     disclaimers: ['关系建议用于沟通与节奏参考，不替代双方现实选择与法律咨询。'],
-    meta: { marriageScore: Math.round(marriageScore), dayBranch },
+    meta: {
+      marriageScore: Math.round(marriageScore),
+      dayBranch,
+      ...engineMetaFromYongShen(truthInput.yongShen, pillars),
+    },
   };
 }

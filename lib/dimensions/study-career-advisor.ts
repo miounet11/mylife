@@ -2,7 +2,7 @@ import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { generateBaziShiShenAnalysis } from '@/lib/bazi-analyzer';
 import { buildDimensionEnginePack } from './engine-pack';
 import { rankSubjects } from './data/subjects';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildStudyCareerReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -85,6 +85,9 @@ export function buildStudyCareerReport(input: DimensionAdvisorInput): DimensionR
     sections,
     predictions,
     disclaimers: ['方向建议用于规划参考，不承诺录取、升职或考试结果。'],
-    meta: { dominantGod: Object.entries(analysis.shiShenCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '' },
+    meta: {
+      dominantGod: Object.entries(analysis.shiShenCount).sort((a, b) => b[1] - a[1])[0]?.[0] || '',
+      ...engineMetaFromYongShen(yongShen, pillars),
+    },
   };
 }

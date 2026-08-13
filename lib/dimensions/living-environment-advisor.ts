@@ -1,7 +1,7 @@
 import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { resolveDirections } from './data/directions-wuxing';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildLivingEnvironmentReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -86,6 +86,9 @@ export function buildLivingEnvironmentReport(input: DimensionAdvisorInput): Dime
     sections,
     predictions,
     disclaimers: ['环境建议不构成建筑或风水法律承诺。'],
-    meta: { primaryDirection: enhance[0]?.direction || '' },
+    meta: {
+      primaryDirection: enhance[0]?.direction || '',
+      ...engineMetaFromYongShen(yongShen, truthInput.pillars),
+    },
   };
 }

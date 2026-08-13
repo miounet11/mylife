@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import type { NamingSessionResult } from '@/lib/naming';
 import { encodeNameKey } from '@/lib/naming';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
 
 type Props = {
   sessionId: string;
@@ -92,6 +93,16 @@ export function NamingResultView({ sessionId, result }: Props) {
           打开公开页 →
         </a>
       ) : null}
+
+      <EngineLockStrip
+        note="起名对照生辰用神与康熙笔画，不另起命盘"
+        extraHref="/tools/naming"
+        extraLabel="再起一批"
+        facts={[
+          { label: '用神', value: (result.input.yongShen || []).join('、') },
+          { label: '忌神', value: (result.input.jiShen || []).join('、') },
+        ]}
+      />
 
       {/* input strip */}
       <div className="flex flex-wrap gap-2 text-[11px]">

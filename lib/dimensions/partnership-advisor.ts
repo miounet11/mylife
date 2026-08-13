@@ -2,7 +2,7 @@ import { generateBaziShiShenAnalysis } from '@/lib/bazi-analyzer';
 import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { rankPartnerArchetypes } from './data/partner-archetypes';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildPartnershipReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -85,6 +85,6 @@ export function buildPartnershipReport(input: DimensionAdvisorInput): DimensionR
     sections,
     predictions,
     disclaimers: ['合作建议不构成法律意见或商业担保。'],
-    meta: { dayMaster },
+    meta: { dayMaster, ...engineMetaFromYongShen(truthInput.yongShen, pillars) },
   };
 }

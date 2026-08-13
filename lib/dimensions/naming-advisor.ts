@@ -2,7 +2,7 @@ import type { DimensionAdvisorInput, DimensionReport } from './types';
 import { buildDimensionEnginePack } from './engine-pack';
 import { scoreNameAgainstYongShen } from './data/name-characters';
 import { scoreName } from '@/lib/naming';
-import { buildPrediction, formatDateOffset, section } from './shared';
+import { buildPrediction, engineMetaFromYongShen, formatDateOffset, section } from './shared';
 
 export function buildNamingReport(input: DimensionAdvisorInput): DimensionReport {
   const pack = buildDimensionEnginePack(input);
@@ -98,6 +98,6 @@ export function buildNamingReport(input: DimensionAdvisorInput): DimensionReport
       '姓名五行评估仅供参考，不承诺命运改变或任何具体结果。',
       '涉及证件/legal 改名请咨询相关部门与专业人士。',
     ],
-    meta: { nameScore: scored.score, displayName },
+    meta: { nameScore: scored.score, displayName, ...engineMetaFromYongShen(yongShen, truthInput.pillars) },
   };
 }

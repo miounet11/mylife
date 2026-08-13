@@ -4,3 +4,4 @@
 
 export { default as EngineSurfaceMount } from '@/components/engine-surface/engine-surface-mount';
 export { default as EngineSurfaceCite } from '@/components/engine-surface/engine-surface-cite';
+export { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';

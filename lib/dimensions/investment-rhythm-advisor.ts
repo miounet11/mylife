@@ -6,6 +6,7 @@ import {
   clampConfidence,
   findKlinePoint,
   formatDateOffset,
+  engineMetaFromYongShen,
   formatWuxingList,
   normalizeWuxingList,
   section,
@@ -161,6 +162,7 @@ export function buildInvestmentRhythmReport(input: DimensionAdvisorInput): Dimen
       volatility: Number(volatility.toFixed(2)),
       topAsset: fit[0]?.name || '',
       priority: 'p0',
+      ...engineMetaFromYongShen(yongShen, truthInput.pillars),
     },
   };
 }

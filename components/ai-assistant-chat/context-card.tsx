@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
 import type { ChatExperienceContext } from '@/lib/chat-context';
 import type { ChatIntentPreset } from '@/lib/chat-intent';
 import type { ReportActionSuggestion } from '@/lib/report-v2';
@@ -31,47 +31,29 @@ export function ContextCard({
   if (!report && !prompts.length && !context.summary) return null;
 
   return (
-    <section className="rounded-[8px] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5">
-      <div className="flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--brand-strong)]">
-            引擎锁定
-          </p>
-          <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
-            {intentPreset ? `${intentPreset.entryLabel} · ` : ''}
-            对话只解释这些结构，不另起一套算法
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2 text-[12px]">
-          {report?.id ? (
-            <Link
-              href={`/result/${encodeURIComponent(report.id)}#engine-surface`}
-              className="font-medium text-[color:var(--ink-2)] underline-offset-2 hover:underline"
-            >
-              报告结构台
-            </Link>
-          ) : (
-            <Link href="/analyze" className="font-medium text-[color:var(--ink-2)] underline-offset-2 hover:underline">
-              去排盘
-            </Link>
-          )}
-          <Link href="/engines" className="text-[color:var(--ink-4)] underline-offset-2 hover:underline">
-            15 套引擎
-          </Link>
-        </div>
-      </div>
-
-      {report ? (
-        <dl className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-[color:var(--ink-2)]">
-          <Fact label="日主" value={report.dayMaster} mono />
-          <Fact label="格局" value={report.pattern} />
-          <Fact label="用神" value={(report.yongShen || []).join('、') || '—'} />
-          <Fact label="大运" value={report.currentDaYun} mono />
-          <Fact label="流年" value={report.currentLiuNian} mono />
-        </dl>
-      ) : (
-        <p className="mt-2 text-[12px] text-[color:var(--ink-5)]">未绑定报告 · 不编造日主用神</p>
-      )}
+    <section className="space-y-2">
+      <EngineLockStrip
+        note={
+          intentPreset
+            ? `${intentPreset.entryLabel} · 对话只解释这些结构，不另起一套算法`
+            : report
+              ? '对话只解释这些结构，不另起一套算法'
+              : '未绑定报告 · 不编造日主用神'
+        }
+        extraHref={report?.id ? `/result/${encodeURIComponent(report.id)}#engine-surface` : '/analyze'}
+        extraLabel={report?.id ? '报告结构台' : '去排盘'}
+        facts={
+          report
+            ? [
+                { label: '日主', value: report.dayMaster, mono: true },
+                { label: '格局', value: report.pattern },
+                { label: '用神', value: (report.yongShen || []).join('、') },
+                { label: '大运', value: report.currentDaYun, mono: true },
+                { label: '流年', value: report.currentLiuNian, mono: true },
+              ]
+            : []
+        }
+      />
 
       {report?.bestWindow || report?.riskWindow ? (
         <p className="mt-1.5 text-[11px] leading-[1.45] text-[color:var(--ink-4)]">
@@ -117,15 +99,5 @@ export function ContextCard({
         </div>
       ) : null}
     </section>
-  );
-}
-
-function Fact({ label, value, mono }: { label: string; value?: string; mono?: boolean }) {
-  const text = `${value || ''}`.trim() || '—';
-  return (
-    <div className="inline-flex items-baseline gap-1">
-      <dt className="text-[color:var(--ink-5)]">{label}</dt>
-      <dd className={mono ? 'font-mono font-semibold' : 'font-semibold'}>{text}</dd>
-    </div>
   );
 }
