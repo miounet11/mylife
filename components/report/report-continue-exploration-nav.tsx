@@ -65,9 +65,9 @@ const ITEMS: Item[] = [
   },
   {
     id: 'world-yi-v2',
-    hash: '/world-yi',
-    label: 'World Yi v2 教义脊柱',
-    desc: 'Yixue/Bazi 判断框架与报告 primitives 直连（schedulePublishedAt 自动上线）',
+    hash: '/world-yi/logic',
+    label: '世界易定义',
+    desc: '用种子、仓库、土壤解释眼前这件事',
     Icon: BookOpen,
   },
   {

@@ -41,7 +41,7 @@ export const LEARNING_TRACKS: LearningTrack[] = [
     subtitle: '基础概念与读盘顺序',
     description: '日主、用神、大运流年、报告读法与世界易基础，适合第一次阅读完整报告的用户。',
     icon: 'compass',
-    targetCount: 10,
+    targetCount: 11,
     hubHref: '/world-yi',
     steps: [
       {
@@ -112,6 +112,14 @@ export const LEARNING_TRACKS: LearningTrack[] = [
         readMinutes: 10,
         required: true,
         slug: 'world-yi-methodology',
+      },
+      {
+        key: 'world-yi-logic',
+        kind: 'hub',
+        label: '世界易定义与处境',
+        href: '/world-yi/logic',
+        readMinutes: 8,
+        required: true,
       },
       {
         key: 'six-step',

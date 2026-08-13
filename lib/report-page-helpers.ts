@@ -278,6 +278,12 @@ export function inferWorldYiGuidedPaths(signalText: string) {
 
   return [
     {
+      href: '/world-yi/logic',
+      title: '用定义解释处境',
+      description:
+        '结构是种子，时位是仓库或田面，环境是土壤。先对照定义，再看这份报告为什么这样排。',
+    },
+    {
       href: '/knowledge/world-yi-methodology',
       title: '先回方法论',
       description:

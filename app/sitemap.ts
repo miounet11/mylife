@@ -162,6 +162,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/learn', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/teachers', priority: 0.88, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/world-yi', priority: 0.8, changeFrequency: 'weekly', multiLanguage: true },
+    { path: '/world-yi/logic', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/world-yi/cities', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/world-yi/era-timing', priority: 0.86, changeFrequency: 'weekly', multiLanguage: true },
     { path: '/almanac', priority: 0.92, changeFrequency: 'daily', multiLanguage: true },

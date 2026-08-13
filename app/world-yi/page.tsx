@@ -11,6 +11,7 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { illustStripTitle, toIllustLocale } from '@/lib/page-illustrations/locale';
 import { WORLD_YI_DOMAINS } from '@/lib/portal-nav';
 import { getWorldYiPublicStats } from '@/lib/world-yi-public-stats';
+import { WORLD_YI_LOGIC_AXIOMS, listWorldYiLayers } from '@/lib/world-yi-logic';
 import { LightBirthBridge } from '@/components/conversion/light-birth-bridge';
 import { PageJsonLd, PageSeoGeoSection, metadataFromPagePack } from '@/components/seo/page-seo-geo';
 import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
@@ -28,6 +29,7 @@ export default async function WorldYiPage({
   const lens = getEncyclopediaWorldYiLens({ slug: 'gua-qian', category: '64 卦百科', source: 'world-yi-hub' });
   const stats = getWorldYiPublicStats();
   const seoPack = getPageSeoGeoPack('/world-yi');
+  const layers = listWorldYiLayers();
 
   return (
     <AppPage header={{ ctaHref: '/analyze', ctaLabel: '接到我的报告', compact: true }}>
@@ -41,9 +43,12 @@ export default async function WorldYiPage({
         <FocusHero
           eyebrow="世界易"
           title="结构、时位与动作"
-          description="把传统命理翻译成现代判断语言：先看结构张力，再看阶段匹配，最后落到可验证动作。"
+          description="先有定义，再解释处境：结构是种子，时位是田面或仓库，环境是土壤。先看张力与阶段，最后落到可验证动作。"
           actions={
             <>
+              <Link href="/world-yi/logic" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+                定义与处境
+              </Link>
               <Link
                 href="/knowledge/world-yi-v1-manifesto"
                 className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
@@ -99,6 +104,43 @@ export default async function WorldYiPage({
         />
 
         {lens ? <EncyclopediaWorldYiSidebar lens={lens} /> : null}
+
+        <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 shadow-card">
+          <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--brand)]">
+                定义
+              </p>
+              <h2 className="mt-1 text-[15px] font-semibold text-[color:var(--ink-1)]">
+                六层逻辑，用来解释眼前的事
+              </h2>
+              <p className="mt-1 max-w-2xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
+                结构是种子，时位是田面或仓库，环境是土壤。墓库是库存不是坟。先有定义，再谈换工作、存钱、关系和迁城。
+              </p>
+            </div>
+            <Link
+              href="/world-yi/logic"
+              className="text-[12px] font-medium text-[color:var(--brand)] underline-offset-2 hover:underline"
+            >
+              打开定义与处境 →
+            </Link>
+          </div>
+          <ol className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {layers.map((layer) => (
+              <li key={layer.id} className="rounded-lg border border-[color:var(--hairline)] px-3 py-2.5">
+                <p className="text-[13px] font-semibold text-[color:var(--ink-1)]">
+                  {layer.order}. {layer.name}
+                </p>
+                <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-4)]">{layer.oneLiner}</p>
+              </li>
+            ))}
+          </ol>
+          <ul className="mt-3 space-y-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
+            {WORLD_YI_LOGIC_AXIOMS.slice(0, 3).map((line) => (
+              <li key={line}>{line}</li>
+            ))}
+          </ul>
+        </section>
 
         <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-4 shadow-card">
           <div className="mb-3 flex flex-wrap items-end justify-between gap-2">

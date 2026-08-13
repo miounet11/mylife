@@ -405,7 +405,7 @@ const WORLD_YI: PageSeoGeoPack = {
   name: '世界易',
   title: '世界易｜全球时位·迁移择城·结构方法｜人生K线',
   description:
-    '世界易把结构判断放到全球时位与迁移场景：城市洞察、领域应用与英文入口，服务海内外华人。',
+    '世界易先给定义再解释处境：结构是种子，时位是田面或仓库，环境是土壤；再叠加城市、迁移与跨文化场景，而不是单一地区民俗断语。',
   keywords: ['世界易', '迁移择城', '海外华人运势', '城市洞察', 'World Yi'],
   answerSummary:
     '世界易是人生K线的全球方法层：在个人结构之上叠加城市、迁移与跨文化场景，提供中英内容入口与应用轨道，而不是单一地区民俗断语。',
@@ -422,6 +422,7 @@ const WORLD_YI: PageSeoGeoPack = {
     { question: '能直接荐城吗？', answer: '提供结构观察与对照，不构成移民置业保证。' },
   ],
   related: [
+    { href: '/world-yi/logic', label: '定义与处境' },
     { href: '/world-yi/cities', label: '城市主题' },
     { href: '/world-yi/era-timing', label: '时代天时' },
     { href: '/world-yi/en', label: 'English gateway' },
@@ -434,6 +435,42 @@ const WORLD_YI: PageSeoGeoPack = {
   ],
   geoRegion: '全球',
   geoPlaceName: '海外华人社区',
+};
+
+const WORLD_YI_LOGIC: PageSeoGeoPack = {
+  path: '/world-yi/logic',
+  slug: 'world-yi-logic',
+  name: '世界易定义与处境',
+  title: '世界易定义与处境｜种子·仓库·土壤如何解释现实｜人生K线',
+  description:
+    '世界易六层定义：结构是种子，时位是田面或仓库，环境是土壤，动作是田活。用同一套逻辑说明换工作、存钱、关系、迁城，而不是吉凶话术。',
+  keywords: ['世界易定义', '时位', '墓库', '用神', '换工作', '迁城', 'World Yi'],
+  answerSummary:
+    '世界易用六层解释现实：结构是给定的种子，时位区分田面与仓库（墓库是库存不是坟），环境是土壤压力测试，动作是可回访的田活，风险是把仓库当坟或错季翻地。',
+  searchIntents: ['世界易是什么', '墓库是什么意思', '八字怎么解释换工作', '时位和运势区别'],
+  entityKeywords: ['世界易', '结构', '时位', '仓库', '土壤', '用神', '墓库', '复盘'],
+  howTo: [
+    { step: '读六层', body: '按结构→时位→环境→动作→风险→复盘的顺序看定义。' },
+    { step: '对照处境', body: '在处境台里选或输入眼前的事，看世界易怎么说。' },
+    { step: '接到自己的盘', body: '定义是公共的；日主与用神要回到结构报告。' },
+  ],
+  faqs: [
+    { question: '墓库是坏事吗？', answer: '不是。世界易把墓库读成仓库：余气入库，待转化，不是坟或灾。' },
+    { question: '和普通算命有何不同？', answer: '先给定义再解释处境，落到可验证动作，不给吉凶判决。' },
+    { question: '能替代我的八字报告吗？', answer: '不能。这里是公共逻辑；个人发挥仍看日主、用神与大运。' },
+    { question: '土是不是要补齐？', answer: '土是转换器，不是第五种必须买齐的原料。' },
+  ],
+  related: [
+    { href: '/world-yi', label: '世界易总入口' },
+    { href: '/knowledge/world-yi-methodology', label: '六步判断法' },
+    { href: '/world-yi/cities', label: '城市主题' },
+    { href: '/analyze', label: '结构报告' },
+  ],
+  breadcrumbs: [
+    { name: '首页', path: '/' },
+    { name: '世界易', path: '/world-yi' },
+    { name: '定义与处境', path: '/world-yi/logic' },
+  ],
 };
 
 const WORLD_YI_ERA_TIMING: PageSeoGeoPack = {
@@ -949,6 +986,8 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/teachers': TEACHERS,
   'world-yi': WORLD_YI,
   '/world-yi': WORLD_YI,
+  'world-yi-logic': WORLD_YI_LOGIC,
+  '/world-yi/logic': WORLD_YI_LOGIC,
   'world-yi-cities': WORLD_YI_CITIES,
   '/world-yi/cities': WORLD_YI_CITIES,
   'world-yi-era-timing': WORLD_YI_ERA_TIMING,

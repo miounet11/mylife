@@ -32,6 +32,9 @@ export default function EncyclopediaWorldYiSidebar({
         <Link href={lens.learnHref} className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
           典籍学习轨
         </Link>
+        <Link href="/world-yi/logic" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+          定义与处境
+        </Link>
         <Link
           href={lens.methodologyHref}
           className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"

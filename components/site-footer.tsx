@@ -67,6 +67,7 @@ export default function SiteFooter() {
               {[
                 { href: '/topics/q-should-i-change-job', label: '该不该换工作' },
                 { href: '/topics/q-when-to-marry', label: '谈婚论嫁' },
+                { href: '/world-yi/logic', label: '世界易定义' },
                 { href: '/topics/q-move-city', label: '迁城择居' },
                 { href: '/topics/dimension-fortune-rhythm', label: '运势节奏' },
                 { href: '/topics/dimension-career-industry', label: '工作行业' },
