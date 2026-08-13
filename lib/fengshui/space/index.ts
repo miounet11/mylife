@@ -36,6 +36,7 @@ export { analyzeQimenSpace, qimenGridFromReading } from './qimen-analysis';
 export {
   adviseSites,
   adviseSiteCandidate,
+  annotateSitesWithNatal,
   estimateFootTraffic,
   heuristicPoiFromAddress,
   SITE_PURPOSE_LABELS,

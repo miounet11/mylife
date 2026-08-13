@@ -15,7 +15,73 @@ type Props = {
   locale?: string;
   northLabel?: string;
   entranceLabel?: string;
+  highlightFacings?: string[];
+  reduceFacings?: string[];
 };
+
+const FACING_XZ: Record<string, [number, number]> = {
+  北: [0, -1],
+  东北: [0.71, -0.71],
+  东: [1, 0],
+  东南: [0.71, 0.71],
+  南: [0, 1],
+  西南: [-0.71, 0.71],
+  西: [-1, 0],
+  西北: [-0.71, -0.71],
+};
+
+function FacingPosts({
+  widthM,
+  depthM,
+  enhance,
+  reduce,
+}: {
+  widthM: number;
+  depthM: number;
+  enhance: string[];
+  reduce: string[];
+}) {
+  const seen = new Set<string>();
+  const items: Array<{ f: string; kind: 'yong' | 'ji' }> = [];
+  for (const f of enhance) {
+    if (!FACING_XZ[f] || seen.has(f)) continue;
+    seen.add(f);
+    items.push({ f, kind: 'yong' });
+  }
+  for (const f of reduce) {
+    if (!FACING_XZ[f] || seen.has(f)) continue;
+    seen.add(f);
+    items.push({ f, kind: 'ji' });
+  }
+  if (!items.length) return null;
+  return (
+    <group>
+      {items.map(({ f, kind }) => {
+        const dir = FACING_XZ[f];
+        const x = dir[0] * widthM * 0.48;
+        const z = dir[1] * depthM * 0.48;
+        const h = kind === 'yong' ? 1.35 : 0.85;
+        const color = kind === 'yong' ? '#f1f5f9' : '#64748b';
+        return (
+          <group key={`${kind}-${f}`} position={[x, h / 2 + 0.04, z]}>
+            <mesh>
+              <cylinderGeometry args={[0.055, 0.055, h, 8]} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={kind === 'yong' ? 0.28 : 0.06}
+              />
+            </mesh>
+            <mesh position={[0, h / 2 + 0.07, 0]}>
+              <sphereGeometry args={[0.08, 10, 10]} />
+              <meshStandardMaterial color={kind === 'yong' ? '#e2e8f0' : '#475569'} />
+            </mesh>
+          </group>
+        );
+      })}
+    </group>
+  );
+}
 
 function HeatFloor({
   grids,
@@ -245,7 +311,7 @@ function NorthArrow({ rotDeg }: { rotDeg: number }) {
   );
 }
 
-function Scene({ state, result }: Props) {
+function Scene({ state, result, highlightFacings, reduceFacings }: Props) {
   const domain = (state.activeDomain || 'residential') as SpaceActiveDomain;
   const meta = DOMAIN_MODEL_META[domain];
   const layer = pickLayerGrid(result.grids, state.activeLayer);
@@ -279,6 +345,12 @@ function Scene({ state, result }: Props) {
           heightM={heightM}
         />
         <Vents vents={state.vents} widthM={widthM} depthM={depthM} />
+        <FacingPosts
+          widthM={widthM}
+          depthM={depthM}
+          enhance={highlightFacings || []}
+          reduce={reduceFacings || []}
+        />
         <DriftFogParticles
           count={meta.particleCount}
           accent={meta.accentColor}
@@ -300,7 +372,14 @@ function Scene({ state, result }: Props) {
   );
 }
 
-export function SpaceViewport3D({ state, result, northLabel = 'N', entranceLabel }: Props) {
+export function SpaceViewport3D({
+  state,
+  result,
+  northLabel = 'N',
+  entranceLabel,
+  highlightFacings,
+  reduceFacings,
+}: Props) {
   const domain = (state.activeDomain || 'residential') as SpaceActiveDomain;
   const meta = DOMAIN_MODEL_META[domain];
   const rot = Math.round(state.room.planRotationDeg || 0);
@@ -314,7 +393,12 @@ export function SpaceViewport3D({ state, result, northLabel = 'N', entranceLabel
         gl={{ antialias: true, alpha: false }}
       >
         <Suspense fallback={null}>
-          <Scene state={state} result={result} />
+          <Scene
+            state={state}
+            result={result}
+            highlightFacings={highlightFacings}
+            reduceFacings={reduceFacings}
+          />
         </Suspense>
       </Canvas>
       {/* HUD compass */}
@@ -333,6 +417,7 @@ export function SpaceViewport3D({ state, result, northLabel = 'N', entranceLabel
         </div>
         <div className="text-white/55">
           {entranceLabel || state.room.entranceFacing} · rot {rot}° · 3D
+          {highlightFacings?.length ? ` · 人宅 ${highlightFacings.slice(0, 3).join('/')}` : ''}
         </div>
       </div>
       <div className="pointer-events-none absolute bottom-2 left-2 text-[10px] text-white/45">

@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 
 import {
   adviseSites,
+  annotateSitesWithNatal,
   estimateFootTraffic,
   heuristicPoiFromAddress,
 } from '@/lib/fengshui/space/site-advisor';
@@ -89,5 +90,24 @@ describe('Site advisor', () => {
     ]);
     assert.equal(result.candidates[0].suggestedDomain, 'tomb');
     assert.ok(result.candidates[0].dimensions.some((d) => d.key === 'back'));
+  });
+
+  test('annotateSitesWithNatal keeps scores, adds 人宅 facing note', () => {
+    const raw = adviseSites('house', [
+      {
+        label: '南向',
+        address: '杭州 某处 公园',
+        lat: 30.25,
+        lng: 120.16,
+        facing: '南',
+        areaSqm: 90,
+      },
+    ]);
+    const before = raw.candidates[0].totalScore;
+    const next = annotateSitesWithNatal(raw, ['东', '东南'], ['西']);
+    assert.equal(next.candidates[0].totalScore, before);
+    assert.ok(next.candidates[0].actions[0].includes('南'));
+    assert.ok(next.summary.includes('用神方位'));
+    assert.equal(next.candidates[0].facing, '南');
   });
 });

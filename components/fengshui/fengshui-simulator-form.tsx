@@ -1,15 +1,22 @@
 'use client';
 
+import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
+
 import { postToolResultToFoundation } from '@/lib/life-foundation/client-signal';
 import { FengshuiRadarChart, type FengshuiRadarDataPoint } from './fengshui-radar-chart';
 import { ShopColorSwatch } from './shop-color-swatch';
 import { analyzeShopFengshui, resolveIndustryElement } from '@/lib/fengshui';
 import type { ShopFengshuiInput, ShopFengshuiOutput } from '@/lib/fengshui/types';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { toElementEn } from '@/lib/wuxing-normalize';
+import type { SpaceProfileLink } from '@/lib/fengshui/space/types';
 
-// No personal Bazi context is collected on this page. The engine therefore uses
-// the selected industry's own element profile as a shop-level reference, rather
-// than presenting it as the user's personal favorable-element conclusion.
 const REFERENCE_UNFAVORABLE_ELEMENTS: string[] = [];
+
+function toEnList(list?: string[]): string[] {
+  return (list || []).map((x) => toElementEn(x)).filter(Boolean) as string[];
+}
 
 const ELEMENT_LABELS: Record<string, string> = {
   wood: '木',
@@ -44,8 +51,39 @@ export function FengshuiSimulatorForm() {
 
   const [result, setResult] = useState<ShopFengshuiOutput | null>(null);
   const [calculating, setCalculating] = useState(false);
+  const [profileLink, setProfileLink] = useState<SpaceProfileLink | null>(null);
+  const [linking, setLinking] = useState(false);
 
   const canSubmit = industry && shopName.trim() && doorDirection;
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const res = await fetch('/api/fengshui/space/link-bazi');
+        const data = await res.json();
+        if (data?.success && data.profileLink) {
+          setProfileLink(data.profileLink as SpaceProfileLink);
+        }
+      } catch {
+        // unbound: industry-only fallback
+      }
+    })();
+  }, []);
+
+  const linkPrimary = async () => {
+    setLinking(true);
+    try {
+      const res = await fetch('/api/fengshui/space/link-bazi');
+      const data = await res.json();
+      if (data?.success && data.profileLink) {
+        setProfileLink(data.profileLink as SpaceProfileLink);
+      }
+    } catch {
+      // keep unbound
+    } finally {
+      setLinking(false);
+    }
+  };
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -62,22 +100,33 @@ export function FengshuiSimulatorForm() {
           decorPreference: decor || undefined,
           openingDate: openingDate || undefined,
         };
+        const natalYong = toEnList([
+          ...(profileLink?.yongShen || []),
+          ...(profileLink?.xiShen || []),
+        ]);
+        const natalJi = toEnList(profileLink?.jiShen);
         const industryProfile = resolveIndustryElement(industry);
-        const referenceElements = [industryProfile.element, industryProfile.subElement].filter(
+        const industryEls = [industryProfile.element, industryProfile.subElement].filter(
           (element): element is string => Boolean(element),
         );
+        const favorable = natalYong.length ? natalYong : industryEls;
         const output = analyzeShopFengshui(
           input,
-          referenceElements,
-          REFERENCE_UNFAVORABLE_ELEMENTS,
-          '行业五行结构',
+          favorable,
+          natalYong.length ? natalJi : REFERENCE_UNFAVORABLE_ELEMENTS,
+          natalYong.length ? '宅主用神' : '行业五行结构',
         );
         setResult(output);
-        postToolResultToFoundation({ toolSlug: 'fengshui-simulator', headline: '风水模拟', summary: `行业${industry}方位评估`, score: output.radarScores.industry });
+        postToolResultToFoundation({
+          toolSlug: 'fengshui-simulator',
+          headline: natalYong.length ? '商铺风水 · 人宅合参' : '风水模拟',
+          summary: `行业${industry}方位评估`,
+          score: output.radarScores.industry,
+        });
         setCalculating(false);
       }, 300);
     },
-    [canSubmit, industry, shopName, doorDirection, decor, openingDate],
+    [canSubmit, industry, shopName, doorDirection, decor, openingDate, profileLink],
   );
 
   const handleReset = useCallback(() => {
@@ -112,6 +161,48 @@ export function FengshuiSimulatorForm() {
 
   return (
     <div className="space-y-6">
+      <EngineLockStrip
+        surface="fengshui"
+        extraHref={
+          profileLink?.fortuneId
+            ? `/result/${encodeURIComponent(profileLink.fortuneId)}#engine-surface`
+            : '/analyze?source=fengshui_simulator'
+        }
+        extraLabel={profileLink?.fortuneId ? '报告结构台' : '去排盘'}
+        facts={
+          profileLink
+            ? [
+                { label: '宅主', value: profileLink.displayName },
+                { label: '日主', value: profileLink.dayMaster, mono: true },
+                { label: '用神', value: (profileLink.yongShen || []).join('、') },
+                { label: '忌神', value: (profileLink.jiShen || []).join('、') },
+              ]
+            : []
+        }
+      />
+      {!profileLink ? (
+        <p className="text-[12px] text-[color:var(--ink-5)]">
+          未关联八字时按行业五行做结构对照。
+          <button
+            type="button"
+            disabled={linking}
+            onClick={() => void linkPrimary()}
+            className="ml-2 font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline disabled:opacity-40"
+          >
+            {linking ? '关联中…' : '关联八字'}
+          </button>
+          <Link href="/tools/fengshui-space" className="ml-3 text-[color:var(--ink-4)] underline-offset-2 hover:underline">
+            打开空间场
+          </Link>
+        </p>
+      ) : (
+        <p className="text-[12px] text-[color:var(--ink-4)]">
+          门向、店名与色彩对照同一套日主用神，不另起宅命。
+          <Link href="/tools/fengshui-space" className="ml-2 underline-offset-2 hover:underline">
+            空间场工作台
+          </Link>
+        </p>
+      )}
       {/* ---- Form ---- */}
       <form onSubmit={handleSubmit} className="fb-card space-y-4 p-5">
         <h3 className="text-base font-semibold text-[color:var(--ink-1)]">商铺信息</h3>
@@ -246,7 +337,9 @@ export function FengshuiSimulatorForm() {
                   : '当前维度存在差异，可结合建议调整'}
             </div>
             <p className="mt-3 max-w-xl text-[12px] leading-relaxed text-[color:var(--ink-4)]">
-              本次结果未读取个人八字，按商铺行业、门向、名称、装修与日期作通用结构分析，不代表个人喜用五行结论。
+              {profileLink?.yongShen?.length
+                ? `已叠宅主用神 ${(profileLink.yongShen || []).join('、')}：门向/店名/色彩按人宅合参，不另起一套宅命。`
+                : '未绑定八字：按商铺行业、门向、名称、装修与日期作通用结构分析，不代表个人喜用五行。'}
             </p>
           </div>
 

@@ -1,9 +1,11 @@
 'use client';
 
+import { useEffect, useMemo, useState } from 'react';
 import { postToolResultToFoundation } from '@/lib/life-foundation/client-signal';
 import type { SpaceGeoPlace } from '@/lib/fengshui/space/types';
 import {
   SITE_PURPOSE_LABELS,
+  annotateSitesWithNatal,
   type SiteAdviseResult,
   type SiteCandidateInput,
   type SiteCandidateResult,
@@ -33,7 +35,7 @@ function newId() {
   return `c-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 }
 
-function fromGeo(geo: SpaceGeoPlace | null, purpose: SitePurpose): Draft | null {
+function fromGeo(geo: SpaceGeoPlace | null, purpose: SitePurpose, facing = ''): Draft | null {
   if (!geo) return null;
   return {
     id: newId(),
@@ -41,7 +43,7 @@ function fromGeo(geo: SpaceGeoPlace | null, purpose: SitePurpose): Draft | null 
     address: geo.address,
     lat: geo.lat,
     lng: geo.lng,
-    facing: '',
+    facing,
     areaSqm: purpose === 'yinzhai' ? '3' : purpose === 'shop' ? '60' : '90',
     floor: purpose === 'shop' ? '1' : '',
     industry: purpose === 'shop' ? '餐饮' : '',
@@ -57,10 +59,20 @@ export function SiteAdvisorPanel({
   currentGeo,
   onInjectWinner,
   onApplyDomain,
+  compact = false,
+  defaultFacing = '',
+  enhanceFacings = [],
+  reduceFacings = [],
+  natalNote,
 }: {
   currentGeo: SpaceGeoPlace | null;
   onInjectWinner: (place: SpaceGeoPlace, meta: SiteCandidateResult) => void;
   onApplyDomain?: (domain: SiteCandidateResult['suggestedDomain']) => void;
+  compact?: boolean;
+  defaultFacing?: string;
+  enhanceFacings?: string[];
+  reduceFacings?: string[];
+  natalNote?: string;
 }) {
   const [purpose, setPurpose] = useState<SitePurpose>('house');
   const [candidates, setCandidates] = useState<Draft[]>([]);
@@ -75,7 +87,7 @@ export function SiteAdvisorPanel({
   );
 
   const addCurrent = () => {
-    const d = fromGeo(currentGeo, purpose);
+    const d = fromGeo(currentGeo, purpose, defaultFacing);
     if (!d) {
       setError('请先在上方「地图选址」搜索并注入一个地址');
       return;
@@ -155,7 +167,8 @@ export function SiteAdvisorPanel({
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.error || '评估失败');
-      setResult(data.result as SiteAdviseResult);
+      const raw = data.result as SiteAdviseResult;
+      setResult(annotateSitesWithNatal(raw, enhanceFacings, reduceFacings));
       postToolResultToFoundation({ toolSlug: 'site-advisor', headline: '空间选址评估', summary: `${purpose === 'shop' ? '商铺' : '阳宅'}选址分析完成`, score: 1 });
       setSelectedId(data.result?.winnerId || data.result?.candidates?.[0]?.id || null);
     } catch (e) {
@@ -166,16 +179,39 @@ export function SiteAdvisorPanel({
     }
   };
 
+  useEffect(() => {
+    if (!compact || !currentGeo) return;
+    const d = fromGeo(currentGeo, purpose, defaultFacing);
+    if (!d) return;
+    setCandidates((list) => {
+      if (list.some((x) => Math.abs(x.lat - d.lat) < 1e-5 && Math.abs(x.lng - d.lng) < 1e-5)) {
+        return list;
+      }
+      return [...list, d].slice(0, 6);
+    });
+    // only auto-add when the map pin changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [compact, currentGeo?.lat, currentGeo?.lng, currentGeo?.address]);
+
   return (
-    <div className="space-y-3 rounded-xl border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 md:p-4">
+    <div
+      className={`space-y-2 bg-[color:var(--paper)] ${
+        compact ? 'p-0' : 'rounded-xl border border-[color:var(--hairline)] p-3 md:p-4'
+      }`}
+    >
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <div className="text-[11px] font-bold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
             选址顾问 · 人流估算
           </div>
-          <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
-            多案对比：选阳宅 / 选铺面（含人流） / 选阴宅。可叠加 OSM 周边设施密度，结果可一键注入空间场。
-          </p>
+          {compact ? null : (
+            <p className="mt-0.5 text-[12px] text-[color:var(--ink-4)]">
+              多案对比：选阳宅 / 选铺面（含人流） / 选阴宅。可叠加 OSM 周边设施密度，结果可一键注入空间场。
+            </p>
+          )}
+          {natalNote ? (
+            <p className="mt-0.5 text-[11px] leading-snug text-[color:var(--ink-4)]">{natalNote}</p>
+          ) : null}
         </div>
       </div>
 

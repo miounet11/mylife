@@ -94,6 +94,7 @@ export interface SiteCandidateResult {
   address: string;
   lat: number;
   lng: number;
+  facing?: string;
   purpose: SitePurpose;
   totalScore: number;
   rankHint: string;
@@ -543,6 +544,7 @@ export function adviseSiteCandidate(
     address: raw.address,
     lat: raw.lat,
     lng: raw.lng,
+    facing: raw.facing || undefined,
     purpose,
     totalScore,
     rankHint,
@@ -587,5 +589,39 @@ export function adviseSites(
     summary,
     disclaimer:
       '选址与人流为结构启发式评估，用于多案对比与风水形局讨论，不构成置业/投资/殡葬法定意见；请结合现场、规划与专业测绘。',
+  };
+}
+
+/** 人宅叠注：不改结构分，只在动作里对照用神/忌神方位 */
+export function annotateSitesWithNatal(
+  result: SiteAdviseResult,
+  enhanceFacings: string[] = [],
+  reduceFacings: string[] = [],
+): SiteAdviseResult {
+  if (!enhanceFacings.length && !reduceFacings.length) return result;
+
+  const yong = enhanceFacings.filter(Boolean);
+  const ji = reduceFacings.filter(Boolean);
+
+  const candidates = result.candidates.map((c) => {
+    const face = `${c.facing || ''}`.trim();
+    const match = Boolean(face && yong.some((f) => face === f || face.includes(f) || f.includes(face)));
+    const clash = Boolean(face && ji.some((f) => face === f || face.includes(f) || f.includes(face)));
+    const note = !face
+      ? `未填朝向：对照用神方位 ${yong.join('、') || '—'} 再核门口。`
+      : match
+        ? `门向 ${face} 与用神方位同气，结构上利于接气。`
+        : clash
+          ? `门向 ${face} 偏忌神侧：宜在 ${yong.join('、') || '用神方位'} 补采光/整洁，不强制改朝向。`
+          : `门向 ${face}：对照用神 ${yong.join('、') || '—'} 微调入口陈设。`;
+    const actions = [note, ...c.actions.filter((a) => a !== note)].slice(0, 8);
+    return { ...c, actions };
+  });
+
+  const extra = yong.length ? ` · 人宅对照用神方位 ${yong.join('、')}` : '';
+  return {
+    ...result,
+    candidates,
+    summary: `${result.summary}${extra}`.slice(0, 280),
   };
 }

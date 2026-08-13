@@ -30,6 +30,7 @@ import { SpaceViewport } from './space-viewport';
 import { SpaceControlPanel } from './space-control-panel';
 import { LayoutPresetPicker } from './layout-preset-picker';
 import { MapPlacePicker } from './map-place-picker';
+import { SiteAdvisorPanel } from './site-advisor-panel';
 import { VirtualCompass } from './virtual-compass';
 import { CadPlanEditor } from './cad-plan-editor';
 import { spaceLabCopy } from '@/lib/i18n/space-lab-copy';
@@ -719,58 +720,25 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                   compact
                   autoLocate
                 />
-                <div className="flex shrink-0 flex-wrap gap-1 border-t border-[color:var(--hairline)] pt-1.5">
-                  <button
-                    type="button"
-                    className="rounded bg-[color:var(--ink-1)] px-2 py-1 text-[10px] font-semibold text-white"
-                    onClick={() => {
+                <div className="min-h-0 flex-1 overflow-y-auto border-t border-[color:var(--hairline)] pt-1.5">
+                  <SiteAdvisorPanel
+                    compact
+                    currentGeo={state.geo}
+                    defaultFacing={state.room.entranceFacing}
+                    enhanceFacings={bridge.enhanceFacings}
+                    reduceFacings={bridge.reduceFacings}
+                    natalNote={
+                      bridge.linked
+                        ? `人宅：用神方位 ${bridge.enhanceFacings.join('、') || '—'}，选址分不改，只对照朝向。`
+                        : '未关联八字：以下为纯结构选址。'
+                    }
+                    onInjectWinner={(place) => {
+                      injectGeo(place);
                       setWorkbenchTab('preset');
-                      setBanner('区位已就绪 · 在「方案」加载户型，右侧即时预览');
+                      setBanner(`已注入区位：${place.address}`);
                     }}
-                  >
-                    去选方案
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded border border-[color:var(--hairline)] px-2 py-1 text-[10px] font-semibold"
-                    onClick={() => {
-                      if (!state.geo) {
-                        setBanner('请先在地图拖标或授权定位');
-                        return;
-                      }
-                      void (async () => {
-                        try {
-                          const res = await fetch('/api/fengshui/space/site-advise', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                              purpose: 'shop',
-                              enrichPoi: true,
-                              candidates: [
-                                {
-                                  label: state.geo!.name || '当前点',
-                                  address: state.geo!.address,
-                                  lat: state.geo!.lat,
-                                  lng: state.geo!.lng,
-                                  streetFront: true,
-                                },
-                              ],
-                            }),
-                          });
-                          const data = await res.json();
-                          if (data.success) {
-                            setBanner(data.message || data.result?.summary);
-                          } else {
-                            setError(data.error || '评估失败');
-                          }
-                        } catch {
-                          setError('选址评估失败');
-                        }
-                      })();
-                    }}
-                  >
-                    估人流
-                  </button>
+                    onApplyDomain={(domain) => onDomainChange(domain)}
+                  />
                 </div>
               </div>
             ) : null}
@@ -922,6 +890,8 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                 locale={locale}
                 northLabel={copy.compass.north}
                 entranceLabel={`${copy.compass.entrance} ${state.room.entranceFacing}`}
+                highlightFacings={bridge.enhanceFacings}
+                reduceFacings={bridge.reduceFacings}
               />
             ) : viewMode === 'plan' && state.cadEditMode !== false ? (
               <CadPlanEditor
