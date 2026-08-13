@@ -9,8 +9,10 @@ import { ShopColorSwatch } from './shop-color-swatch';
 import { analyzeShopFengshui, resolveIndustryElement } from '@/lib/fengshui';
 import type { ShopFengshuiInput, ShopFengshuiOutput } from '@/lib/fengshui/types';
 import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
 import { toElementEn } from '@/lib/wuxing-normalize';
 import type { SpaceProfileLink } from '@/lib/fengshui/space/types';
+import { runWorldYiEngineFromLoose } from '@/lib/world-yi-engine';
 
 const REFERENCE_UNFAVORABLE_ELEMENTS: string[] = [];
 
@@ -180,6 +182,22 @@ export function FengshuiSimulatorForm() {
             : []
         }
       />
+      {profileLink?.dayMaster || (profileLink?.yongShen || []).length ? (
+        <ReportWorldYiDual
+          compact
+          id="world-yi-engine-shop"
+          title="宅主 · 易学事实 · 世界易判断"
+          reading={runWorldYiEngineFromLoose({
+            dayMaster: profileLink?.dayMaster,
+            yongShen: {
+              dayMaster: profileLink?.dayMaster,
+              yongShen: profileLink?.yongShen,
+              xiShen: profileLink?.xiShen,
+              jiShen: profileLink?.jiShen,
+            },
+          })}
+        />
+      ) : null}
       {!profileLink ? (
         <p className="text-[12px] text-[color:var(--ink-5)]">
           未关联八字时按行业五行做结构对照。

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import type { NameCandidate, NamingDetailLlm, NamingSessionResult } from '@/lib/naming';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
+import { runWorldYiEngineFromLoose } from '@/lib/world-yi-engine';
 
 type Props = {
   sessionId: string;
@@ -74,6 +76,22 @@ export function NamingDetailView({ sessionId, name, candidate, result }: Props) 
           </div>
         ) : null}
       </header>
+
+      {result.input.yongShen?.length || result.input.dayMaster ? (
+        <ReportWorldYiDual
+          compact
+          id="world-yi-engine-naming-detail"
+          title="起名 · 易学事实 · 世界易判断"
+          reading={runWorldYiEngineFromLoose({
+            dayMaster: result.input.dayMaster,
+            yongShen: {
+              dayMaster: result.input.dayMaster,
+              yongShen: result.input.yongShen,
+              jiShen: result.input.jiShen,
+            },
+          })}
+        />
+      ) : null}
 
       {candidate ? (
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">

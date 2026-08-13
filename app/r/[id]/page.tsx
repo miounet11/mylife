@@ -38,6 +38,9 @@ import {
   isIndexablePublicReport,
 } from '@/lib/public-report-index';
 import { toSiteLocaleText } from '@/lib/i18n/site-locale';
+import { ReportWorldYiDual } from '@/components/report/report-world-yi-dual';
+import { runWorldYiEngine } from '@/lib/world-yi-engine';
+import type { FortuneAnalysisResult } from '@/lib/user-types';
 
 export const dynamic = 'force-dynamic';
 
@@ -128,8 +131,31 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
   const d5Count = record.next_5_years?.length || 0;
 
   // 悬浮导航：只传可序列化 iconKey
+  let worldYiReading = null as ReturnType<typeof runWorldYiEngine> | null;
+  try {
+    worldYiReading = runWorldYiEngine({
+      basic: displayFortune.bazi,
+      fiveElements: displayFortune.fiveElements,
+      tenGods: displayFortune.tenGods,
+      pattern: displayFortune.pattern,
+      fortune: displayFortune.fortune,
+      advice: displayFortune.advice,
+      evidence: displayFortune.evidence,
+      analysis: displayFortune.analysis,
+      klineData: displayFortune.klineData,
+      dayun: displayFortune.dayun,
+      shenSha: displayFortune.shenSha,
+      yongShen: (displayFortune as { yongShen?: FortuneAnalysisResult['yongShen'] }).yongShen,
+    } as FortuneAnalysisResult);
+  } catch {
+    worldYiReading = null;
+  }
+
   const chapterDockItems: ReportChapterDockItem[] = [
     { id: 'portrait', label: t('① 命盘画像', '① Portrait'), iconKey: 'layers' },
+    ...(worldYiReading
+      ? [{ id: 'world-yi-engine', label: t('世界易', 'World Yi'), iconKey: 'compass' } as ReportChapterDockItem]
+      : []),
     { id: 'past', label: t('② 过去验证', '② Past'), iconKey: 'check' },
     { id: 'next-30d', label: t('③ 未来 30 天', '③ 30 days'), iconKey: 'calendar' },
     { id: 'next-12m', label: t('④ 未来 12 月', '④ 12 months'), iconKey: 'calendar' },
@@ -324,6 +350,13 @@ export default async function ResultV2Page({ params, searchParams }: PageProps) 
                 </div>
               </div>
             </section>
+
+            {worldYiReading ? (
+              <ReportWorldYiDual
+                reading={worldYiReading}
+                title={t('易学事实 · 世界易判断', 'Yixue facts · World Yi reading')}
+              />
+            ) : null}
 
             {/* 时间轴主线 */}
             <div className="rounded-[12px] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-3 md:p-4">
