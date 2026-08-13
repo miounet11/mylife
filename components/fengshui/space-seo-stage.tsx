@@ -6,13 +6,13 @@ import { SpaceSeoPlanSvg } from '@/components/fengshui/space-seo-plan-svg';
 import { getSpaceSeoScenario } from '@/lib/fengshui/space/seo-catalog';
 import { buildSpaceSeoLab, type SpaceSeoSceneSnapshot } from '@/lib/fengshui/space/seo-report';
 
-const SpaceViewport3D = dynamic(
-  () => import('@/components/fengshui/space-lab/space-viewport-3d').then((m) => m.SpaceViewport3D),
+const SpaceSeoViewport3D = dynamic(
+  () => import('@/components/fengshui/space-seo-viewport-3d').then((m) => m.SpaceSeoViewport3D),
   {
     ssr: false,
     loading: () => (
       <div className="flex h-full items-center justify-center bg-[#0b0e14] text-[13px] text-white/50">
-        加载 3D 场景…
+        加载户型 3D…
       </div>
     ),
   },
@@ -38,7 +38,7 @@ export function SpaceSeoStage({
         <p className="truncate">
           {snapshot.layout} · {snapshot.facing}向
           {snapshot.yongLabel ? ` · 用神 ${snapshot.yongLabel}` : ''}
-          <span className="ml-2 text-white/40">拖转查看 · 白柱为用神方位</span>
+          <span className="ml-2 text-white/40">开顶户型 · 可拖转 · 色块是房间 · 白柱为用神方位</span>
         </p>
         <div className="flex shrink-0 gap-1">
           {(
@@ -64,14 +64,11 @@ export function SpaceSeoStage({
         {mode === 'plan' || !lab ? (
           <SpaceSeoPlanSvg snap={snapshot} className="h-full w-full" />
         ) : (
-          <SpaceViewport3D
+          <SpaceSeoViewport3D
             state={lab.state}
             result={lab.result}
-            northLabel="北"
-            entranceLabel={`入口 ${snapshot.facing}`}
             highlightFacings={lab.enhanceFacings}
             reduceFacings={lab.reduceFacings}
-            autoRotate
           />
         )}
       </div>
