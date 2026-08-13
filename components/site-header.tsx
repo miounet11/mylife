@@ -40,6 +40,7 @@ const secondaryNavItems: Array<{ href: string; labelKey: string }> = [
 
 /** Always-visible quick entry (also shown in compact header on sm+) */
 const BIRTH_QUICK_HREF = '/tools/timing-yearly-window';
+const SPACE_LAB_HREF = '/tools/fengshui-space';
 
 const priorityGrowthHeaderLinks = getPriorityGrowthToolLinks('header_priority_growth');
 
@@ -167,6 +168,19 @@ export default function SiteHeader({
               )}
             >
               {birthQuickLabel}
+            </ToolEntryLink>
+            <ToolEntryLink
+              href={`${SPACE_LAB_HREF}?source=header_space`}
+              source="header_space"
+              title={t('navSpace')}
+              className={cn(
+                'inline-flex h-10 min-h-[var(--control-h)] shrink-0 items-center whitespace-nowrap rounded-[var(--radius)] px-2.5 text-[13px] font-semibold no-underline transition hover:no-underline',
+                isActive(SPACE_LAB_HREF)
+                  ? 'bg-white/15 text-white'
+                  : 'text-white/90 hover:bg-white/10 hover:text-white',
+              )}
+            >
+              {t('navSpace')}
             </ToolEntryLink>
             {!compact ? (
               <>

@@ -28,6 +28,15 @@ const TOOLS: Array<{
   priority?: boolean;
 }> = [
   {
+    id: 'fengshui',
+    label: '空间场',
+    short: '空间场',
+    desc: '户型 · 人宅合参',
+    priority: true,
+    href: ({ reportId, source }) =>
+      `/tools/fengshui-space?source=${encodeURIComponent(source)}&fortuneId=${encodeURIComponent(reportId)}`,
+  },
+  {
     id: 'naming',
     label: '起名工坊',
     short: '起名',
@@ -60,14 +69,6 @@ const TOOLS: Array<{
     desc: '三线节奏',
     href: ({ reportId, source }) =>
       `/tools/palmistry?source=${encodeURIComponent(source)}&fortuneId=${encodeURIComponent(reportId)}`,
-  },
-  {
-    id: 'fengshui',
-    label: '空间场',
-    short: '空间',
-    desc: '人宅合参',
-    href: ({ reportId, source }) =>
-      `/tools/fengshui-space?source=${encodeURIComponent(source)}&fortuneId=${encodeURIComponent(reportId)}`,
   },
   {
     id: 'hehun',

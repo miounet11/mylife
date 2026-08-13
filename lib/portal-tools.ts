@@ -56,6 +56,12 @@ export const TOOL_INTENT_MATCHES: ToolIntentMatch[] = [
     href: '/tools/timing-yearly-window?source=tools_intent_yearly',
   },
   {
+    id: 'fengshui',
+    label: '家 / 店风水',
+    hint: '空间场工作台',
+    href: '/tools/fengshui-space?source=tools_intent_fengshui',
+  },
+  {
     id: 'career',
     label: '事业 / 跳槽',
     hint: '事业结构报告',
@@ -84,12 +90,6 @@ export const TOOL_INTENT_MATCHES: ToolIntentMatch[] = [
     label: '今日宜忌',
     hint: '黄历 · 日运',
     href: '/almanac?source=tools_intent_daily',
-  },
-  {
-    id: 'fengshui',
-    label: '家 / 店风水',
-    hint: '空间场工作台',
-    href: '/tools/fengshui-space?source=tools_intent_fengshui',
   },
   {
     id: 'full',
@@ -128,6 +128,31 @@ export const TOOL_HUB_GROUPS: ToolHubGroup[] = [
         title: '起名工坊',
         description: '生辰用神 · 康熙笔画 · 个人/改名/公司。',
         cta: '起名',
+      },
+    ],
+  },
+  {
+    key: 'space',
+    title: '风水 · 空间场',
+    description: '家宅与商铺环境层结构化分析。',
+    tools: [
+      {
+        href: '/tools/fengshui-space',
+        title: '空间场工作台',
+        description: 'CAD · AI 美化 · 完整报表 · 人宅合参。',
+        cta: '打开',
+      },
+      {
+        href: '/tools/fengshui-simulator',
+        title: '商铺风水模拟器',
+        description: '行业五行、方位、色彩与开业择时。',
+        cta: '模拟',
+      },
+      {
+        href: '/dimensions/living-environment',
+        title: '居家环境研判',
+        description: '方位摆设与搬迁窗口参考。',
+        cta: '研判',
       },
     ],
   },
@@ -227,31 +252,6 @@ export const TOOL_HUB_GROUPS: ToolHubGroup[] = [
         title: '手相观察',
         description: '掌纹结构分 + 可授权脱敏线图。',
         cta: '上传',
-      },
-    ],
-  },
-  {
-    key: 'space',
-    title: '风水 · 空间场',
-    description: '家宅与商铺环境层结构化分析。',
-    tools: [
-      {
-        href: '/tools/fengshui-space',
-        title: '空间场工作台',
-        description: 'CAD · AI 美化 · 完整报表 · 人宅合参。',
-        cta: '打开',
-      },
-      {
-        href: '/tools/fengshui-simulator',
-        title: '商铺风水模拟器',
-        description: '行业五行、方位、色彩与开业择时。',
-        cta: '模拟',
-      },
-      {
-        href: '/dimensions/living-environment',
-        title: '居家环境研判',
-        description: '方位摆设与搬迁窗口参考。',
-        cta: '研判',
       },
     ],
   },

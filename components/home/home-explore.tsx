@@ -15,6 +15,14 @@ const PATHS = [
     primary: true,
   },
   {
+    href: '/tools/fengshui-space?source=home_explore_path',
+    badge: '工作台',
+    title: '空间场',
+    desc: '户型 · 选址 · 人宅合参',
+    cta: '打开工作台',
+    primary: true,
+  },
+  {
     href: '/hehun?source=home_explore_path',
     badge: '热门',
     title: '合婚双盘',
@@ -41,6 +49,11 @@ const PATHS = [
 ] as const;
 
 const TOOLS = [
+  {
+    href: '/tools/fengshui-space?source=home_explore',
+    title: '空间场',
+    desc: '户型 CAD · 人宅合参',
+  },
   {
     href: '/almanac?source=home_explore',
     title: '今日黄历',

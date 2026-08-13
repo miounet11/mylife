@@ -199,6 +199,22 @@ export function toolsHubCopy(locale: SiteLocale) {
       'zh-CN': '合婚',
       en: 'Compatibility',
     }),
+    linkSpace: pick(locale, {
+      'zh-CN': '空间场',
+      en: 'Space Lab',
+    }),
+    featuredSpaceTitle: pick(locale, {
+      'zh-CN': '户型 · 选址 · 人宅合参',
+      en: 'Plan · site · natal overlay',
+    }),
+    featuredSpaceDesc: pick(locale, {
+      'zh-CN': 'CAD 平面、3D 热力与选址人流，叠同一套日主用神，不另起宅命。',
+      en: 'CAD plan, 3D heat, and site compare — overlaid on the same natal useful-god, not a second house chart.',
+    }),
+    featuredSpaceCta: pick(locale, {
+      'zh-CN': '打开空间场',
+      en: 'Open Space Lab',
+    }),
     intentTitle: pick(locale, {
       'zh-CN': '你现在最关心什么',
       en: 'What do you care about now?',
@@ -237,6 +253,18 @@ export function toolsHubCopy(locale: SiteLocale) {
         desc: pick(locale, {
           'zh-CN': '看今年推进与防守节奏 · 填生日即可',
           en: 'This year’s push vs hold rhythm · birth date only',
+        }),
+        primary: true as const,
+      },
+      {
+        href: '/tools/fengshui-space?source=tools_hub_birth_quick',
+        title: pick(locale, {
+          'zh-CN': '空间场工作台',
+          en: 'Space Lab',
+        }),
+        desc: pick(locale, {
+          'zh-CN': '户型 CAD · 选址人流 · 人宅合参',
+          en: 'CAD plan · site traffic · natal overlay',
         }),
         primary: true as const,
       },

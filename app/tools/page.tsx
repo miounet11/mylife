@@ -6,7 +6,7 @@ import JourneyStrip from '@/components/content/journey-strip';
 import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import { AppPage } from '@/components/layout/app-page';
 import { EntryLinkGrid } from '@/components/layout/entry-link-grid';
-import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
+import { FeatureImmersionHero, ImmersionMediaBand } from '@/components/brand/feature-immersion-hero';
 import ToolEntryLink from '@/components/tools/tool-entry-link';
 import ToolsHubBirthForm from '@/components/tools/tools-hub-birth-form';
 import SecondSystemRail from '@/components/product/second-system-rail';
@@ -88,10 +88,18 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
           actions={
             <>
               <ToolEntryLink
+                href="/tools/fengshui-space?source=tools_hub_hero"
+                source="tools_hub_hero"
+                title={copy.linkSpace}
+                className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+              >
+                {copy.linkSpace}
+              </ToolEntryLink>
+              <ToolEntryLink
                 href="/tools/timing-yearly-window"
                 source="tools_hub_hero"
                 title={copy.heroYearly}
-                className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+                className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
               >
                 {copy.heroYearly}
               </ToolEntryLink>
@@ -109,6 +117,40 @@ export default async function ToolsPage({ searchParams }: ToolsPageProps) {
         />
 
         <JourneyStrip active="tools" locale={uiLocale} />
+
+        <section
+          className="overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--ink-1)] bg-[color:var(--paper)]"
+          aria-labelledby="tools-space-title"
+        >
+          <div className="grid md:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)]">
+            <ImmersionMediaBand
+              surfaceKey="fengshui"
+              compact
+              className="!mb-0 rounded-none border-0 md:min-h-[168px] md:max-h-none"
+            />
+            <div className="flex flex-col justify-center gap-2 p-4 md:p-5">
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand-strong)]">
+                {copy.linkSpace}
+              </p>
+              <h2 id="tools-space-title" className="text-[18px] font-semibold tracking-tight text-[color:var(--ink-1)]">
+                {copy.featuredSpaceTitle}
+              </h2>
+              <p className="max-w-xl text-[13px] leading-[1.55] text-[color:var(--ink-4)]">
+                {copy.featuredSpaceDesc}
+              </p>
+              <div className="mt-1">
+                <ToolEntryLink
+                  href="/tools/fengshui-space?source=tools_hub_featured"
+                  source="tools_hub_featured"
+                  title={copy.featuredSpaceCta}
+                  className="inline-flex h-10 min-h-[var(--control-h)] items-center justify-center rounded-[var(--radius)] bg-[color:var(--ink-1)] px-4 text-[13px] font-medium text-white no-underline hover:bg-black hover:no-underline"
+                >
+                  {copy.featuredSpaceCta}
+                </ToolEntryLink>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* 1 · Intent match — strongest path to the right tool */}
         <section

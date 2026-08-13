@@ -126,6 +126,14 @@ export const NEED_MAP: NeedItem[] = [
     href: '/dimensions/timing-selection',
   },
   {
+    id: 'space',
+    tier: 'B',
+    title: '空间场',
+    question: '户型、选址与人宅合参',
+    status: 'covered',
+    href: '/tools/fengshui-space',
+  },
+  {
     id: 'naming',
     tier: 'B',
     title: '起名改名',

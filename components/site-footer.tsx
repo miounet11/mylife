@@ -20,6 +20,7 @@ const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: strin
   { href: '/almanac', labelKey: 'navAlmanac' },
   { href: '/hehun', labelKey: 'navHehun' },
   { href: '/tools/naming', labelKey: 'navNaming' },
+  { href: '/tools/fengshui-space', labelKey: 'navSpace' },
   { href: '/knowledge', labelKey: 'navKnowledge' },
   { href: '/teachers', labelKey: 'navTeachers' },
   { href: '/cases', labelKey: 'navCases' },

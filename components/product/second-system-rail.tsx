@@ -16,6 +16,9 @@ type Copy = {
   hehunTitle: string;
   hehunDesc: string;
   hehunCta: string;
+  spaceTitle: string;
+  spaceDesc: string;
+  spaceCta: string;
   liuyaoTitle: string;
   liuyaoDesc: string;
   ziweiTitle: string;
@@ -37,6 +40,9 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunTitle: '合婚双盘',
     hehunDesc: '双方生日即时对盘：日主、夫妻宫、用忌与大运同步。',
     hehunCta: '对盘',
+    spaceTitle: '空间场',
+    spaceDesc: '户型 CAD、3D 热力与选址人流，叠同一套日主用神。',
+    spaceCta: '打开',
     liuyaoTitle: '六爻教育起卦',
     liuyaoDesc: '三枚铜钱排本卦/变卦结构；不自动断事。',
     ziweiTitle: '紫微教育排盘',
@@ -49,6 +55,9 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunTitle: '合婚雙盤',
     hehunDesc: '雙方生日即時對盤：日主、夫妻宮、用忌與大運同步。',
     hehunCta: '對盤',
+    spaceTitle: '空間場',
+    spaceDesc: '戶型 CAD、3D 熱力與選址人流，疊同一套日主用神。',
+    spaceCta: '打開',
     liuyaoTitle: '六爻教育起卦',
     liuyaoDesc: '三枚銅錢排本卦/變卦結構；不自動斷事。',
     ziweiTitle: '紫微教育排盤',
@@ -62,6 +71,9 @@ const COPY: Record<'zh-CN' | 'zh-Hant' | 'en', Copy> = {
     hehunTitle: 'Dual-chart match',
     hehunDesc: 'Both birth dates: day master, spouse palace, yongji, and dayun sync.',
     hehunCta: 'Compare',
+    spaceTitle: 'Space Lab',
+    spaceDesc: 'CAD plan, 3D heat, and site compare on the same natal useful-god.',
+    spaceCta: 'Open',
     liuyaoTitle: 'Six-line educational cast',
     liuyaoDesc: 'Three-coin method → primary/changed hexagram structure only.',
     ziweiTitle: 'Ziwei educational chart',
@@ -115,6 +127,22 @@ export default function SecondSystemRail({
       </div>
 
       <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+        <li>
+          <Link
+            href={withSource('/tools/fengshui-space')}
+            className="group flex flex-col gap-0.5 py-2.5 no-underline hover:no-underline sm:flex-row sm:items-baseline sm:justify-between sm:gap-4"
+          >
+            <span className="text-[13px] font-semibold text-[color:var(--ink-1)] group-hover:underline">
+              {copy.spaceTitle}
+              <span className="ml-2 text-[11px] font-normal text-[color:var(--ink-5)]">
+                {copy.spaceCta}
+              </span>
+            </span>
+            <span className="min-w-0 text-[12px] text-[color:var(--ink-5)] sm:max-w-[55%] sm:truncate sm:text-right">
+              {copy.spaceDesc}
+            </span>
+          </Link>
+        </li>
         <li>
           <Link
             href={withSource('/hehun')}

@@ -25,6 +25,7 @@ const MESSAGES: Record<string, { 'zh-CN': string; 'zh-Hant'?: string; en: string
   navAstro: { 'zh-CN': '星座', 'zh-Hant': '星座', en: 'Zodiac' },
   navHehun: { 'zh-CN': '合婚', 'zh-Hant': '合婚', en: 'Match' },
   navNaming: { 'zh-CN': '起名', 'zh-Hant': '起名', en: 'Naming' },
+  navSpace: { 'zh-CN': '空间场', 'zh-Hant': '空間場', en: 'Space Lab' },
   navDocs: { 'zh-CN': '文档', 'zh-Hant': '文檔', en: 'Docs' },
   navWorldYi: { 'zh-CN': '世界易学说', 'zh-Hant': '世界易學說', en: 'World Yi' },
   navLearn: { 'zh-CN': '学习地图', 'zh-Hant': '學習地圖', en: 'Learn' },
