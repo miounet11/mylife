@@ -83,9 +83,7 @@ export default function WorldYiLogicPage() {
             {layers.map((layer) => (
               <li key={layer.id} className="grid gap-2 py-3 md:grid-cols-[88px_minmax(0,1fr)]">
                 <div>
-                  <p className="text-[13px] font-semibold text-[color:var(--ink-1)]">
-                    {layer.order}. {layer.name}
-                  </p>
+                  <p className="text-[13px] font-semibold text-[color:var(--ink-1)]">{layer.name}</p>
                   <p className="mt-0.5 text-[12px] text-[color:var(--ink-5)]">{layer.oneLiner}</p>
                 </div>
                 <div className="space-y-1.5 text-[13px] leading-[1.65] text-[color:var(--ink-2)]">
