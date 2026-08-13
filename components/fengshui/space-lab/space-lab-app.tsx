@@ -2,7 +2,6 @@
 
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Link from 'next/link';
 import {
   buildFengshuiSpaceReport,
   buildProBriefText,
@@ -35,6 +34,8 @@ import { VirtualCompass } from './virtual-compass';
 import { CadPlanEditor } from './cad-plan-editor';
 import { spaceLabCopy } from '@/lib/i18n/space-lab-copy';
 import type { SiteLocale } from '@/lib/i18n/site-locale';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
+import { buildBaziSpaceBridge, mergeBridgeIntoActions } from '@/lib/fengshui/space/bazi-space-bridge';
 
 const SpaceViewport3D = dynamic(
   () => import('./space-viewport-3d').then((m) => m.SpaceViewport3D),
@@ -84,7 +85,19 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
     setTick((t) => t + 1);
   }, []);
 
-  const result = useMemo(() => simulateSpaceField(state), [state, tick]);
+  const sim = useMemo(() => simulateSpaceField(state), [state, tick]);
+  const bridge = useMemo(() => buildBaziSpaceBridge(state), [state]);
+  const result = useMemo(() => {
+    const merged = mergeBridgeIntoActions(sim, bridge);
+    return {
+      ...sim,
+      summary: {
+        ...sim.summary,
+        structuralNotes: merged.structuralNotes,
+        priorityActions: merged.priorityActions,
+      },
+    };
+  }, [sim, bridge]);
 
   const windOn = state.vents.some((v) => v.enabled);
   const nineOn = state.time.nineStarEnabled;
@@ -253,28 +266,40 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
     setBanner(`已注入区位：${place.address}`);
   };
 
-  const linkPrimaryBazi = async () => {
+  const linkPrimaryBazi = async (opts?: { silent?: boolean }) => {
     setLinkingBazi(true);
-    setError(null);
+    if (!opts?.silent) setError(null);
     try {
       const res = await fetch('/api/fengshui/space/link-bazi');
       const data = await res.json();
       if (data.code === 'no_fortune') {
-        setError(data.error);
-        setBanner(null);
+        if (!opts?.silent) {
+          setError(data.error);
+          setBanner(null);
+        }
         return;
       }
       if (!res.ok || !data.success || !data.profileLink) {
         throw new Error(data.error || '关联失败');
       }
-      patch((s) => ({ ...s, profileLink: data.profileLink }));
-      setBanner(data.message || '已关联主盘八字');
+      patch((s) => ({
+        ...s,
+        profileLink: data.profileLink,
+        planOverlayMode: s.planOverlayMode === 'none' ? 'bagua8' : s.planOverlayMode,
+      }));
+      if (!opts?.silent) setBanner(data.message || '已关联主盘八字');
     } catch (err) {
-      setError(err instanceof Error ? err.message : '关联八字失败');
+      if (!opts?.silent) setError(err instanceof Error ? err.message : '关联八字失败');
     } finally {
       setLinkingBazi(false);
     }
   };
+
+  useEffect(() => {
+    void linkPrimaryBazi({ silent: true });
+    // one-shot bind on enter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const runBeautify = async () => {
     setBeautifying(true);
@@ -522,104 +547,70 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
             <span className="max-w-[30vw] truncate text-[11px] text-red-600">{error}</span>
           ) : null}
         </div>
-        <div className="flex shrink-0 flex-wrap items-center justify-end gap-1 text-[10px]">
-          <span className="rounded-full bg-[color:var(--bg-sunken)] px-2 py-0.5 font-semibold text-[color:var(--ink-2)]">
+        <div className="flex shrink-0 flex-wrap items-center justify-end gap-x-3 gap-y-1 text-[12px]">
+          <span className="text-[11px] text-[color:var(--ink-5)]">
             {DOMAIN_MODEL_META[state.activeDomain]?.label || '阳宅'}
           </span>
-          {state.profileLink ? (
-            <span
-              className="max-w-[8rem] truncate rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-800"
-              title={`用神 ${state.profileLink.yongShen.join('、')}`}
-            >
-              八字·{state.profileLink.displayName || state.profileLink.dayMaster || '已关联'}
-            </span>
-          ) : (
+          {!state.profileLink ? (
             <button
               type="button"
               disabled={linkingBazi}
               onClick={() => void linkPrimaryBazi()}
-              className="rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 font-semibold text-emerald-800 disabled:opacity-40"
-              title="关联主盘做人宅合参"
+              className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline disabled:opacity-40"
             >
               {linkingBazi ? '关联中…' : '关联八字'}
             </button>
-          )}
-          <button
-            type="button"
-            disabled={beautifying}
-            onClick={() => void runBeautify()}
-            className="rounded-md bg-indigo-600 px-2 py-1 font-semibold text-white disabled:opacity-40"
-            title="一键 AI 美化户型与彩平图"
-          >
-            {beautifying ? '美化中…' : '一键AI美化'}
-          </button>
+          ) : null}
           <button
             type="button"
             disabled={reportBusy}
             onClick={() => void generateFullReport(false)}
-            className="rounded-md bg-[color:var(--ink-1)] px-2 py-1 font-semibold text-white disabled:opacity-40"
+            className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline disabled:opacity-40"
           >
             {reportBusy ? '生成中…' : '完整报表'}
           </button>
           <button
             type="button"
-            onClick={() => patch((s) => ({ ...s, proMode: !s.proMode }))}
-            className={`rounded-md px-2 py-1 font-semibold ${
-              state.proMode
-                ? 'bg-[color:var(--ink-1)] text-white'
-                : 'border border-[color:var(--hairline)] text-[color:var(--ink-2)]'
-            }`}
-            title="专业模式：比例尺、完整读数、导出"
-          >
-            PRO
-          </button>
-          <button
-            type="button"
-            onClick={() => void copyProBrief()}
-            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
-          >
-            {copy.pro.copy}
-          </button>
-          <button
-            type="button"
-            onClick={exportProSession}
-            className="hidden rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)] sm:inline"
-          >
-            {copy.pro.exportJson}
-          </button>
-          <button
-            type="button"
             disabled={saving}
             onClick={() => void saveSession()}
-            className="rounded-md bg-[color:var(--brand-soft)] px-2 py-1 font-semibold text-[color:var(--brand-strong)] disabled:opacity-40"
+            className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline disabled:opacity-40"
           >
             {copy.pro.save}
           </button>
           <button
             type="button"
+            disabled={beautifying}
+            onClick={() => void runBeautify()}
+            className="text-[color:var(--ink-3)] underline-offset-2 hover:underline disabled:opacity-40"
+          >
+            {beautifying ? '美化中…' : '美化'}
+          </button>
+          <button
+            type="button"
+            onClick={() => patch((s) => ({ ...s, proMode: !s.proMode }))}
+            className={state.proMode ? 'font-medium text-[color:var(--ink-1)]' : 'text-[color:var(--ink-4)]'}
+          >
+            PRO
+          </button>
+          <button type="button" onClick={() => void copyProBrief()} className="hidden text-[color:var(--ink-4)] hover:underline sm:inline">
+            {copy.pro.copy}
+          </button>
+          <button type="button" onClick={exportProSession} className="hidden text-[color:var(--ink-4)] hover:underline md:inline">
+            JSON
+          </button>
+          <button
+            type="button"
             disabled={publishing}
             onClick={() => void (fullReport ? publishFullReport(fullReport) : generateFullReport(true))}
-            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)] disabled:opacity-40"
-            title="生成并公开发布完整报表，他人可查看"
+            className="hidden text-[color:var(--ink-4)] hover:underline sm:inline disabled:opacity-40"
           >
-            {publishing ? '发布中…' : '公开发布'}
+            {publishing ? '发布中…' : '发布'}
           </button>
           {publicUrl ? (
-            <a
-              href={publicUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="max-w-[7rem] truncate rounded-md bg-sky-50 px-2 py-1 font-semibold text-sky-800 underline"
-            >
-              公开链接
+            <a href={publicUrl} target="_blank" rel="noreferrer" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              公开页
             </a>
           ) : null}
-          <Link
-            href="/tools/naming"
-            className="rounded-md border border-[color:var(--hairline)] px-2 py-1 font-semibold text-[color:var(--ink-2)]"
-          >
-            起名
-          </Link>
         </div>
       </header>
 
@@ -627,6 +618,64 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
       <div className="mt-2 grid min-h-0 flex-1 grid-cols-1 gap-2 overflow-hidden lg:grid-cols-[minmax(300px,34%)_minmax(0,1fr)]">
         {/* 左栏 */}
         <aside className="flex min-h-0 flex-col overflow-hidden rounded-lg border border-[color:var(--hairline)] bg-[color:var(--paper)]">
+          <div className="shrink-0 border-b border-[color:var(--hairline)] px-2.5 py-2">
+            <EngineLockStrip
+              className="!rounded-none !border-0 !bg-transparent !px-0 !py-0"
+              surface="fengshui"
+              extraHref={
+                state.profileLink?.fortuneId
+                  ? `/result/${encodeURIComponent(state.profileLink.fortuneId)}#engine-surface`
+                  : '/analyze?source=fengshui_space'
+              }
+              extraLabel={state.profileLink?.fortuneId ? '报告结构台' : '去排盘'}
+              facts={
+                state.profileLink
+                  ? [
+                      { label: '宅主', value: state.profileLink.displayName },
+                      { label: '日主', value: state.profileLink.dayMaster, mono: true },
+                      { label: '用神', value: (state.profileLink.yongShen || []).join('、') },
+                      {
+                        label: '喜神',
+                        value: (state.profileLink.xiShen || []).join('、'),
+                      },
+                      { label: '忌神', value: (state.profileLink.jiShen || []).join('、') },
+                    ]
+                  : []
+              }
+            />
+            {bridge.linked ? (
+              <div className="mt-1.5 space-y-1 text-[11px] leading-snug text-[color:var(--ink-3)]">
+                <p>{bridge.entranceNote}</p>
+                {bridge.bedroomNote ? <p>{bridge.bedroomNote}</p> : null}
+                <div className="flex flex-wrap gap-x-3 gap-y-0.5 pt-0.5">
+                  <button
+                    type="button"
+                    className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
+                    onClick={() =>
+                      patch((s) => ({
+                        ...s,
+                        planOverlayMode: 'bagua8',
+                        showCompass: true,
+                      }))
+                    }
+                  >
+                    对照八方位
+                  </button>
+                  <button
+                    type="button"
+                    className="text-[color:var(--ink-4)] underline-offset-2 hover:underline"
+                    onClick={() => void generateFullReport(false)}
+                  >
+                    人宅报表
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <p className="mt-1.5 text-[11px] leading-snug text-[color:var(--ink-5)]">
+                {bridge.entranceNote}
+              </p>
+            )}
+          </div>
           <div className="flex shrink-0 border-b border-[color:var(--hairline)]">
             {(
               [
@@ -818,6 +867,9 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                   : copy.views.three}{' '}
               · {state.room.widthM.toFixed(1)}×{state.room.depthM.toFixed(1)}m ·{' '}
               {state.room.entranceFacing}
+              {bridge.linked
+                ? ` · 人宅${bridge.entranceMatch ? '接气' : `宜补${bridge.enhanceFacings.slice(0, 2).join('/')}`}`
+                : ''}
               {state.geo ? ` · ${state.geo.name || state.geo.address.slice(0, 16)}` : ''}
             </span>
             <div className="flex items-center gap-1.5">
@@ -845,8 +897,10 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                 type="button"
                 className="rounded bg-white/10 px-1.5 py-0.5 text-white/80"
                 onClick={() => {
-                  setState(createDefaultLabState());
-                  setSelectedVentId('vent-in-1');
+                  const next = createDefaultLabState();
+                  if (state.profileLink) next.profileLink = state.profileLink;
+                  setState(next);
+                  setSelectedVentId(next.vents[0]?.id || 'vent-in-1');
                   setOpenings([]);
                   setTick((t) => t + 1);
                 }}
@@ -876,6 +930,8 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                 locale={locale}
                 selectedVentId={selectedVentId}
                 onSelectVent={setSelectedVentId}
+                highlightFacings={bridge.enhanceFacings}
+                reduceFacings={bridge.reduceFacings}
                 onChange={(next) => {
                   setState(next);
                   setTick((t) => t + 1);
@@ -896,6 +952,8 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                 viewMode={viewMode}
                 copy={copy}
                 locale={locale}
+                highlightFacings={bridge.enhanceFacings}
+                reduceFacings={bridge.reduceFacings}
               />
             )}
           </div>
@@ -925,69 +983,71 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
       {/* 完整报表抽屉 */}
       {showReport && fullReport ? (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-3 sm:items-center">
-          <div className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
-            <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-4 py-3">
+          <div className="flex max-h-[88dvh] w-full max-w-2xl flex-col overflow-hidden rounded-[12px] border border-[color:var(--hairline)] bg-[color:var(--paper)] shadow-xl">
+            <div className="flex shrink-0 items-center justify-between border-b border-[color:var(--hairline)] px-4 py-3">
               <div>
-                <div className="text-[11px] font-semibold text-indigo-600">完整风水报表</div>
-                <h2 className="text-[15px] font-black text-slate-900">{fullReport.title}</h2>
+                <div className="text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--brand-strong)]">
+                  空间场报表
+                </div>
+                <h2 className="text-[15px] font-semibold text-[color:var(--ink-1)]">{fullReport.title}</h2>
               </div>
               <button
                 type="button"
-                className="rounded-md px-2 py-1 text-[12px] font-semibold text-slate-500 hover:bg-slate-100"
+                className="text-[12px] text-[color:var(--ink-4)] underline-offset-2 hover:underline"
                 onClick={() => setShowReport(false)}
               >
                 关闭
               </button>
             </div>
             <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-3">
-              <p className="text-[13px] text-slate-600">{fullReport.summary}</p>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] text-slate-500">峰值</div>
-                  <div className="text-[16px] font-black">
+              <p className="text-[13px] text-[color:var(--ink-3)]">{fullReport.summary}</p>
+              <div className="grid grid-cols-4 divide-x divide-[color:var(--hairline)] border border-[color:var(--hairline)] text-center">
+                <div className="p-2">
+                  <div className="text-[10px] text-[color:var(--ink-5)]">峰值</div>
+                  <div className="text-[16px] font-semibold tabular-nums text-[color:var(--ink-1)]">
                     {(fullReport.metrics.peakEnergy * 100).toFixed(0)}
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] text-slate-500">均值</div>
-                  <div className="text-[16px] font-black">
+                <div className="p-2">
+                  <div className="text-[10px] text-[color:var(--ink-5)]">均值</div>
+                  <div className="text-[16px] font-semibold tabular-nums text-[color:var(--ink-1)]">
                     {(fullReport.metrics.avgEnergy * 100).toFixed(0)}
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] text-slate-500">滞留</div>
-                  <div className="text-[16px] font-black">
+                <div className="p-2">
+                  <div className="text-[10px] text-[color:var(--ink-5)]">滞留</div>
+                  <div className="text-[16px] font-semibold tabular-nums text-[color:var(--ink-1)]">
                     {(fullReport.metrics.stagnationRatio * 100).toFixed(0)}%
                   </div>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-2">
-                  <div className="text-[10px] text-slate-500">面积</div>
-                  <div className="text-[16px] font-black">
+                <div className="p-2">
+                  <div className="text-[10px] text-[color:var(--ink-5)]">面积</div>
+                  <div className="text-[16px] font-semibold tabular-nums text-[color:var(--ink-1)]">
                     {fullReport.metrics.areaSqm.toFixed(0)}㎡
                   </div>
                 </div>
               </div>
               {fullReport.sections.map((sec) => (
-                <section key={sec.id}>
-                  <h3 className="text-[13px] font-bold text-slate-900">{sec.heading}</h3>
-                  <p className="mt-1 whitespace-pre-wrap text-[12px] leading-relaxed text-slate-600">
+                <section key={sec.id} className="border-t border-[color:var(--hairline)] pt-3">
+                  <h3 className="text-[13px] font-semibold text-[color:var(--ink-1)]">{sec.heading}</h3>
+                  <p className="mt-1 whitespace-pre-wrap text-[12px] leading-relaxed text-[color:var(--ink-3)]">
                     {sec.body}
                   </p>
                 </section>
               ))}
             </div>
-            <div className="flex shrink-0 flex-wrap gap-2 border-t border-slate-100 px-4 py-3">
+            <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-2 border-t border-[color:var(--hairline)] px-4 py-3 text-[12px]">
               <button
                 type="button"
-                className="rounded-md bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white"
+                className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline disabled:opacity-40"
                 disabled={publishing}
                 onClick={() => void publishFullReport(fullReport)}
               >
-                {publishing ? '发布中…' : '公开发布（他人可看）'}
+                {publishing ? '发布中…' : '公开发布'}
               </button>
               <button
                 type="button"
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-[11px] font-semibold"
+                className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(reportToPlainText(fullReport));
@@ -1001,7 +1061,7 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
               </button>
               <button
                 type="button"
-                className="rounded-md border border-slate-200 px-3 py-1.5 text-[11px] font-semibold"
+                className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
                 onClick={() =>
                   downloadJson(`fengshui-report-${Date.now()}.json`, fullReport)
                 }
@@ -1013,7 +1073,7 @@ export function SpaceLabApp({ locale = 'zh-CN' }: { locale?: SiteLocale | string
                   href={publicUrl}
                   target="_blank"
                   rel="noreferrer"
-                  className="rounded-md bg-sky-50 px-3 py-1.5 text-[11px] font-semibold text-sky-800 underline"
+                  className="text-[color:var(--ink-2)] underline-offset-2 hover:underline"
                 >
                   打开公开页
                 </a>

@@ -3,6 +3,7 @@ import { getAuthSession } from '@/lib/auth';
 import { fortuneOperations } from '@/lib/database';
 import { getOrCreateGuestUserId } from '@/lib/user-utils';
 import { profileLinkFromFortuneRow } from '@/lib/fengshui/space/bazi-space-bridge';
+import { resolveYongShenPresentation } from '@/lib/yongshen-live';
 import type { SpaceProfileLink } from '@/lib/fengshui/space/types';
 
 export const runtime = 'nodejs';
@@ -78,23 +79,26 @@ async function link(request: NextRequest) {
       truthInput: full.truthInput || full.truth_input,
     });
 
-    // If yongShen empty, try nested result.analysis
-    if (link && !link.yongShen.length) {
-      const result = (full.result || full.analysis || {}) as Record<string, unknown>;
-      const y =
-        (result.yongShen as { yongShen?: string[]; xiShen?: string[]; jiShen?: string[] }) ||
-        ((result.truthInput as Record<string, unknown>)?.yongShen as {
-          yongShen?: string[];
-          xiShen?: string[];
-          jiShen?: string[];
-        });
-      if (y) {
+    try {
+      const live = resolveYongShenPresentation({
+        ...((full.result && typeof full.result === 'object' ? full.result : {}) as object),
+        basic: full.bazi || (full.result as { basic?: unknown } | undefined)?.basic,
+        pillars: (full.bazi as { pillars?: unknown } | undefined)?.pillars,
+        yongShen: (full as { yongShen?: unknown }).yongShen,
+        birthDate: full.birthDate || (full as { birth_date?: unknown }).birth_date,
+        birthTime: full.birthTime || (full as { birth_time?: unknown }).birth_time,
+        analysis: full.analysis,
+      });
+      if (link && live.yongShen.length) {
         link = {
           ...link,
-          yongShen: [...(y.yongShen || []), ...(y.xiShen || [])].filter(Boolean).slice(0, 6),
-          jiShen: [...(y.jiShen || [])].filter(Boolean).slice(0, 6),
+          yongShen: live.yongShen,
+          xiShen: live.xiShen,
+          jiShen: live.jiShen,
         };
       }
+    } catch {
+      /* keep parsed link */
     }
 
     if (!link) {

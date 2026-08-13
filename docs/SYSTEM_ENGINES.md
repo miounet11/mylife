@@ -181,6 +181,7 @@ Unbound chat: lock note only, no invented 日主/用神.
 | 十维 | `buildFortuneContextInput` | lock |
 | 合婚 / 起名 | natal / 用神 overlay | lock |
 | 通书（已绑盘） | 日主用神 overlay | lock (below natal) |
+| 空间场 | 人宅合参 + 结构场 | lock → 报告结构台；八方位叠图圈出用神/忌神 |
 
 ## Quick lookup
 

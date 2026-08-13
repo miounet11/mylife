@@ -58,6 +58,8 @@ type Props = {
   locale?: string;
   selectedVentId: string | null;
   onSelectVent: (id: string | null) => void;
+  highlightFacings?: string[];
+  reduceFacings?: string[];
 };
 
 /** 次要工具：不打断「画块/选块」主路径 */
@@ -82,6 +84,8 @@ export function CadPlanEditor({
   copy,
   selectedVentId,
   onSelectVent,
+  highlightFacings,
+  reduceFacings,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [aux, setAux] = useState<AuxTool>('none');
@@ -354,6 +358,8 @@ export function CadPlanEditor({
       mode: state.planOverlayMode || 'none',
       entranceFacing: state.room.entranceFacing,
       paperStyle: paper,
+      highlightFacings,
+      reduceFacings,
     });
 
     ctx.strokeStyle = 'rgba(15,23,42,0.7)';
@@ -393,6 +399,8 @@ export function CadPlanEditor({
     drawKind,
     selectedVentId,
     kindLabel,
+    highlightFacings,
+    reduceFacings,
   ]);
 
   const onPointerDown = (e: React.PointerEvent) => {

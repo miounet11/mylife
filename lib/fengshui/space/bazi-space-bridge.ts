@@ -3,20 +3,40 @@
  */
 
 import { resolveDirections } from '@/lib/dimensions/data/directions-wuxing';
+import { formatYongShenPublic } from '@/lib/yongshen-presentation';
+import { listHasElement, normalizeElementList } from '@/lib/wuxing-normalize';
 import type { SpaceLabState, SpaceProfileLink, SpaceSimResult } from './types';
 
 export type BaziSpaceBridge = {
   linked: boolean;
   dayMaster?: string;
   yongShen: string[];
+  xiShen: string[];
   jiShen: string[];
   enhanceNotes: string[];
   reduceNotes: string[];
+  /** 用神/喜神对应的八方位名（东/南/…） */
+  enhanceFacings: string[];
+  reduceFacings: string[];
+  entranceMatch: boolean;
   entranceNote: string;
   bedroomNote: string;
   overlayHint: string;
   summaryLines: string[];
 };
+
+/** 五行 → 空间方位（与八方位叠图同名） */
+export const ELEMENT_FACINGS: Record<string, string[]> = {
+  木: ['东', '东南'],
+  火: ['南'],
+  土: ['西南', '东北'],
+  金: ['西', '西北'],
+  水: ['北'],
+};
+
+export function facingsForElements(els: string[]): string[] {
+  return [...new Set(normalizeElementList(els).flatMap((e) => ELEMENT_FACINGS[e] || []))];
+}
 
 const FACING_ELEMENT: Record<string, string> = {
   东: '木',
@@ -37,23 +57,28 @@ export function buildBaziSpaceBridge(
     return {
       linked: false,
       yongShen: [],
+      xiShen: [],
       jiShen: [],
       enhanceNotes: [],
       reduceNotes: [],
-      entranceNote: '未关联八字：以下为纯结构场观察，可点「关联我的八字」做人宅合参。',
+      enhanceFacings: [],
+      reduceFacings: [],
+      entranceMatch: false,
+      entranceNote: '未关联八字：以下为纯结构场观察，可点「关联八字」做人宅合参。',
       bedroomNote: '关联主盘后，将给出主卧/静区与用神方位的合参建议。',
       overlayHint: '可开八方位/九宫叠图做结构对照。',
       summaryLines: ['未绑定八字 · 结构场独立评估'],
     };
   }
 
-  const yong = link.yongShen || [];
-  const ji = link.jiShen || [];
-  const { enhance, reduce } = resolveDirections(yong, ji);
+  const yong = normalizeElementList(link.yongShen);
+  const xi = normalizeElementList(link.xiShen);
+  const ji = normalizeElementList(link.jiShen);
+  const favorable = [...new Set([...yong, ...xi])];
+  const { enhance, reduce } = resolveDirections(favorable, ji);
   const facing = state.room.entranceFacing || '南';
   const faceEl = FACING_ELEMENT[facing] || '土';
-  const yongSet = new Set(yong);
-  const entranceMatch = yongSet.has(faceEl);
+  const entranceMatch = listHasElement(favorable, faceEl);
 
   const enhanceNotes = enhance.map(
     (e) => `${e.direction}（${e.element}）：${e.layout}`,
@@ -62,9 +87,10 @@ export function buildBaziSpaceBridge(
     (e) => `${e.direction}（${e.element}）：宜收敛杂物与高耗能堆叠`,
   );
 
+  const yongLabel = yong.join('、') || '—';
   const entranceNote = entranceMatch
-    ? `主入口朝${facing}（五行偏${faceEl}），与用神（${yong.join('、') || '—'}）同气相求，结构上利于「接气」。`
-    : `主入口朝${facing}（五行偏${faceEl}），用神偏${yong.join('、') || '待判定'}：可在用神方位加强采光/绿植/整洁，而非强改朝向。`;
+    ? `主入口朝${facing}（五行偏${faceEl}），与用神（${yongLabel}）同气相求，结构上利于「接气」。`
+    : `主入口朝${facing}（五行偏${faceEl}），用神偏${yongLabel === '—' ? '待判定' : yongLabel}：可在用神方位加强采光/绿植/整洁，而非强改朝向。`;
 
   const bedroomNote =
     enhance[0]
@@ -79,19 +105,26 @@ export function buildBaziSpaceBridge(
   const who = link.displayName ? `宅主 ${link.displayName}` : '宅主主盘';
   const dm = link.dayMaster ? `日主 ${link.dayMaster}` : '';
 
+  const enhanceFacings = facingsForElements(favorable);
+  const reduceFacings = facingsForElements(ji);
+
   return {
     linked: true,
     dayMaster: link.dayMaster,
     yongShen: yong,
+    xiShen: xi,
     jiShen: ji,
     enhanceNotes,
     reduceNotes,
+    enhanceFacings,
+    reduceFacings,
+    entranceMatch,
     entranceNote,
     bedroomNote,
     overlayHint,
     summaryLines: [
       `${who}${dm ? ` · ${dm}` : ''}`,
-      `用神/喜神：${yong.join('、') || '—'}`,
+      `用神：${yongLabel}${xi.length ? ` · 喜神 ${xi.join('、')}` : ''}`,
       ji.length ? `忌神：${ji.join('、')}` : '忌神：不明显',
       entranceNote,
       bedroomNote,
@@ -156,27 +189,44 @@ export function profileLinkFromFortuneRow(row: {
     (rec.yongShen as { yongShen?: string[]; xiShen?: string[]; jiShen?: string[] }) ||
     (rec.yong_shen as { yongShen?: string[]; xiShen?: string[]; jiShen?: string[] }) ||
     {};
-  const yongShen = [
-    ...((yongRaw.yongShen as string[]) || []),
-    ...((yongRaw.xiShen as string[]) || []),
-  ].filter(Boolean);
-  const jiShen = [...((yongRaw.jiShen as string[]) || [])].filter(Boolean);
+  let yongShen = normalizeElementList(yongRaw.yongShen);
+  let xiShen = normalizeElementList(yongRaw.xiShen);
+  let jiShen = normalizeElementList(yongRaw.jiShen);
 
-  // nested analysis.yongShen
   if (!yongShen.length && rec.analysis && typeof rec.analysis === 'object') {
     const a = rec.analysis as Record<string, unknown>;
     const y = a.yongShen as { yongShen?: string[]; xiShen?: string[]; jiShen?: string[] };
     if (y) {
-      yongShen.push(...(y.yongShen || []), ...(y.xiShen || []));
-      jiShen.push(...(y.jiShen || []));
+      yongShen = normalizeElementList(y.yongShen);
+      xiShen = normalizeElementList([...(xiShen || []), ...(y.xiShen || [])]);
+      jiShen = normalizeElementList([...(jiShen || []), ...(y.jiShen || [])]);
     }
   }
 
-  const pillars = (rec.pillars as Array<{ gan?: string; zhi?: string }>) || [];
+  const pub = formatYongShenPublic({
+    yongShen,
+    xiShen,
+    jiShen,
+    dayMaster: `${rec.dayMaster || rec.day_master || ''}`,
+    strength: '',
+    strengthDesc: '',
+    score: 0,
+    analysis: '',
+    details: { helpStrength: 0, drainStrength: 0, seasonBonus: 0 },
+    priority: [],
+  } as Parameters<typeof formatYongShenPublic>[0]);
+  if (pub?.yongShen?.length) {
+    yongShen = pub.yongShen;
+    xiShen = pub.xiShen || xiShen;
+    jiShen = pub.jiShen || jiShen;
+  }
+
+  const pillars = (rec.pillars as Array<{ gan?: string; zhi?: string; celestialStem?: string }>) || [];
   const dayPillar = pillars[2];
   const dayMaster =
     (rec.dayMaster as string) ||
     (rec.day_master as string) ||
+    (dayPillar?.celestialStem ? String(dayPillar.celestialStem) : '') ||
     (dayPillar?.gan ? String(dayPillar.gan) : undefined);
 
   const birthSignature =
@@ -188,6 +238,7 @@ export function profileLinkFromFortuneRow(row: {
     displayName: String(row.displayName || row.name || '').slice(0, 40) || undefined,
     dayMaster,
     yongShen: [...new Set(yongShen)].slice(0, 6),
+    xiShen: [...new Set(xiShen)].slice(0, 6),
     jiShen: [...new Set(jiShen)].slice(0, 6),
     linkedAt: new Date().toISOString(),
   };

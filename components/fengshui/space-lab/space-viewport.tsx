@@ -23,6 +23,8 @@ type Props = {
   viewMode: 'plan' | 'iso';
   copy?: SpaceLabCopy;
   locale?: string;
+  highlightFacings?: string[];
+  reduceFacings?: string[];
 };
 
 function labelForKind(kind: string, copy?: SpaceLabCopy): string {
@@ -203,6 +205,8 @@ export function SpaceViewport({
   viewMode,
   copy,
   locale,
+  highlightFacings,
+  reduceFacings,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dragId = useRef<string | null>(null);
@@ -372,6 +376,8 @@ export function SpaceViewport({
         mode: overlayMode,
         entranceFacing: state.room.entranceFacing,
         paperStyle: paper,
+        highlightFacings,
+        reduceFacings,
       });
 
       for (const v of state.vents) {
@@ -426,7 +432,7 @@ export function SpaceViewport({
     return () => {
       cancelled = true;
     };
-  }, [state, result, selectedVentId, viewMode, copy, locale]);
+  }, [state, result, selectedVentId, viewMode, copy, locale, highlightFacings, reduceFacings]);
 
   const toNorm = (clientX: number, clientY: number) => {
     const canvas = canvasRef.current!;

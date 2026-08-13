@@ -103,7 +103,16 @@ export type PlanOverlayDrawOpts = {
   entranceFacing: string;
   /** paper style light plan like references */
   paperStyle?: boolean;
+  /** 人宅合参：用神/喜神方位（东/南/…） */
+  highlightFacings?: string[];
+  /** 人宅合参：忌神方位 */
+  reduceFacings?: string[];
 };
+
+function facingIn(name: string, list?: string[]): boolean {
+  if (!list?.length || !name) return false;
+  return list.some((f) => f === name || name.includes(f) || f.includes(name));
+}
 
 export function drawPlanPaperBackground(
   ctx: CanvasRenderingContext2D,
@@ -137,17 +146,17 @@ export function drawPlanPaperBackground(
 }
 
 export function drawPlanOverlay(opts: PlanOverlayDrawOpts) {
-  const { ctx, ox, oy, size, mode, entranceFacing } = opts;
+  const { ctx, ox, oy, size, mode, entranceFacing, highlightFacings, reduceFacings } = opts;
   if (mode === 'none') return;
 
   const cx = ox + size / 2;
   const cy = oy + size / 2;
   const R = size * 0.46;
 
-  if (mode === 'bagua8') drawBagua8(ctx, cx, cy, R, entranceFacing);
+  if (mode === 'bagua8') drawBagua8(ctx, cx, cy, R, entranceFacing, highlightFacings, reduceFacings);
   else if (mode === 'radial24') drawRadial24(ctx, cx, cy, R, entranceFacing);
-  else if (mode === 'bagua9') drawBagua9(ctx, ox, oy, size, entranceFacing);
-  else if (mode === 'sector') drawSector(ctx, cx, cy, R, entranceFacing);
+  else if (mode === 'bagua9') drawBagua9(ctx, ox, oy, size, entranceFacing, highlightFacings, reduceFacings);
+  else if (mode === 'sector') drawSector(ctx, cx, cy, R, entranceFacing, highlightFacings, reduceFacings);
   else if (mode === 'flyingStar') drawFlyingStar(ctx, cx, cy, R, entranceFacing);
 }
 
@@ -157,6 +166,8 @@ function drawBagua8(
   cy: number,
   R: number,
   entranceFacing: string,
+  highlightFacings?: string[],
+  reduceFacings?: string[],
 ) {
   // outer ring
   ctx.strokeStyle = 'rgba(30,40,50,0.35)';
@@ -180,20 +191,57 @@ function drawBagua8(
     ctx.stroke();
   }
 
+  // 用神扇区浅填（先于徽章，不挡字）
+  if (highlightFacings?.length) {
+    for (const d of EIGHT) {
+      if (!facingIn(d.name, highlightFacings)) continue;
+      const start = deg2rad(d.bearing - 22.5 - 90);
+      const end = deg2rad(d.bearing + 22.5 - 90);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, R * 0.7, start, end);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(15,23,42,0.08)';
+      ctx.fill();
+    }
+  }
+
   // direction badges
   for (const d of EIGHT) {
+    const hi = facingIn(d.name, highlightFacings);
+    const lo = facingIn(d.name, reduceFacings) && !hi;
     const p = bearingToCanvas(d.bearing, R * 0.88);
     const x = cx + p.x;
     const y = cy + p.y;
+    if (hi) {
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.strokeStyle = 'rgba(15,23,42,0.88)';
+      ctx.lineWidth = 2.4;
+      ctx.stroke();
+    } else if (lo) {
+      ctx.beginPath();
+      ctx.arc(x, y, 18, 0, Math.PI * 2);
+      ctx.setLineDash([3, 2]);
+      ctx.strokeStyle = 'rgba(100,116,139,0.95)';
+      ctx.lineWidth = 1.4;
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
     ctx.beginPath();
-    ctx.arc(x, y, 14, 0, Math.PI * 2);
-    ctx.fillStyle = d.color;
+    ctx.arc(x, y, hi ? 15 : 14, 0, Math.PI * 2);
+    ctx.fillStyle = lo ? 'rgba(100,116,139,0.78)' : d.color;
     ctx.fill();
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 11px ui-sans-serif, system-ui';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText(d.short, x, y);
+    if (hi || lo) {
+      ctx.font = 'bold 8px ui-sans-serif, system-ui';
+      ctx.fillStyle = hi ? '#0f172a' : '#64748b';
+      ctx.fillText(hi ? '用' : '忌', x, y + 22);
+    }
   }
 
   // 鬼門 NE / SW markers
@@ -209,7 +257,16 @@ function drawBagua8(
   ctx.fill();
   ctx.fillStyle = '#fff';
   ctx.font = '9px ui-sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
   ctx.fillText('中', cx, cy);
+
+  if (highlightFacings?.length || reduceFacings?.length) {
+    ctx.textAlign = 'center';
+    ctx.font = '9px ui-sans-serif, system-ui';
+    ctx.fillStyle = 'rgba(15,23,42,0.58)';
+    ctx.fillText('实圈用神 · 虚圈忌神', cx, cy + 16);
+  }
 }
 
 function drawRadial24(
@@ -261,19 +318,21 @@ function drawBagua9(
   oy: number,
   size: number,
   entranceFacing: string,
+  highlightFacings?: string[],
+  reduceFacings?: string[],
 ) {
   // 3x3 cells — 坐北朝南习惯：上北下南（与参考图入口在下一致时可旋转）
   // 我们标准：上北，入口标注在对应边
-  const cells: Array<{ name: string; color: string; note: string }> = [
-    { name: '西北\n财/贵', color: 'rgba(234,179,8,0.22)', note: '金' },
-    { name: '北\n事业', color: 'rgba(14,165,233,0.22)', note: '水' },
-    { name: '东北\n学业', color: 'rgba(34,197,94,0.22)', note: '土' },
-    { name: '西\n人际', color: 'rgba(168,85,247,0.18)', note: '金' },
-    { name: '中\n平衡', color: 'rgba(250,204,21,0.28)', note: '土' },
-    { name: '东\n健康', color: 'rgba(132,204,22,0.22)', note: '木' },
-    { name: '西南\n姻缘', color: 'rgba(244,63,94,0.18)', note: '土' },
-    { name: '南\n名誉', color: 'rgba(249,115,22,0.22)', note: '火' },
-    { name: '东南\n文昌', color: 'rgba(45,212,191,0.2)', note: '木' },
+  const cells: Array<{ name: string; color: string; note: string; dir: string }> = [
+    { name: '西北\n财/贵', color: 'rgba(234,179,8,0.22)', note: '金', dir: '西北' },
+    { name: '北\n事业', color: 'rgba(14,165,233,0.22)', note: '水', dir: '北' },
+    { name: '东北\n学业', color: 'rgba(34,197,94,0.22)', note: '土', dir: '东北' },
+    { name: '西\n人际', color: 'rgba(168,85,247,0.18)', note: '金', dir: '西' },
+    { name: '中\n平衡', color: 'rgba(250,204,21,0.28)', note: '土', dir: '中' },
+    { name: '东\n健康', color: 'rgba(132,204,22,0.22)', note: '木', dir: '东' },
+    { name: '西南\n姻缘', color: 'rgba(244,63,94,0.18)', note: '土', dir: '西南' },
+    { name: '南\n名誉', color: 'rgba(249,115,22,0.22)', note: '火', dir: '南' },
+    { name: '东南\n文昌', color: 'rgba(45,212,191,0.2)', note: '木', dir: '东南' },
   ];
   // order row-major with top=N: NW N NE / W C E / SW S SE
   const order = [0, 1, 2, 3, 4, 5, 6, 7, 8];
@@ -284,11 +343,15 @@ function drawBagua9(
     const c = cells[order[i]];
     const x = ox + col * cell;
     const y = oy + row * cell;
-    ctx.fillStyle = c.color;
+    const hi = facingIn(c.dir, highlightFacings);
+    const lo = facingIn(c.dir, reduceFacings) && !hi;
+    ctx.fillStyle = hi ? 'rgba(15,23,42,0.10)' : c.color;
     ctx.fillRect(x, y, cell, cell);
-    ctx.strokeStyle = 'rgba(15,23,42,0.25)';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(x, y, cell, cell);
+    ctx.strokeStyle = hi ? 'rgba(15,23,42,0.78)' : lo ? 'rgba(100,116,139,0.7)' : 'rgba(15,23,42,0.25)';
+    ctx.lineWidth = hi ? 2.4 : 1;
+    if (lo) ctx.setLineDash([4, 3]);
+    ctx.strokeRect(x + 1.5, y + 1.5, cell - 3, cell - 3);
+    ctx.setLineDash([]);
     ctx.fillStyle = '#0f172a';
     ctx.font = 'bold 11px ui-sans-serif';
     ctx.textAlign = 'center';
@@ -297,6 +360,11 @@ function drawBagua9(
     lines.forEach((line, li) => {
       ctx.fillText(line, x + cell / 2, y + cell / 2 + (li - (lines.length - 1) / 2) * 13);
     });
+    if (hi || lo) {
+      ctx.font = 'bold 9px ui-sans-serif';
+      ctx.fillStyle = hi ? '#0f172a' : '#64748b';
+      ctx.fillText(hi ? '用神' : '忌神', x + cell / 2, y + cell - 12);
+    }
   }
 
   // entrance bar at facing edge
@@ -323,19 +391,30 @@ function drawSector(
   cy: number,
   R: number,
   entranceFacing: string,
+  highlightFacings?: string[],
+  reduceFacings?: string[],
 ) {
-  // 8 wedges alternating cool/warm — like reference blue/red triangles
+  // 8 wedges — 用神扇区加深，忌神扇区变灰
   for (let i = 0; i < 8; i++) {
-    const start = deg2rad(i * 45 - 90);
-    const end = deg2rad((i + 1) * 45 - 90);
+    const d = EIGHT[i];
+    const hi = facingIn(d.name, highlightFacings);
+    const lo = facingIn(d.name, reduceFacings) && !hi;
+    const start = deg2rad(d.bearing - 22.5 - 90);
+    const end = deg2rad(d.bearing + 22.5 - 90);
     ctx.beginPath();
     ctx.moveTo(cx, cy);
     ctx.arc(cx, cy, R, start, end);
     ctx.closePath();
-    ctx.fillStyle = i % 2 === 0 ? 'rgba(37,99,235,0.14)' : 'rgba(220,38,38,0.12)';
+    ctx.fillStyle = hi
+      ? 'rgba(15,23,42,0.14)'
+      : lo
+        ? 'rgba(148,163,184,0.12)'
+        : i % 2 === 0
+          ? 'rgba(37,99,235,0.10)'
+          : 'rgba(220,38,38,0.08)';
     ctx.fill();
-    ctx.strokeStyle = i % 2 === 0 ? 'rgba(37,99,235,0.45)' : 'rgba(220,38,38,0.4)';
-    ctx.lineWidth = 1.2;
+    ctx.strokeStyle = hi ? 'rgba(15,23,42,0.65)' : lo ? 'rgba(100,116,139,0.45)' : 'rgba(15,23,42,0.18)';
+    ctx.lineWidth = hi ? 1.8 : 1.1;
     ctx.stroke();
   }
 

@@ -21,7 +21,8 @@ export type EngineDisplaySurface =
   | 'dimensions'
   | 'hehun'
   | 'naming'
-  | 'almanac';
+  | 'almanac'
+  | 'fengshui';
 
 export type EngineDisplayPolicy = {
   surface: EngineDisplaySurface;
@@ -118,6 +119,15 @@ export const ENGINE_DISPLAY: Record<EngineDisplaySurface, EngineDisplayPolicy> =
     extraLabel: '完整报告',
     extraHrefFallback: '/analyze',
   },
+  fengshui: {
+    surface: 'fengshui',
+    mode: 'lock',
+    mountDesk: false,
+    showCite: false,
+    note: '空间场叠在同一套日主用神上，不另起宅命',
+    extraLabel: '完整报告',
+    extraHrefFallback: '/analyze',
+  },
 };
 
 export function getEngineDisplay(surface: EngineDisplaySurface): EngineDisplayPolicy {
@@ -146,7 +156,7 @@ export const ENGINE_DISPLAY_LAYERS: Array<{
   {
     mode: 'lock',
     title: '锁定条',
-    body: '对话、十维、合婚、起名、通书：只钉日主/用神/大运等关键事实，深读回报告结构台。',
-    surfaces: '对话 · 十维 · 合婚 · 起名 · 通书',
+    body: '对话、十维、合婚、起名、通书、空间场：只钉日主/用神等关键事实，深读回报告结构台。',
+    surfaces: '对话 · 十维 · 合婚 · 起名 · 通书 · 空间场',
   },
 ];

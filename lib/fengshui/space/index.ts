@@ -85,6 +85,8 @@ export {
   buildBaziSpaceBridge,
   mergeBridgeIntoActions,
   profileLinkFromFortuneRow,
+  facingsForElements,
+  ELEMENT_FACINGS,
   type BaziSpaceBridge,
 } from './bazi-space-bridge';
 export {

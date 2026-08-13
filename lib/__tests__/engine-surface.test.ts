@@ -18,6 +18,8 @@ describe('engine surface pack', () => {
     assert.equal(getEngineDisplay('chatBound').mode, 'lock');
     assert.equal(getEngineDisplay('dimensions').mode, 'lock');
     assert.equal(getEngineDisplay('hehun').mode, 'lock');
+    assert.equal(getEngineDisplay('fengshui').mode, 'lock');
+    assert.equal(getEngineDisplay('fengshui').mountDesk, false);
     assert.equal(ENGINE_DISPLAY_LAYERS.length, 3);
   });
 

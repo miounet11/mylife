@@ -166,8 +166,10 @@ export interface SpaceProfileLink {
   birthSignature: string;
   displayName?: string;
   dayMaster?: string;
-  /** 用神 + 喜神 */
+  /** 扶抑主用神（中文五行） */
   yongShen: string[];
+  /** 喜神（含调候），空间场可与用神一并作宜补方位 */
+  xiShen?: string[];
   jiShen: string[];
   linkedAt: string;
 }
