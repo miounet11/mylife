@@ -745,9 +745,7 @@ export default function HehunWorkspace({ locale: localeProp }: { locale?: SiteLo
       {displayResult ? (
         <div className="space-y-4 border-y border-[color:var(--hairline)] py-4">
           <EngineLockStrip
-            note="合婚对照同一套四柱 / 用神 / 大运，不另起纳音体系"
-            extraHref="/analyze"
-            extraLabel="个人报告"
+            surface="hehun"
             facts={[
               {
                 label: displayResult.personA.name || copy.sideA,

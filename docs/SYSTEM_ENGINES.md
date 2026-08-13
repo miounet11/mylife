@@ -155,19 +155,32 @@ Without date, 月令 falls back to 本气 (丑月 = 己土 all month). Dimension
 
 ---
 
-## Surface utilization
+## UI display logic
 
-| Surface | Compute | Display |
-|---------|---------|---------|
-| Report `/result` | `analyzeFortune` + live 用神 | Engine Surface + 排盘核对 + K线 desk |
-| Expert desk | same pack | Engine Surface (dense) |
-| Tool result | GroundTruthPack from report/birth | Engine Surface |
-| Chat | EFC + live 用神 + 排盘核对 in **system prompt** | Opening strip + follow-up **引擎锁定** card; full desk stays on report |
-| 十维 | `buildFortuneContextInput` | `EngineLockStrip` 日主/用神 + advisor text |
-| 合婚 / 起名 | natal or 用神 overlay | `EngineLockStrip` + layer / candidate scores |
-| 通书 / 星座 | 日主用神 overlay | 日运层，权重低于命盘 |
+Source of truth: `lib/engine-surface/display-policy.ts` (`getEngineDisplay`).
 
-Chat must not invent 日主/用神 when unbound. When bound, it **cites** the natal chain and deep-dives on the report structure台.
+Three layers. A page picks **one primary**. Do not add a fourth chrome.
+
+| Layer | Component | When |
+|-------|-----------|------|
+| **结构台 desk** | `EngineSurfaceMount` | Report, expert, tool-result — reader needs 四柱/用神/大运/K线 |
+| **引用条 cite** | `EngineSurfaceCite` | Same page as the desk, above the narrative |
+| **锁定条 lock** | `EngineLockStrip` | Chat, 十维, 合婚, 起名, 通书 — cite facts, deep-read on the report desk |
+
+Reading order on a report: 结论 → 动作 → 引用条 → 结构台.  
+Chat / tools: 锁定条 → 本页结论 → 链接回结构台.  
+Unbound chat: lock note only, no invented 日主/用神.
+
+| Surface | Compute | Display mode |
+|---------|---------|--------------|
+| `/result` | `analyzeFortune` + live 用神 | desk + cite |
+| Expert desk | same pack | desk (dense) + cite |
+| `/tool-result` | GroundTruthPack | desk + cite |
+| Chat bound | EFC in system prompt | lock → `#engine-surface` |
+| Chat unbound | none | lock, CTA 去排盘 |
+| 十维 | `buildFortuneContextInput` | lock |
+| 合婚 / 起名 | natal / 用神 overlay | lock |
+| 通书（已绑盘） | 日主用神 overlay | lock (below natal) |
 
 ## Quick lookup
 

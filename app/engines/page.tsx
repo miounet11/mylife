@@ -9,6 +9,7 @@ import { getRequestLocale } from '@/lib/i18n/server-locale';
 import { getPageSeoGeoPack } from '@/lib/page-seo-geo-packs';
 import { withLocalePrefix } from '@/lib/seo';
 import { getSystemCapabilityStats } from '@/lib/system-capability-stats';
+import { ENGINE_DISPLAY_LAYERS } from '@/lib/engine-surface/display-policy';
 import {
   SYSTEM_ENGINE_FAMILY_LABEL,
   engineCapabilityLine,
@@ -75,6 +76,21 @@ export default async function EnginesPage({ searchParams }: EnginesPageProps) {
           <span className="mx-1.5 text-[color:var(--ink-6)]">·</span>
           用神引擎 {catalog.yongShenVersion}
         </p>
+
+        <section>
+          <h2 className="mb-1 text-[12px] font-medium text-[color:var(--ink-5)]">界面怎么展示</h2>
+          <ul className="divide-y divide-[color:var(--hairline)] border-t border-[color:var(--hairline)]">
+            {ENGINE_DISPLAY_LAYERS.map((layer) => (
+              <li key={layer.mode} className="flex flex-col gap-0.5 py-3 sm:flex-row sm:items-baseline sm:justify-between sm:gap-4">
+                <span className="text-[14px] font-medium text-[color:var(--ink-1)]">{layer.title}</span>
+                <span className="min-w-0 text-[12px] leading-[1.45] text-[color:var(--ink-5)] sm:max-w-[68%] sm:text-right">
+                  {layer.body}
+                  <span className="ml-1 text-[color:var(--ink-6)]">（{layer.surfaces}）</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
 
         {FAMILY_ORDER.map((family) => {
           const rows = catalog.byFamily[family];

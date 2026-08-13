@@ -46,9 +46,7 @@ export default function DimensionReportShell({
   return (
     <div className="space-y-4">
       <EngineLockStrip
-        note="十维切片走四柱→用神→大运→K线主链，不另起盘"
-        extraHref="/analyze"
-        extraLabel="完整报告"
+        surface="dimensions"
         facts={[
           { label: '日主', value: dayMaster, mono: true },
           { label: '用神', value: yongShen.join('、') },

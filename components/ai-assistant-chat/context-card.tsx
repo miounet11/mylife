@@ -33,15 +33,13 @@ export function ContextCard({
   return (
     <section className="space-y-2">
       <EngineLockStrip
+        surface={report ? 'chatBound' : 'chatUnbound'}
         note={
           intentPreset
             ? `${intentPreset.entryLabel} · 对话只解释这些结构，不另起一套算法`
-            : report
-              ? '对话只解释这些结构，不另起一套算法'
-              : '未绑定报告 · 不编造日主用神'
+            : undefined
         }
-        extraHref={report?.id ? `/result/${encodeURIComponent(report.id)}#engine-surface` : '/analyze'}
-        extraLabel={report?.id ? '报告结构台' : '去排盘'}
+        extraHref={report?.id ? `/result/${encodeURIComponent(report.id)}#engine-surface` : undefined}
         facts={
           report
             ? [

@@ -95,9 +95,7 @@ export function NamingResultView({ sessionId, result }: Props) {
       ) : null}
 
       <EngineLockStrip
-        note="起名对照生辰用神与康熙笔画，不另起命盘"
-        extraHref="/tools/naming"
-        extraLabel="再起一批"
+        surface="naming"
         facts={[
           { label: '用神', value: (result.input.yongShen || []).join('、') },
           { label: '忌神', value: (result.input.jiShen || []).join('、') },

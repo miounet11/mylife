@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
 import type { AlmanacDayPack, PersonalDayOverlay } from '@/lib/almanac/types';
 import {
   almanacDayPanelCopy,
@@ -57,6 +58,15 @@ export default function AlmanacDayPanel({
 
   return (
     <div className="space-y-4" data-almanac-day={pack.date} data-locale={locale}>
+      {personal ? (
+        <EngineLockStrip
+          surface="almanac"
+          facts={[
+            { label: copy.dayMaster, value: personal.dayMaster, mono: true },
+            { label: locale === 'en' ? 'Favorable' : '用神', value: (personal.yongShen || []).join(locale === 'en' ? ', ' : '、') },
+          ]}
+        />
+      ) : null}
       <header className="overflow-hidden rounded-2xl border border-[color:var(--hairline)] bg-gradient-to-br from-[color:var(--brand-soft)]/50 via-white to-[color:var(--paper)] p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0 flex-1">

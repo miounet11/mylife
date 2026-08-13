@@ -324,7 +324,6 @@ export default function ProReportShell({
       <EngineSurfaceCite
         pack={enginePack}
         modules={['pillars', 'yongji', 'kline', 'months', 'dayun', 'almanac']}
-        label="决策与叙事都挂在同一套引擎结构上"
       />
 
       <ReportIllustrationCite

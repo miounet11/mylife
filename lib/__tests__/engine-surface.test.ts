@@ -5,10 +5,22 @@ import {
   buildEngineSurfaceFromFortuneLike,
   buildEngineSurfaceFromProView,
   buildEngineSurfacePack,
+  ENGINE_DISPLAY_LAYERS,
   ENGINE_MODULE_META,
+  getEngineDisplay,
 } from '@/lib/engine-surface';
 
 describe('engine surface pack', () => {
+  it('display policy: desk vs lock never mix', () => {
+    assert.equal(getEngineDisplay('report').mountDesk, true);
+    assert.equal(getEngineDisplay('report').showCite, true);
+    assert.equal(getEngineDisplay('chatBound').mountDesk, false);
+    assert.equal(getEngineDisplay('chatBound').mode, 'lock');
+    assert.equal(getEngineDisplay('dimensions').mode, 'lock');
+    assert.equal(getEngineDisplay('hehun').mode, 'lock');
+    assert.equal(ENGINE_DISPLAY_LAYERS.length, 3);
+  });
+
   it('exports module meta for all ids', () => {
     const ids = Object.keys(ENGINE_MODULE_META);
     assert.ok(ids.includes('pillars'));

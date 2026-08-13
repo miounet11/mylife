@@ -18,6 +18,15 @@ export {
 } from '@/lib/engine-surface/types';
 
 export {
+  ENGINE_DISPLAY,
+  ENGINE_DISPLAY_LAYERS,
+  getEngineDisplay,
+  type EngineDisplayMode,
+  type EngineDisplaySurface,
+  type EngineDisplayPolicy,
+} from '@/lib/engine-surface/display-policy';
+
+export {
   buildEngineSurfacePack,
   buildEngineSurfaceFromFortuneLike,
   buildEngineSurfaceFromProView,

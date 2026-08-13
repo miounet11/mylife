@@ -12,6 +12,7 @@ import {
 import { trackClientEvent } from '@/lib/analytics-client';
 import { trackGoogleAnalyticsEvent } from '@/lib/analytics-client'; // Stub for now; check prod sync for full implementation
 import { ContextCard } from '@/components/ai-assistant-chat/context-card';
+import { EngineLockStrip } from '@/components/engine-surface/engine-lock-strip';
 import { MaterialEvidenceComposer } from '@/components/ai-assistant-chat/material-evidence-composer';
 import { useChatEvents } from '@/components/ai-assistant-chat/use-chat-events';
 import { useChatMaterials } from '@/components/ai-assistant-chat/use-chat-materials';
@@ -1213,22 +1214,17 @@ export default function AIAssistantChat({
 
           {showOpeningChrome && context?.report ? (
             <div className="space-y-2">
-              <div className="rounded-[8px] border border-[#e7f3ff] bg-[#f0f6ff] px-2.5 py-1.5 text-[11px] leading-[1.45] text-[#365899]">
-                <span className="font-semibold">{context.report.name || t('你', 'You')}</span>
-                {' · '}
-                {t('日主', 'Day master')}{' '}
-                <span className="font-mono font-semibold">{context.report.dayMaster || '—'}</span>
-                {' · '}
-                {t('大运', 'Luck cycle')}{' '}
-                <span className="font-mono font-semibold">{context.report.currentDaYun || '—'}</span>
-                {(context.report.yongShen || []).length > 0 ? (
-                  <>
-                    {' · '}
-                    {t('用神', 'Favorable')}{' '}
-                    <span className="font-semibold">{context.report.yongShen.join(enUi ? ', ' : '、')}</span>
-                  </>
-                ) : null}
-              </div>
+              <EngineLockStrip
+                surface="chatBound"
+                extraHref={`/result/${encodeURIComponent(context.report.id)}#engine-surface`}
+                facts={[
+                  { label: t('日主', 'Day master'), value: context.report.dayMaster, mono: true },
+                  { label: t('格局', 'Pattern'), value: context.report.pattern },
+                  { label: t('用神', 'Favorable'), value: (context.report.yongShen || []).join(enUi ? ', ' : '、') },
+                  { label: t('大运', 'Luck cycle'), value: context.report.currentDaYun, mono: true },
+                  { label: t('流年', 'Year pillar'), value: context.report.currentLiuNian, mono: true },
+                ]}
+              />
               {/* first_mes is injected as MessageBubble below; panel keeps chips + starters */}
               {!hideOpeningFirstMes ? (
                 <ChatOpeningPanel

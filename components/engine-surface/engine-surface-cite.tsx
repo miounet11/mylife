@@ -5,6 +5,7 @@
  * Drop above any result narrative so readers can open structure modules.
  */
 
+import { getEngineDisplay } from '@/lib/engine-surface/display-policy';
 import {
   ENGINE_MODULE_META,
   type EngineModuleId,
@@ -25,7 +26,7 @@ export default function EngineSurfaceCite({
   pack,
   href = '#engine-surface',
   modules,
-  label = '引用引擎模块',
+  label = getEngineDisplay('report').note,
   className = '',
 }: Props) {
   const ids = (modules || pack.modules).filter((id) => ENGINE_MODULE_META[id]);
