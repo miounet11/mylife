@@ -9,6 +9,7 @@ import {
   resolveCohortKey,
   resolveCohortRegion,
   sanitizeCalibration,
+  matchStats,
 } from '@/lib/cohort-lenses';
 import { buildPromptModules } from '@/lib/agentic-report/prompt-injector';
 import { buildCohortClaims } from '@/lib/cohort-lenses/claims';
@@ -118,6 +119,28 @@ describe('cohort-lenses', () => {
       ?.claims.find((claim) => claim.id === 'childhood.family');
     assert.equal(family?.verdict, 'unlike');
     assert.equal(family?.forkId, 'many-siblings');
+  });
+
+  it('computes overlap from like / unlike judgments', () => {
+    const stats = matchStats({
+      version: 1,
+      birthYear: 1993,
+      cohortKey: 'cn-90-94',
+      region: 'cn-mainland',
+      judgments: [
+        { claimId: 'a', lensId: 'career', verdict: 'like', judgedAt: '2026-08-18T00:00:00.000Z' },
+        { claimId: 'b', lensId: 'money', verdict: 'unlike', judgedAt: '2026-08-18T00:00:00.000Z' },
+        { claimId: 'c', lensId: 'childhood', verdict: 'partial', judgedAt: '2026-08-18T00:00:00.000Z' },
+      ],
+      confirmedTraits: [],
+      deniedTraits: [],
+      focusLenses: [],
+      updatedAt: '2026-08-18T00:00:00.000Z',
+    });
+    assert.equal(stats.like, 1);
+    assert.equal(stats.unlike, 1);
+    assert.equal(stats.partial, 1);
+    assert.equal(stats.overlapPct, 50);
   });
 
   it('exposes COHORT_MEMORY in agent prompt modules', () => {

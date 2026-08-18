@@ -18,6 +18,8 @@ import { getChatOpsSnapshot } from '@/lib/chat-ops-snapshot';
 import { getEmailOpsSnapshot } from '@/lib/email/timing-email-stats';
 import { getProductFunnelSnapshot } from '@/lib/product-analytics-dashboard';
 import { countSiteFeedbackByStatus } from '@/lib/user-feedback-store';
+import { buildOpsInboxSnapshot } from '@/lib/ops-inbox';
+import { formatInboxAge } from '@/lib/ops-inbox-view';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,6 +126,7 @@ export default async function AdminDashboardPage() {
     const counts = countSiteFeedbackByStatus() as Record<string, number>;
     return counts.open ?? counts.new ?? counts.pending ?? 0;
   }, 0);
+  const inbox = safeSnap(() => buildOpsInboxSnapshot(), null);
 
   const llmFailRate =
     snap.analytics.llmAttempts24h > 0
@@ -369,12 +372,19 @@ export default async function AdminDashboardPage() {
                 <ArrowRight className="h-3.5 w-3.5 text-[color:var(--ink-4)] group-hover:text-[color:var(--brand)]" />
               </div>
               <div className="mt-3">
-                <div className="text-[10px] uppercase text-[color:var(--ink-4)]">待处理（open）</div>
+                <div className="text-[10px] uppercase text-[color:var(--ink-4)]">未读 / 真实留言</div>
                 <div className="text-2xl font-black tabular-nums text-[color:var(--ink-1)]">
-                  {feedbackOpen}
+                  {inbox?.feedback.unread ?? feedbackOpen}
+                  <span className="ml-1 text-[13px] font-semibold text-[color:var(--ink-4)]">
+                    / {inbox?.feedback.freeformNew ?? 0}
+                  </span>
                 </div>
                 <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">
-                  匿名留言与前台报错汇总
+                  上次留言 {formatInboxAge(inbox?.feedback.lastFreeformAt || null)}
+                  {' · '}
+                  报错 24h {inbox?.errors.last24h ?? 0}
+                  {' · '}
+                  世代校准 24h {inbox?.cohort.last24h ?? 0}
                 </p>
               </div>
             </Link>

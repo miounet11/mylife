@@ -17,6 +17,7 @@ export {
   sanitizeCalibration,
   sanitizeJudgment,
   summarizeCalibration,
+  matchStats,
 } from './memory';
 export {
   buildCohortMirror,

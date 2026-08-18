@@ -11,6 +11,14 @@ import {
   feedbackSignalLabel,
   type FeedbackSignalKind,
 } from '@/lib/feedback-signal';
+import { formatInboxAge, type OpsInboxSnapshot } from '@/lib/ops-inbox-view';
+
+type RecentErrorRow = {
+  id: string;
+  at?: string;
+  route?: string | null;
+  message?: string;
+};
 
 type Counts = Record<string, number>;
 
@@ -30,8 +38,14 @@ function signalTone(kind: FeedbackSignalKind): string {
       return 'bg-sky-50 text-sky-800';
     case 'birth_hour':
       return 'bg-slate-100 text-slate-700';
+    case 'appearance':
+      return 'bg-violet-50 text-violet-800';
+    case 'empty_form':
+      return 'bg-zinc-100 text-zinc-500';
     case 'smoke':
       return 'bg-zinc-100 text-zinc-500';
+    case 'cohort':
+      return 'bg-emerald-50 text-emerald-800';
     default:
       return 'bg-[color:var(--bg-sunken)] text-[color:var(--ink-3)]';
   }
@@ -40,13 +54,17 @@ function signalTone(kind: FeedbackSignalKind): string {
 export default function AdminFeedbackClient({
   initialItems,
   initialCounts,
+  inbox,
+  recentErrors = [],
 }: {
   initialItems: SiteFeedbackRecord[];
   initialCounts: Counts;
+  inbox?: OpsInboxSnapshot;
+  recentErrors?: RecentErrorRow[];
 }) {
   const [items, setItems] = useState(initialItems);
   const [counts, setCounts] = useState(initialCounts);
-  const [filter, setFilter] = useState<ViewFilter>('freeform');
+  const [filter, setFilter] = useState<ViewFilter>('new');
   const [busyId, setBusyId] = useState<string | null>(null);
 
   const kindStats = useMemo(() => {
@@ -55,7 +73,10 @@ export default function AdminFeedbackClient({
       birth_hour: 0,
       accuracy: 0,
       past_event: 0,
+      appearance: 0,
+      empty_form: 0,
       smoke: 0,
+      cohort: 0,
     };
     for (const item of items) {
       stats[classifyFeedbackSignal(item.message)] += 1;
@@ -189,6 +210,98 @@ export default function AdminFeedbackClient({
 
   return (
     <div className="space-y-4">
+      {inbox ? (
+        <section className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
+          <div className="text-[11px] font-bold uppercase tracking-[0.12em] text-[color:var(--brand)]">
+            Inbox pulse
+          </div>
+          <h2 className="mt-1 text-[15px] font-black text-[color:var(--ink-1)]">
+            不是没有信号：校准在进、报错在进，真实留言最近一次在
+            {inbox.feedback.lastFreeformAt
+              ? ` ${formatInboxAge(inbox.feedback.lastFreeformAt)}`
+              : ' —'}
+          </h2>
+          <p className="mt-1 text-[12px] leading-5 text-[color:var(--ink-3)]">
+            未读 {inbox.feedback.unread} 条里，待回的用户留言 {inbox.feedback.freeformNew} 条。
+            前端报错近 24h {inbox.errors.last24h} 条
+            {inbox.errors.groups[0]
+              ? `，最多是「${inbox.errors.groups[0].label}」×${inbox.errors.groups[0].count}`
+              : ''}
+            。世代校准近 24h {inbox.cohort.last24h} 次判断。
+          </p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5">
+              <div className="text-[10px] font-bold uppercase text-[color:var(--ink-4)]">上次真实留言</div>
+              <div className="mt-0.5 text-[14px] font-bold text-[color:var(--ink-1)]">
+                {formatInboxAge(inbox.feedback.lastFreeformAt)}
+              </div>
+              {inbox.feedback.lastFreeformPreview ? (
+                <p className="mt-1 line-clamp-2 text-[11px] text-[color:var(--ink-3)]">
+                  {inbox.feedback.lastFreeformPreview}
+                </p>
+              ) : null}
+            </div>
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5">
+              <div className="text-[10px] font-bold uppercase text-[color:var(--ink-4)]">反馈 24h / 7d</div>
+              <div className="mt-0.5 text-xl font-black tabular-nums text-[color:var(--ink-1)]">
+                {inbox.feedback.last24h}
+                <span className="ml-1 text-[13px] font-semibold text-[color:var(--ink-4)]">
+                  / {inbox.feedback.last7d}
+                </span>
+              </div>
+            </div>
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5">
+              <div className="text-[10px] font-bold uppercase text-[color:var(--ink-4)]">前端报错 24h</div>
+              <div className="mt-0.5 text-xl font-black tabular-nums text-[color:var(--ink-1)]">
+                {inbox.errors.last24h}
+              </div>
+              <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">
+                近 7 天 {inbox.errors.total} · {formatInboxAge(inbox.errors.lastAt)}
+              </p>
+            </div>
+            <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2.5">
+              <div className="text-[10px] font-bold uppercase text-[color:var(--ink-4)]">世代校准 24h</div>
+              <div className="mt-0.5 text-xl font-black tabular-nums text-[color:var(--ink-1)]">
+                {inbox.cohort.last24h}
+              </div>
+              <p className="mt-1 text-[11px] text-[color:var(--ink-4)]">
+                像我 {inbox.cohort.byVerdict.like || 0} · 不像 {inbox.cohort.byVerdict.unlike || 0}
+              </p>
+            </div>
+          </div>
+          {inbox.errors.groups.length > 0 ? (
+            <div className="mt-3 border-t border-[color:var(--hairline)] pt-3">
+              <div className="text-[11px] font-bold text-[color:var(--ink-4)]">前端报错分组（近 7 天）</div>
+              <ul className="mt-2 divide-y divide-[color:var(--hairline)]">
+                {inbox.errors.groups.map((group) => (
+                  <li key={group.key} className="flex flex-wrap items-baseline justify-between gap-2 py-1.5 text-[12px]">
+                    <span className="text-[color:var(--ink-2)]">{group.label}</span>
+                    <span className="tabular-nums text-[color:var(--ink-4)]">
+                      ×{group.count}
+                      {group.sampleRoute ? ` · ${group.sampleRoute}` : ''}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {recentErrors.length > 0 ? (
+            <details className="mt-3">
+              <summary className="cursor-pointer text-[12px] font-semibold text-[color:var(--ink-3)]">
+                最近 {recentErrors.length} 条前端报错明细
+              </summary>
+              <ul className="mt-2 max-h-56 space-y-1.5 overflow-auto font-mono text-[11px] leading-5 text-[color:var(--ink-4)]">
+                {recentErrors.slice(0, 20).map((row) => (
+                  <li key={row.id}>
+                    {row.at?.slice(0, 19)} · {row.route || '—'} · {(row.message || '').slice(0, 120)}
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </section>
+      ) : null}
+
       {/* High-level analysis */}
       <section className="rounded-[var(--radius-lg)] border border-[color:var(--hairline)] bg-[color:var(--paper)] p-4 md:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -214,13 +327,16 @@ export default function AdminFeedbackClient({
           </button>
         </div>
 
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8">
           {(
             [
               { kind: 'freeform' as const, label: '用户留言' },
               { kind: 'past_event' as const, label: '过去节点否认' },
               { kind: 'accuracy' as const, label: '准确度评分' },
               { kind: 'birth_hour' as const, label: '时辰校准' },
+              { kind: 'appearance' as const, label: '外貌生活校准' },
+              { kind: 'empty_form' as const, label: '空报错模板' },
+              { kind: 'cohort' as const, label: '世代校准' },
               { kind: 'smoke' as const, label: '冒烟测试' },
             ] as const
           ).map((row) => (
@@ -290,7 +406,7 @@ export default function AdminFeedbackClient({
           </div>
         ) : (
           <p className="mt-4 text-[12px] text-[color:var(--ink-4)]">
-            当前没有未处理的用户自由留言（或都已归档）。
+            当前没有未处理的用户自由留言。未读条目多半是校准信号，请切到「未读」或「校准信号」。
           </p>
         )}
       </section>
@@ -305,6 +421,8 @@ export default function AdminFeedbackClient({
               kindStats.birth_hour +
               kindStats.accuracy +
               kindStats.past_event +
+              kindStats.appearance +
+              kindStats.empty_form +
               kindStats.smoke,
           },
           { key: 'all' as const, label: '全部', value: counts.total || items.length },
@@ -340,7 +458,9 @@ export default function AdminFeedbackClient({
         <ul className="divide-y divide-[color:var(--hairline)]">
           {visible.length === 0 ? (
             <li className="px-4 py-10 text-center text-sm text-[color:var(--ink-4)]">
-              暂无反馈
+              {filter === 'freeform'
+              ? '没有用户自由留言。校准和报错在上面的脉搏里，或切到「未读」。'
+              : '这个筛选下没有条目。'}
             </li>
           ) : (
             visible.map((item) => {

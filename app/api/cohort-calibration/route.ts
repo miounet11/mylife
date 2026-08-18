@@ -158,6 +158,18 @@ export async function POST(request: NextRequest) {
     claims,
   );
 
+  try {
+    const { appendCohortJudgmentsLog } = require('@/lib/cohort-lenses/ops-log') as typeof import('@/lib/cohort-lenses/ops-log');
+    appendCohortJudgmentsLog(judgments, {
+      reportId: reportId || null,
+      birthYear,
+      cohortKey,
+      region,
+    });
+  } catch {
+    // non-fatal
+  }
+
   let reportSaved = false;
   if (reportId) {
     const fortune = readFortune(reportId);

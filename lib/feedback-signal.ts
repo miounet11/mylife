@@ -8,12 +8,34 @@ export type FeedbackSignalKind =
   | 'birth_hour'
   | 'accuracy'
   | 'past_event'
-  | 'smoke';
+  | 'appearance'
+  | 'empty_form'
+  | 'smoke'
+  | 'cohort';
+
+/** Preset 报错模板只填了标题、用户没写正文。 */
+export function isBlankStructuredFeedback(message: string): boolean {
+  const body = `${message || ''}`
+    .replace(/^【[^】]+】\s*/u, '')
+    .replace(/报告ID[：:].+\n?/g, '')
+    .replace(/系统用神[：:].+\n?/g, '')
+    .replace(/系统忌神[：:].+\n?/g, '')
+    .replace(/强弱[：:].+\n?/g, '')
+    .replace(/老师[：:].+\n?/g, '')
+    .replace(/我认为[：:]\s*/g, '')
+    .replace(/问题描述[：:]?\s*/g, '')
+    .replace(/我发现的问题[：:]\s*/g, '')
+    .trim();
+  return body.length < 4;
+}
 
 export function classifyFeedbackSignal(message: string): FeedbackSignalKind {
   const m = `${message || ''}`.trim();
   if (!m) return 'freeform';
   if (/冒烟|smoke\s*test|公网冒烟/i.test(m)) return 'smoke';
+  if (/世代校准|cohort[_-]?claim|童年背景|金钱思维矩阵/.test(m)) return 'cohort';
+  if (/外貌与生活校准/.test(m)) return 'appearance';
+  if (/【(喜忌|报告|对话)报错】/.test(m) && isBlankStructuredFeedback(m)) return 'empty_form';
   if (/出生时辰把握|birth[_ ]?certainty|templateKey=birth/i.test(m)) return 'birth_hour';
   if (/报告准确度反馈|accuracy[_-]?rating/i.test(m)) return 'accuracy';
   if (
@@ -34,8 +56,14 @@ export function feedbackSignalLabel(kind: FeedbackSignalKind): string {
       return '准确度评分';
     case 'past_event':
       return '过去节点校准';
+    case 'appearance':
+      return '外貌生活校准';
+    case 'empty_form':
+      return '空报错模板';
     case 'smoke':
       return '冒烟测试';
+    case 'cohort':
+      return '世代校准';
     default:
       return '用户留言';
   }

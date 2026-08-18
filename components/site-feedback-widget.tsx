@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { AlertTriangle, CheckCircle2, MessageSquarePlus, X } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { FEEDBACK_CATEGORIES, type FeedbackCategoryKey } from '@/lib/user-feedback-types';
+import { isBlankStructuredFeedback } from '@/lib/feedback-signal';
 import { trackClientEvent } from '@/lib/analytics-client';
 
 type Status = 'idle' | 'submitting' | 'done' | 'error';
@@ -44,10 +45,16 @@ export default function SiteFeedbackWidget() {
     () => (pathname || '').startsWith('/admin'),
     [pathname],
   );
+  const onReportPage = useMemo(
+    () => /^\/(result|r)\//.test(pathname || ''),
+    [pathname],
+  );
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
     setPageUrl(window.location.href);
+    const match = (pathname || '').match(/^\/(?:result|r)\/([^/?#]+)/);
+    if (match?.[1]) setReportId(decodeURIComponent(match[1]));
   }, [pathname, open]);
 
   useEffect(() => {
@@ -110,6 +117,11 @@ export default function SiteFeedbackWidget() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (status === 'submitting') return;
+    if (isBlankStructuredFeedback(message)) {
+      setStatus('error');
+      setErrorMsg('请写清楚具体问题，不要只提交空模板');
+      return;
+    }
     setStatus('submitting');
     setErrorMsg('');
     try {
@@ -155,25 +167,23 @@ export default function SiteFeedbackWidget() {
 
   return (
     <>
-      {/* Floating launcher */}
-      <div className="fixed bottom-4 right-4 z-[60] flex flex-col items-end gap-2 md:bottom-6 md:right-6">
+      {/* One compact launcher. Sit above report chapter-dock / action rail. */}
+      <div
+        className={`fixed z-[60] ${
+          onReportPage
+            ? 'bottom-20 left-4 right-auto lg:bottom-6'
+            : 'bottom-20 right-4 lg:bottom-6 lg:right-6'
+        }`}
+      >
         <button
           type="button"
-          onClick={() => handleOpen('content_wrong')}
-          className="inline-flex h-11 items-center gap-2 rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3.5 text-[13px] font-semibold text-[color:var(--ink-2)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
+          onClick={() => handleOpen(onReportPage ? 'content_wrong' : 'message')}
+          className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 text-[12px] font-semibold text-[color:var(--ink-2)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
           aria-label="报错或留言"
         >
-          <AlertTriangle className="h-4 w-4 text-[color:var(--signal-strong)]" />
-          报错
-        </button>
-        <button
-          type="button"
-          onClick={() => handleOpen('message')}
-          className="inline-flex h-11 items-center gap-2 rounded-full bg-[color:var(--brand)] px-3.5 text-[13px] font-semibold text-white shadow-[0_8px_24px_rgba(11,95,85,0.28)] transition hover:opacity-95"
-          aria-label="匿名留言"
-        >
-          <MessageSquarePlus className="h-4 w-4" />
-          留言
+          <MessageSquarePlus className="h-3.5 w-3.5" />
+          反馈
+          <AlertTriangle className="h-3.5 w-3.5 text-[color:var(--signal-strong)]" />
         </button>
       </div>
 

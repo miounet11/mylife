@@ -93,3 +93,79 @@ export function listClientErrors(options?: {
 
   return out;
 }
+
+export type ClientErrorGroup = {
+  key: string;
+  label: string;
+  count: number;
+  lastAt: string;
+  sampleRoute: string | null;
+  sampleMessage: string;
+};
+
+export type ClientErrorSummary = {
+  total: number;
+  last24h: number;
+  lastAt: string | null;
+  groups: ClientErrorGroup[];
+};
+
+function errorGroupKey(entry: ClientErrorEntry): { key: string; label: string } {
+  const message = `${entry.message || ''}`;
+  if (/Loading chunk|ChunkLoadError|Failed to fetch dynamically imported/i.test(message)) {
+    return { key: 'chunk_load', label: '前端分包过期（部署后旧页）' };
+  }
+  if (/hydrat/i.test(message)) {
+    return { key: 'hydrate', label: 'Hydration 不匹配' };
+  }
+  if (/NetworkError|Failed to fetch|Load failed/i.test(message)) {
+    return { key: 'network', label: '网络/接口失败' };
+  }
+  const short = message.replace(/\s+/g, ' ').slice(0, 72) || 'unknown';
+  return { key: `msg:${short}`, label: short };
+}
+
+export function summarizeClientErrors(options?: {
+  days?: number;
+  limit?: number;
+}): ClientErrorSummary {
+  const entries = listClientErrors({
+    days: options?.days || 7,
+    limit: options?.limit || 200,
+  });
+  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+  const byKey = new Map<string, ClientErrorGroup>();
+  let last24h = 0;
+  let lastAt: string | null = null;
+  for (const entry of entries) {
+    const at = Date.parse(entry.at || '') || 0;
+    if (at && (!lastAt || entry.at > lastAt)) lastAt = entry.at;
+    if (at >= cutoff) last24h += 1;
+    const { key, label } = errorGroupKey(entry);
+    const current = byKey.get(key);
+    if (!current) {
+      byKey.set(key, {
+        key,
+        label,
+        count: 1,
+        lastAt: entry.at,
+        sampleRoute: entry.route || null,
+        sampleMessage: `${entry.message || ''}`.slice(0, 160),
+      });
+    } else {
+      current.count += 1;
+      if (entry.at > current.lastAt) {
+        current.lastAt = entry.at;
+        current.sampleRoute = entry.route || current.sampleRoute;
+        current.sampleMessage = `${entry.message || ''}`.slice(0, 160);
+      }
+    }
+  }
+  const groups = [...byKey.values()].sort((a, b) => b.count - a.count).slice(0, 8);
+  return {
+    total: entries.length,
+    last24h,
+    lastAt,
+    groups,
+  };
+}

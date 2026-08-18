@@ -184,6 +184,31 @@ export function formatCohortMemoryBlock(
   return lines.join('\n');
 }
 
+export function matchStats(state: CohortCalibrationState | null | undefined): {
+  like: number;
+  partial: number;
+  unlike: number;
+  unsure: number;
+  judged: number;
+  overlapPct: number | null;
+} {
+  const judgments = state?.judgments || [];
+  const like = judgments.filter((item) => item.verdict === 'like').length;
+  const partial = judgments.filter((item) => item.verdict === 'partial').length;
+  const unlike = judgments.filter((item) => item.verdict === 'unlike').length;
+  const unsure = judgments.filter((item) => item.verdict === 'unsure').length;
+  const judged = judgments.length;
+  const comparable = like + partial + unlike;
+  return {
+    like,
+    partial,
+    unlike,
+    unsure,
+    judged,
+    overlapPct: comparable ? Math.round(((like + partial * 0.5) / comparable) * 100) : null,
+  };
+}
+
 export function summarizeCalibration(state: CohortCalibrationState | null | undefined): string {
   if (!state || state.judgments.length === 0) {
     return '尚未用世代经历校准。标几条「像我 / 不像」，下次报告和问顾问会按你的个人事实改口径。';

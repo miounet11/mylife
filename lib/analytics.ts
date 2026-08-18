@@ -143,6 +143,9 @@ export type AnalyticsEventName =
   | 'almanac_region_changed'
   | 'cohort_claim_judged'
   | 'cohort_lens_completed'
+  | 'feedback_widget_opened'
+  | 'feedback_submitted'
+  | 'client_error'
 
 interface TrackEventInput {
   userId?: string | null;

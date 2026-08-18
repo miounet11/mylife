@@ -9,6 +9,7 @@ import {
   buildCohortMirror,
   emptyCalibration,
   getCohortFacts,
+  matchStats,
   mergeCalibrations,
   sanitizeCalibration,
   type CohortCalibrationState,
@@ -103,6 +104,7 @@ export default function ReportCohortLenses({
     window: view.chatStarters[0] || null,
   });
   const currentStage = view.stages.find((item) => item.current);
+  const stats = matchStats(calibration);
 
   const submit = async (input: {
     claimId: string;
@@ -176,15 +178,20 @@ export default function ReportCohortLenses({
           forkId: input.forkId || '',
         },
       });
-      const lensDone = view.lenses
-        .find((lens) => lens.id === input.lensId)
-        ?.claims.every((claim) => claim.id === input.claimId || claim.verdict);
+      const currentLens = view.lenses.find((lens) => lens.id === input.lensId);
+      const lensDone = currentLens?.claims.every(
+        (claim) => claim.id === input.claimId || claim.verdict,
+      );
       if (lensDone) {
         void trackClientEvent({
           eventName: 'cohort_lens_completed',
           page: `/result/${reportId}`,
           meta: { reportId, lensId: input.lensId },
         });
+        const nextLens = view.lenses.find(
+          (lens) => lens.id !== input.lensId && !lens.judged,
+        );
+        if (nextLens) setOpenLens(nextLens.id);
       }
       setMessage(en ? 'Saved. Next report and chat will use this.' : '已写入个人上下文。下次报告和问顾问会按这条改口径。');
     } catch (e) {
@@ -204,18 +211,42 @@ export default function ReportCohortLenses({
       <p className="mt-1 text-[12px] leading-[1.55] text-[color:var(--ink-5)]">{view.compareLine}</p>
       <p className="mt-2 text-[11px] leading-[1.5] text-[color:var(--ink-5)]">{view.disclaimer}</p>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px] text-[color:var(--ink-3)]">
-        <span>
-          {en ? 'Checked' : '已核对'} {view.progress.judgedClaims}/{view.progress.totalClaims}
-        </span>
-        <span>
-          {en ? 'Lenses' : '面'} {view.progress.judgedLenses}/{view.progress.totalLenses}
-        </span>
-        {currentStage ? (
+      <div className="mt-3">
+        <div className="flex items-center justify-between text-[12px] text-[color:var(--ink-3)]">
           <span>
-            {en ? 'Stage' : '当前阶段'} · {currentStage.label}
+            {en ? 'Checked' : '已核对'} {view.progress.judgedClaims}/{view.progress.totalClaims}
           </span>
-        ) : null}
+          <span>
+            {stats.overlapPct == null
+              ? en
+                ? 'Mark a few claims to score overlap'
+                : '标几条就能看到与同代假设的重合度'
+              : en
+                ? `Overlap ${stats.overlapPct}%`
+                : `与同代假设重合 ${stats.overlapPct}%`}
+          </span>
+        </div>
+        <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-[color:var(--bg-sunken)]">
+          <div
+            className="h-full rounded-full bg-[color:var(--ink-1)]"
+            style={{
+              width: `${Math.max(
+                4,
+                Math.round((view.progress.judgedClaims / Math.max(1, view.progress.totalClaims)) * 100),
+              )}%`,
+            }}
+          />
+        </div>
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-[color:var(--ink-3)]">
+          <span>{en ? 'Like' : '像我'} {stats.like}</span>
+          <span>{en ? 'Partial' : '部分像'} {stats.partial}</span>
+          <span>{en ? 'Unlike' : '不像'} {stats.unlike}</span>
+          {currentStage ? (
+            <span>
+              {en ? 'Stage' : '当前阶段'} · {currentStage.label}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       <div className="mt-3 rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-elevated)] px-3 py-2.5">
