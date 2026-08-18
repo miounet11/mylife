@@ -3,6 +3,8 @@ import type {
   LifeProfile,
   PredictionOutcomeSummary,
 } from './types';
+import type { CohortCalibrationState } from '@/lib/cohort-lenses/types';
+import { mergeCalibrations, sanitizeCalibration } from '@/lib/cohort-lenses/memory';
 import { recalibrateKlineWeights } from './recalibrate';
 
 const STORAGE_KEY = 'lk_life_profiles';
@@ -305,6 +307,17 @@ export function syncPredictionOutcomesFromList(
   });
 
   return updateProfile(birthSignature, { predictionOutcomes });
+}
+
+export function recordCohortCalibration(
+  birthSignature: string,
+  calibration: CohortCalibrationState,
+): LifeProfile {
+  const profile = getOrCreateProfile(birthSignature);
+  const next = mergeCalibrations(profile.cohortCalibration, sanitizeCalibration(calibration));
+  return updateProfile(birthSignature, {
+    cohortCalibration: next || sanitizeCalibration(calibration) || undefined,
+  });
 }
 
 export function subscribeLifeProfileUpdates(

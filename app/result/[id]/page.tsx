@@ -112,7 +112,7 @@ import { localizeElementList, presentReportText, withPresentedAdvice } from '@/l
 import { buildProReportView } from '@/lib/report-pro-view';
 import ProReportShell from '@/components/report-pro/pro-report-shell';
 import ProExpertBanner from '@/components/report-pro/pro-expert-banner';
-import ProUserCalibration from '@/components/report-pro/pro-user-calibration';
+import ReportCalibrationLoop from '@/components/report/report-calibration-loop';
 import { buildExpertDeskView } from '@/lib/report-expert-view';
 import { buildKlineCalibrationMarkers } from '@/lib/kline-calibration';
 import ExpertDesk from '@/components/report-expert/expert-desk';
@@ -854,15 +854,12 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
         { id: 'ex-print', label: pageCopy.dockPrint, iconKey: 'bell' },
       ]
     : [
-        { id: 'report-consultants', label: pageCopy.dockAskConsultant, iconKey: 'footprints' },
-        { id: 'world-yi-engine', label: '世界易', iconKey: 'compass' },
-        { id: 'pro-action', label: pageCopy.dockAction, iconKey: 'target' },
-        { id: 'pro-guide', label: pageCopy.dockGuide, iconKey: 'compass' },
-        { id: 'pro-kline', label: pageCopy.dockKline, iconKey: 'layers' },
-        { id: 'pro-overview', label: pageCopy.dockOverview, iconKey: 'check' },
-        { id: 'pro-elements', label: pageCopy.dockElements, iconKey: 'layers' },
-        { id: 'pro-time', label: pageCopy.dockTime, iconKey: 'calendar' },
-        { id: 'pro-calibration', label: pageCopy.dockCalibration, iconKey: 'bell' },
+        { id: 'pro-verdict', label: '判词', iconKey: 'check' },
+        { id: 'pro-elements', label: '喜用', iconKey: 'compass' },
+        { id: 'pro-kline', label: 'K线', iconKey: 'layers' },
+        { id: 'pro-decision', label: '决策', iconKey: 'target' },
+        { id: 'pro-topics', label: '议题', iconKey: 'calendar' },
+        { id: 'report-consultants', label: '问顾问', iconKey: 'footprints' },
       ];
 
   // v5-D60 右栏元数据
@@ -916,115 +913,114 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
             locale={uiLocale}
           />
 
-          <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:max-w-[1100px] 2xl:mx-auto">
-            <div className="min-w-0 space-y-4 md:space-y-5">
-              {!isClassicOnly ? (
-                <>
-                  <ProReportShell
-                    view={proReportView}
-                    klineData={result.klineData}
-                    summaryHref={summaryHref}
-                    expertHref={expertHref}
-                    publicName={publicName}
-                    reportId={id}
-                    canManage={canManage}
-                    consultantWindows={consultantWindows}
-                    locale={uiLocale}
-                    dayun={
-                      (result as any).dayun ||
-                      (rawFortuneData as any).dayun ||
-                      null
-                    }
-                    calibrationMarkers={klineCalibrationMarkers}
-                    birthYear={(() => {
-                      const raw =
-                        (rawFortuneData as any).birthDate ||
-                        (rawFortuneData as any).birth_date ||
-                        (result.basic as any)?.birthDate ||
-                        '';
-                      const m = String(raw).match(/^(\d{4})/);
-                      return m ? Number(m[1]) : undefined;
-                    })()}
-                    currentDayun={
-                      (result as any).dayun?.currentDayun ||
-                      (result as any).dayun?.current ||
-                      expertDeskView?.dayun?.current ||
-                      null
-                    }
-                    currentDaYunText={
-                      (result as any).fortune?.currentDaYun ||
-                      proReportView.subtitle ||
-                      ''
-                    }
-                    birthTimeUncertain={(() => {
-                      const t = String(
-                        (rawFortuneData as any).birthTime ||
-                          (result.basic as any)?.birthTime ||
-                          ''
-                      ).trim();
-                      if (!t || /未知|不详|不清楚|noon|12:00|12：00/.test(t)) return true;
-                      const certainty = (result.analysis as any)?.birthTimeCertainty;
-                      if (certainty === 'low' || certainty === 'unknown') return true;
-                      return false;
-                    })()}
-                    birthDate={
-                      (rawFortuneData as any).birthDate ||
-                      (rawFortuneData as any).birth_date ||
-                      (result.basic as any)?.birthDate ||
-                      null
-                    }
-                    birthTime={
-                      (rawFortuneData as any).birthTime ||
-                      (rawFortuneData as any).birth_time ||
+          {!isClassicOnly ? (
+            <div className="mx-auto max-w-4xl min-w-0">
+              <ProReportShell
+                view={proReportView}
+                klineData={result.klineData}
+                summaryHref={summaryHref}
+                expertHref={expertHref}
+                publicName={publicName}
+                reportId={id}
+                canManage={canManage}
+                consultantWindows={consultantWindows}
+                locale={uiLocale}
+                dayun={
+                  (result as any).dayun ||
+                  (rawFortuneData as any).dayun ||
+                  null
+                }
+                calibrationMarkers={klineCalibrationMarkers}
+                birthYear={(() => {
+                  const raw =
+                    (rawFortuneData as any).birthDate ||
+                    (rawFortuneData as any).birth_date ||
+                    (result.basic as any)?.birthDate ||
+                    '';
+                  const m = String(raw).match(/^(\d{4})/);
+                  return m ? Number(m[1]) : undefined;
+                })()}
+                currentDayun={
+                  (result as any).dayun?.currentDayun ||
+                  (result as any).dayun?.current ||
+                  expertDeskView?.dayun?.current ||
+                  null
+                }
+                currentDaYunText={
+                  (result as any).fortune?.currentDaYun ||
+                  proReportView.subtitle ||
+                  ''
+                }
+                birthTimeUncertain={(() => {
+                  const t = String(
+                    (rawFortuneData as any).birthTime ||
                       (result.basic as any)?.birthTime ||
-                      null
-                    }
-                    birthPlace={
-                      (rawFortuneData as any).birthPlace ||
-                      (rawFortuneData as any).birth_place ||
-                      (result.basic as any)?.birthPlace ||
-                      null
-                    }
-                    gender={
-                      (rawFortuneData as any).gender ||
-                      (result.basic as any)?.gender ||
-                      null
-                    }
-                    analysis={(result as any).analysis || (rawFortuneData as any).analysis}
-                    fiveElements={(result as any).fiveElements}
-                    tenGods={(result as any).tenGods}
-                    shenSha={(result as any).shenSha}
-                    weeklyEvents={linkedEvents.map((event) => {
-                      const rawDate = (event as { date?: string | Date }).date;
-                      const dateStr =
-                        rawDate instanceof Date
-                          ? rawDate.toISOString().slice(0, 10)
-                          : typeof rawDate === 'string'
-                            ? rawDate.slice(0, 10)
-                            : '';
-                      return {
-                        id: event.id,
-                        title: event.title,
-                        date: dateStr,
-                        userFeedback: event.userFeedback as { wasAccurate?: boolean | null } | undefined,
-                      };
-                    })}
-                  />
-                  <ProUserCalibration
-                    reportId={id}
-                    canManage={canManage}
-                    pastEventTemplates={result.analysis?.pastEventTemplates || []}
-                  />
-                  <ReportWorldYiDual reading={worldYiEngineReading} />
-                  <ProExpertBanner mode="entry" expertHref={expertHref} />
-                </>
-              ) : (
+                      ''
+                  ).trim();
+                  if (!t || /未知|不详|不清楚|noon|12:00|12：00/.test(t)) return true;
+                  const certainty = (result.analysis as any)?.birthTimeCertainty;
+                  if (certainty === 'low' || certainty === 'unknown') return true;
+                  return false;
+                })()}
+                birthDate={
+                  (rawFortuneData as any).birthDate ||
+                  (rawFortuneData as any).birth_date ||
+                  (result.basic as any)?.birthDate ||
+                  null
+                }
+                birthTime={
+                  (rawFortuneData as any).birthTime ||
+                  (rawFortuneData as any).birth_time ||
+                  (result.basic as any)?.birthTime ||
+                  null
+                }
+                birthPlace={
+                  (rawFortuneData as any).birthPlace ||
+                  (rawFortuneData as any).birth_place ||
+                  (result.basic as any)?.birthPlace ||
+                  null
+                }
+                gender={
+                  (rawFortuneData as any).gender ||
+                  (result.basic as any)?.gender ||
+                  null
+                }
+                analysis={(result as any).analysis || (rawFortuneData as any).analysis}
+                fiveElements={(result as any).fiveElements}
+                tenGods={(result as any).tenGods}
+                shenSha={(result as any).shenSha}
+                pastEventTemplates={result.analysis?.pastEventTemplates || []}
+                birthSignature={
+                  (rawFortuneData as any).birthSignature ||
+                  (result.basic as any)?.birthSignature ||
+                  null
+                }
+                initialCohortCalibration={
+                  (result.analysis as { cohortCalibration?: any } | undefined)?.cohortCalibration ||
+                  null
+                }
+                weeklyEvents={linkedEvents.map((event) => {
+                  const rawDate = (event as { date?: string | Date }).date;
+                  const dateStr =
+                    rawDate instanceof Date
+                      ? rawDate.toISOString().slice(0, 10)
+                      : typeof rawDate === 'string'
+                        ? rawDate.slice(0, 10)
+                        : '';
+                  return {
+                    id: event.id,
+                    title: event.title,
+                    date: dateStr,
+                    userFeedback: event.userFeedback as { wasAccurate?: boolean | null } | undefined,
+                  };
+                })}
+              />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4 lg:grid lg:grid-cols-[minmax(0,1fr)_260px] lg:items-start lg:gap-5 xl:grid-cols-[minmax(0,1fr)_280px] 2xl:max-w-[1100px] 2xl:mx-auto">
+              <div className="min-w-0 space-y-4 md:space-y-5">
                 <ProExpertBanner mode="header" massHref={massHref} />
-              )}
-
-              {/* 专业版：排盘工作台为主；仅 view=expert|classic|pro */}
-              {isClassicOnly ? (
-              <div id="classic-report" className="scroll-mt-header space-y-4 md:space-y-5">
+                <div id="classic-report" className="scroll-mt-header space-y-4 md:space-y-5">
               <ExpertDesk desk={expertDeskView} klineData={result.klineData} reportId={id} />
 
               <div className="rounded-[10px] border border-dashed border-[#94a3b8] bg-[#f8fafc] px-4 py-3 text-[12px] text-[#64748b]">
@@ -1137,6 +1133,9 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                   </a>
                   <a href="#deep-structure" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
                     {pageCopy.jumpStructure}
+                  </a>
+                  <a href="#pro-cohort" className="rounded-[3px] border border-[color:var(--hairline)] bg-white px-3 py-2 text-[12px] font-semibold text-[color:var(--ink-2)] hover:bg-[#f6f7f9]">
+                    世代校准
                   </a>
                   <a href={reportChatHref} className="rounded-[3px] border border-[#0b5f55]/25 bg-white px-3 py-2 text-[12px] font-semibold text-[#0b5f55] hover:bg-[#eef3f1]">
                     {sourceCtaStrategy.reportPrimaryLabel || pageCopy.jumpAiDeepAsk}
@@ -1306,6 +1305,37 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </section>
               ) : null}
 
+              <section className="fb-card scroll-mt-header border-t-2 border-t-[#0b5f55] p-4 md:p-5">
+                <ReportCalibrationLoop
+                  reportId={id}
+                  canManage={canManage}
+                  pastEventTemplates={result.analysis?.pastEventTemplates || []}
+                  birthDate={
+                    (rawFortuneData as any).birthDate ||
+                    (rawFortuneData as any).birth_date ||
+                    (result.basic as any)?.birthDate ||
+                    null
+                  }
+                  birthPlace={
+                    (rawFortuneData as any).birthPlace ||
+                    (rawFortuneData as any).birth_place ||
+                    (result.basic as any)?.birthPlace ||
+                    null
+                  }
+                  birthSignature={
+                    (rawFortuneData as any).birthSignature ||
+                    (result.basic as any)?.birthSignature ||
+                    null
+                  }
+                  initialCohortCalibration={
+                    (result.analysis as { cohortCalibration?: any } | undefined)?.cohortCalibration ||
+                    null
+                  }
+                  locale={uiLocale}
+                  showEventCalibration={false}
+                />
+              </section>
+
               {/* 分享与公开：轻量条，不打断主阅读流 */}
               <div className="space-y-3">
                 <PublicReportInteractionPanel
@@ -1346,7 +1376,6 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
                 </Suspense>
               </ResultDeferredSection>
               </div>
-              ) : null}
 
               {/* 回访与服务：正常页与专业版均可 */}
               <div id="services" className="scroll-mt-header space-y-4">
@@ -1547,6 +1576,7 @@ export default async function ResultPage({ params, searchParams }: PageProps) {
               )}
             </ReportMetaSidebar>
           </div>
+          )}
         </ReportSurface>
       </main>
 

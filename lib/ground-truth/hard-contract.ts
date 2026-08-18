@@ -11,7 +11,7 @@ export const ENGINE_HARD_CONTRACT = [
   '3. 用神/忌神建议必须与 ENGINE_CONSTITUTION 一致；不得把忌神说成主用方向。',
   '4. windows.label / peakYears / troughYears 必须取自 ENGINE_* 已给集合；不得发明新时间窗标签或锚点年。',
   '5. 你只做表达与决策翻译，不重算命盘；所有计算已在服务端完成。',
-  '6. 结合 USER_LIFE_CONTEXT 只调整侧重点与语气，不得推翻命局结构结论。',
+  '6. 结合 USER_LIFE_CONTEXT / COHORT_MEMORY 只调整侧重点与语气，不得推翻命局结构结论；已否认的世代共性不得再当个人事实。',
   '7. 对 UNCERTAINTY_NOTES 必须在结论中保留不确定性；禁止绝对化命运断言。',
   '8. 输出合法 JSON（若任务要求 JSON）；叙述用白话；术语必须立刻跟生活含义。',
 ].join('\n');

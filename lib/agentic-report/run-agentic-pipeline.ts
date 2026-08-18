@@ -44,6 +44,7 @@ const AGENT_RETRY_LLM_TIMEOUT_MS = 64000;
 export async function runAgenticPipeline(params: {
   groundTruth: BuildGroundTruthInput;
   context: Omit<BuildContextSignalsInput, 'engine'>;
+  lifeProfile?: import('@/lib/life-profile/types').LifeProfile | null;
   enabled?: boolean;
   agentKeys?: CoreAgentKey[];
   enableRetry?: boolean;
@@ -72,6 +73,7 @@ export async function runAgenticPipeline(params: {
       ...params.context,
       referenceCorpus,
     },
+    lifeProfile: params.lifeProfile || null,
   });
   const keys = params.agentKeys || [...CORE_AGENT_KEYS];
 

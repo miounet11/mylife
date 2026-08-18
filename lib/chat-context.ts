@@ -238,6 +238,21 @@ export function buildChatExperienceContext(params: {
       (report.advice?.yongShen || []).length
         ? `我这份盘主用神是「${(report.advice?.yongShen || []).slice(0, 2).join('、')}」，接下来 30 天我该把哪一件事做成可验证的结果？`
         : '',
+      (() => {
+        try {
+          const { buildCohortMirror, sanitizeCalibration } = require('@/lib/cohort-lenses') as typeof import('@/lib/cohort-lenses');
+          const mirror = buildCohortMirror({
+            birthDate: report.birthDate,
+            birthPlace: report.birthPlace,
+            calibration: sanitizeCalibration(
+              (report.analysis as { cohortCalibration?: unknown } | undefined)?.cohortCalibration,
+            ),
+          });
+          return mirror?.chatStarters?.[0] || '';
+        } catch {
+          return '';
+        }
+      })(),
       topScenario ? `${topScenario.title}现在最该怎么推进？` : '',
       bestWindow ? `如果把重点放在${bestWindow.label}，我应该提前准备什么？` : '',
       riskWindow ? `我该怎样规避${riskWindow.label}这段时间的风险？` : '',
@@ -424,6 +439,32 @@ export function buildChatExperienceContext(params: {
       confirmedPastEvents.length > 0
         ? `用户已经亲自确认过 ${confirmedPastEvents.length} 条过去印证：${confirmedPastEvents.slice(0, 3).map((item) => item.title).join('；')}。回答时要把这些已验证的人生轨迹当成硬证据，而不是当成普通猜测。`
         : '',
+      (() => {
+        try {
+          const {
+            buildCohortMirror,
+            formatCohortMemoryBlock,
+            sanitizeCalibration,
+          } = require('@/lib/cohort-lenses') as typeof import('@/lib/cohort-lenses');
+          const calibration = sanitizeCalibration(
+            (report.analysis as { cohortCalibration?: unknown } | undefined)?.cohortCalibration,
+          );
+          const block = formatCohortMemoryBlock(calibration);
+          const mirror = buildCohortMirror({
+            birthDate: report.birthDate,
+            birthPlace: report.birthPlace,
+            calibration,
+          });
+          return [
+            block,
+            mirror?.memory.summary ? `世代校准进度：${mirror.memory.summary}` : '',
+          ]
+            .filter(Boolean)
+            .join('\n');
+        } catch {
+          return '';
+        }
+      })(),
       // Closed-loop calibration: score + denied keys for chat grounding
       (() => {
         const cal = (report.analysis as { calibrationSummary?: {

@@ -78,6 +78,9 @@ function buildUserLifeContext(ctx: StructuredAgenticContext): string {
   if (life.preferredTone) {
     lines.push(`表达偏好：${life.preferredTone}。`);
   }
+  if (life.cohortMemory) {
+    lines.push(life.cohortMemory);
+  }
   const progress = life.learningProgress || {};
   const completedTracks = Object.entries(progress)
     .filter(([, value]) => Number(value) >= 0.6)
@@ -164,6 +167,10 @@ export function buildPromptModules(ctx: StructuredAgenticContext): PromptModule[
     { label: 'CONTEXT_HUMAN', content: safe(context?.humanFactors, '{}') },
     { label: 'CONTEXT_WORLD_STATE', content: safe(context?.worldState, '{}') },
     { label: 'USER_LIFE_CONTEXT', content: buildUserLifeContext(ctx) },
+    {
+      label: 'COHORT_MEMORY',
+      content: ctx?.lifeProfile?.cohortMemory || ctx?.engine?.lifeProfile?.cohortMemory || '无世代校准反馈，世代层只作假说。',
+    },
     { label: 'UNCERTAINTY_NOTES', content: buildUncertaintyNotes(ctx) },
   ];
 }
@@ -181,6 +188,14 @@ export function injectPromptModules(basePrompt: string, modules: PromptModule[])
   }
   if (locked?.content && !result.includes('LOCKED_ENGINE_FACTS') && !result.includes(locked.content.slice(0, 40))) {
     result = `${result}\n\n【LOCKED_ENGINE_FACTS · 输出中须保留字面】\n${locked.content}`;
+  }
+  const cohort = modules.find((m) => m.label === 'COHORT_MEMORY');
+  if (
+    cohort?.content &&
+    cohort.content !== '无世代校准反馈，世代层只作假说。' &&
+    !result.includes('世代校准')
+  ) {
+    result = `${result}\n\n${cohort.content}`;
   }
   return result;
 }

@@ -17,6 +17,18 @@ function getOperations() {
   }
 }
 
+export function findLifeProfileForUser(
+  userId: string,
+  birthSignature?: string | null,
+): LifeProfile | null {
+  const profiles = listLifeProfilesForUser(userId);
+  if (!profiles.length) return null;
+  if (birthSignature) {
+    return profiles.find((item) => item.birthSignature === birthSignature) || profiles[0] || null;
+  }
+  return profiles[0] || null;
+}
+
 export function listLifeProfilesForUser(userId: string): LifeProfile[] {
   const ops = getOperations();
   if (!ops) return [];

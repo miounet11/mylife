@@ -1,4 +1,5 @@
 import type { YongShenResult } from '@/lib/bazi-analyzer';
+import type { CohortCalibrationState } from '@/lib/cohort-lenses/types';
 
 export type LifeEventCategory =
   | 'job_change'
@@ -50,6 +51,8 @@ export interface LifeProfile {
   lastDimensionAt?: string;
   lastReportId: string;
   reportCount: number;
+  /** Birth-year generation claims the user has confirmed or denied. */
+  cohortCalibration?: CohortCalibrationState;
   createdAt: string;
   updatedAt: string;
 }

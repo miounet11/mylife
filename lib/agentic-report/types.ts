@@ -25,6 +25,8 @@ export interface LifeProfileContext {
   preferredTone?: string;
   learningProgress?: Record<string, number>;
   uncertaintyNotes?: string[];
+  /** Confirmed / denied generation-layer facts. Never overrides engine structure. */
+  cohortMemory?: string;
 }
 
 // ── Engine Ground Truth ──

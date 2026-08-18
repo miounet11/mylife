@@ -553,6 +553,8 @@ export interface FortuneAnalysisResult {
         evidence?: string[];
       };
     };
+    /** Birth-year generation claims the user has confirmed or denied. */
+    cohortCalibration?: import('@/lib/cohort-lenses/types').CohortCalibrationState;
     /** v6-Q1/Q3: intent-aware executable actions for the next 7 days */
     sevenDayActions?: string[];
     pastEventTemplates?: Array<{

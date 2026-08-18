@@ -141,6 +141,8 @@ export type AnalyticsEventName =
   | 'almanac_lens_run'
   | 'almanac_skin_changed'
   | 'almanac_region_changed'
+  | 'cohort_claim_judged'
+  | 'cohort_lens_completed'
 
 interface TrackEventInput {
   userId?: string | null;

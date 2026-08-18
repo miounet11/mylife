@@ -27,6 +27,7 @@ import { deriveReportReasoningMode } from '@/lib/report-reasoning-mode';
 import type { FortuneAnalysisResult, FortuneRecord } from '@/lib/user-types';
 import { parseLocalDate, heavyGenerationCache } from '@/lib/utils';
 import { getWorldYiV2MatchesForReport } from '@/lib/content-store';
+import type { LifeProfile } from '@/lib/life-profile/types';
 
 // 首次 analyze 是用户等待路径：核心草案快速交付，长尾补强交给后续升级/重试。
 // v5-C2 (2026-05-15): 上游偶发 abort 集中在分钟级，把 upgrader 主 LLM 预算抬到 180s 量级，
@@ -119,6 +120,43 @@ export function shouldDeferReportLlmForSource(params: {
     || !params.hasRunnableModels;
 }
 
+function loadLifeProfileForReport(input: {
+  userId?: string;
+  birthDate: Date;
+  birthTime: string;
+  birthPlace: string;
+  gender: 'male' | 'female';
+}): LifeProfile | null {
+  if (!input.userId) return null;
+  try {
+    const { findLifeProfileForUser } = require('@/lib/life-profile/server-store') as typeof import('@/lib/life-profile/server-store');
+    const { buildBirthSignature } = require('@/lib/profile-birth-signature') as typeof import('@/lib/profile-birth-signature');
+    const iso = `${input.birthDate.getFullYear()}-${String(input.birthDate.getMonth() + 1).padStart(2, '0')}-${String(input.birthDate.getDate()).padStart(2, '0')}`;
+    const signature = buildBirthSignature({
+      birthDate: iso,
+      birthTime: input.birthTime,
+      birthPlace: input.birthPlace,
+      birthAccuracy: 'range',
+      gender: input.gender,
+    });
+    return findLifeProfileForUser(input.userId, signature);
+  } catch {
+    return null;
+  }
+}
+
+function attachCohortCalibration(
+  previous: unknown,
+  incoming: unknown,
+): LifeProfile['cohortCalibration'] | undefined {
+  try {
+    const { mergeCalibrations, sanitizeCalibration } = require('@/lib/cohort-lenses/memory') as typeof import('@/lib/cohort-lenses/memory');
+    return mergeCalibrations(sanitizeCalibration(previous), sanitizeCalibration(incoming)) || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 type PipelineSource = 'analyze' | 'upgrade';
 type ReportStage = 'engine' | 'llm' | 'agentic' | 'merge';
 
@@ -162,6 +200,13 @@ export async function generateVersionedReport(params: {
     detail: string;
   }) => void | Promise<void>;
 }) {
+  const lifeProfile = loadLifeProfileForReport({
+    userId: params.userId,
+    birthDate: params.birthDate,
+    birthTime: params.birthTime,
+    birthPlace: params.birthPlace,
+    gender: params.gender,
+  });
   await params.onProgress?.({
     stage: 'engine',
     status: 'started',
@@ -190,6 +235,7 @@ export async function generateVersionedReport(params: {
   const preLlmContext = createAgenticContext({
     pack: groundTruthPack,
     groundTruth,
+    lifeProfile,
     context: {
       birthDate: params.birthDate,
       birthPlace: params.birthPlace,
@@ -289,6 +335,7 @@ export async function generateVersionedReport(params: {
       mainTaskTimeoutMs: params.source === 'analyze' ? ANALYZE_AGENT_MAIN_TASK_TIMEOUT_MS : undefined,
       mainLlmTimeoutMs: params.source === 'analyze' ? ANALYZE_AGENT_MAIN_LLM_TIMEOUT_MS : undefined,
       groundTruth,
+      lifeProfile,
       context: {
         birthDate: params.birthDate,
         birthPlace: params.birthPlace,
@@ -351,6 +398,15 @@ export async function generateVersionedReport(params: {
   });
 
   const finalized = finalizeReportForDelivery(merged as FortuneAnalysisResult);
+  if (lifeProfile?.cohortCalibration) {
+    finalized.analysis = {
+      ...(finalized.analysis || {}),
+      cohortCalibration: attachCohortCalibration(
+        (merged.analysis as { cohortCalibration?: unknown } | undefined)?.cohortCalibration,
+        lifeProfile.cohortCalibration,
+      ),
+    };
+  }
 
   return {
     result: {

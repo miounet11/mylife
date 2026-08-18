@@ -252,6 +252,17 @@ function buildLifeProfileContext(
     uncertaintyNotes.push(`历史命中率 ${Math.round((profile.calibrationScore || 0) * 100)}%，低命中领域应明确标注不确定性。`);
   }
 
+  let cohortMemory: string | undefined;
+  try {
+    const { formatCohortMemoryBlock, sanitizeCalibration } = require('@/lib/cohort-lenses/memory') as typeof import('@/lib/cohort-lenses/memory');
+    cohortMemory = formatCohortMemoryBlock(sanitizeCalibration(profile.cohortCalibration)) || undefined;
+    if (profile.cohortCalibration && (profile.cohortCalibration.deniedTraits || []).length) {
+      uncertaintyNotes.push('用户已否认部分世代共性，相关章节不得再写成「你们这代人都」。');
+    }
+  } catch {
+    cohortMemory = undefined;
+  }
+
   return {
     hasPreviousReports: (profile.reportCount || 0) > 0 || !!profile.lastReportId,
     calibrationScore: profile.calibrationScore || 0,
@@ -267,6 +278,7 @@ function buildLifeProfileContext(
     preferredTone: profile.preferredTone,
     learningProgress,
     uncertaintyNotes,
+    cohortMemory,
   };
 }
 
