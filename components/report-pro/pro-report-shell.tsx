@@ -4,24 +4,27 @@ import type { FortuneAnalysisResult } from '@/lib/user-types';
 import { buildDecisionSheet } from '@/lib/report-decision-sheet';
 import { buildDecisionPacks } from '@/lib/decision-packs';
 import { buildHehunHref, personFromProView } from '@/lib/hehun-prefill';
+import type { KlineCalibrationMarker } from '@/lib/kline-calibration';
+import { buildEngineSurfaceFromProView } from '@/lib/engine-surface';
 import ProPillarsBar from '@/components/report-pro/pro-pillars-bar';
 import ProOverviewCard from '@/components/report-pro/pro-overview-card';
 import ProOutlookPair from '@/components/report-pro/pro-outlook-pair';
 import ProTopicGrid from '@/components/report-pro/pro-topic-grid';
-import ProKlineSection from '@/components/report-pro/pro-kline-section';
 import ProBeginnerGuide from '@/components/report-pro/pro-beginner-guide';
 import ProElementsCard from '@/components/report-pro/pro-elements-card';
+import YongShenStaleBanner from '@/components/report/yongshen-stale-banner';
+import ReportErrorButton from '@/components/report/report-error-button';
 import ProTimeScores from '@/components/report-pro/pro-time-scores';
 import ProRiskAlerts from '@/components/report-pro/pro-risk-alerts';
 import ProActionBar from '@/components/report-pro/pro-action-bar';
 import ProMonthStrip from '@/components/report-pro/pro-month-strip';
 import ProDecisionSheet from '@/components/report-pro/pro-decision-sheet';
-import ProCoreVerdict from '@/components/report-pro/pro-core-verdict';
 import ProNeedMap from '@/components/report-pro/pro-need-map';
 import ProPredictionsStrip from '@/components/report-pro/pro-predictions-strip';
 import ProDecisionPacks from '@/components/report-pro/pro-decision-packs';
 import ProRevisitStrip from '@/components/report-pro/pro-revisit-strip';
 import ProLearningPath from '@/components/report-pro/pro-learning-path';
+import ProKlineLiveIsland from '@/components/kline/pro-kline-live-island';
 import TeacherPicker from '@/components/teachers/teacher-picker';
 import ReportConsultantCards from '@/components/report/report-consultant-cards';
 import { ReportIllustrationCite } from '@/components/report/report-illustration-cite';
@@ -32,10 +35,20 @@ import { ReportFoundationStrip } from '@/components/report/report-foundation-str
 import ReportEmailCapture from '@/components/report/report-email-capture';
 import ReportCalibrationLoop from '@/components/report/report-calibration-loop';
 import type { CohortCalibrationState } from '@/lib/cohort-lenses';
+import AccountSavePanel from '@/components/auth/account-save-panel';
+import ReportShareViral from '@/components/share/report-share-viral';
+import EngineSurfaceMount from '@/components/engine-surface/engine-surface-mount';
+import EngineSurfaceCite from '@/components/engine-surface/engine-surface-cite';
+import ProOpeningTension from '@/components/report-pro/pro-opening-tension';
+import ProWeeklyLoop from '@/components/report-pro/pro-weekly-loop';
+import ProChartAudit from '@/components/report-pro/pro-chart-audit';
+import { buildReportOpeningTension } from '@/lib/report-opening-tension';
+import { buildChartAudit } from '@/lib/chart-audit';
+import type { WeeklyCalibrationInput } from '@/lib/weekly-calibration';
 
 /**
  * 正常用户主报告（默认阅读）：
- * 先看核心结论 → 决策一页通 → 再装饰条 / 顾问 / 行动条 → 四柱 → 人生K线 → 命理总评
+ * 决策一页通 → 行动条 → 结论 → 四柱 → 人生K线 → 命理总评 → 喜用 → 时间 → 避险 → 议题
  * K 线用引擎 klineData（大运/流年加权），排盘细读在「专业版」。
  */
 export default function ProReportShell({
@@ -52,8 +65,17 @@ export default function ProReportShell({
   birthYear,
   consultantWindows,
   locale,
+  dayun,
+  calibrationMarkers,
   birthDate,
+  birthTime,
   birthPlace,
+  gender,
+  analysis,
+  fiveElements,
+  tenGods,
+  shenSha,
+  weeklyEvents,
   birthSignature,
   pastEventTemplates = [],
   initialCohortCalibration = null,
@@ -83,8 +105,21 @@ export default function ProReportShell({
   consultantWindows?: { best?: string; risk?: string } | null;
   /** UI locale for consultant / reading chrome */
   locale?: string | null;
+  /** 全量大运（色带） */
+  dayun?: FortuneAnalysisResult['dayun'] | unknown;
+  /** 用户校准节点 → K 线标注 */
+  calibrationMarkers?: KlineCalibrationMarker[] | null;
+  /** 出生公历日（引擎身份 / 结构台） */
   birthDate?: string | null;
+  birthTime?: string | null;
   birthPlace?: string | null;
+  gender?: string | null;
+  analysis?: unknown;
+  fiveElements?: unknown;
+  tenGods?: unknown;
+  shenSha?: unknown;
+  /** Events for weekly right/wrong loop */
+  weeklyEvents?: WeeklyCalibrationInput[];
   birthSignature?: string | null;
   pastEventTemplates?: Array<{
     key: string;
@@ -113,32 +148,89 @@ export default function ProReportShell({
     }),
   });
 
+  const openingTension = buildReportOpeningTension(view, reportId);
+  const chartAudit = buildChartAudit({
+    birthDate,
+    birthTime,
+    birthPlace,
+    storedFingerprint: view.pillars.map((p) => p.ganZhi).filter(Boolean).join(' '),
+    reportId,
+  });
+
+  const enginePack = buildEngineSurfaceFromProView({
+    view,
+    reportId,
+    klineData,
+    dayun,
+    birthDate,
+    birthTime,
+    birthPlace,
+    gender,
+    analysis,
+    fiveElements,
+    tenGods,
+    shenSha,
+  });
+
   return (
     <div id="pro-reading" className="scroll-mt-header space-y-4 md:space-y-5">
       <ProAnalyticsBeacon reportId={reportId} surface="mass" />
-      <ProCoreVerdict
-        view={view}
-        sheet={decisionSheet}
-        publicName={publicName}
-        locale={locale}
-      />
-      <ProDecisionSheet
-        sheet={decisionSheet}
+      {/* 账号保存优先（密码/Google），再邮箱订阅 — 降低 guest 流失 */}
+      <AccountSavePanel
         reportId={reportId}
-        birthTimeUncertain={birthTimeUncertain}
-        publicName={publicName}
+        source="pro_report_shell_top"
+        nextHref={`/result/${reportId}`}
       />
+      <ReportEmailCapture
+        reportId={reportId}
+        surfaceKey="pro_report_shell_top"
+        variant="inline"
+        visitThreshold={1}
+      />
+      {/* 人生数据底座：完整度 + 一键补缺 */}
+      <ReportFoundationStrip reportId={reportId} source="pro_report_shell" />
+      {/* 工具分发：报告入口是金矿 session */}
+      <ReportToolsStrip
+        reportId={reportId}
+        dayMaster={view.dayMaster}
+        yongShen={view.elements?.yongShen}
+        source="pro_report_shell"
+        compact
+      />
+      {view.elements?.yongShenStale ? (
+        <YongShenStaleBanner
+          reportId={reportId}
+          strengthDesc={view.elements.strengthDesc}
+          yongShen={view.elements.yongShen}
+        />
+      ) : null}
+
+      <ProOpeningTension tension={openingTension} reportId={reportId} />
+
+      {chartAudit ? <ProChartAudit audit={chartAudit} /> : null}
+
+      {weeklyEvents?.length ? (
+        <ProWeeklyLoop reportId={reportId} events={weeklyEvents} />
+      ) : null}
+
       <section className="border-b border-[color:var(--hairline)] pb-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <div className="text-[12px] font-medium text-[color:var(--ink-5)]">你的报告</div>
               <KnowledgeBaseStamp />
+              <ReportErrorButton
+                compact
+                reportId={reportId}
+                category="content_wrong"
+                label="整份报错"
+                presetMessage={`【报告报错】\n报告ID：${reportId}\n\n问题描述：\n`}
+              />
             </div>
-            <h2 className="mt-1.5 text-[18px] font-semibold leading-snug tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[22px]">
+            <h1 className="mt-1.5 text-[18px] font-semibold leading-snug tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[22px]">
               {publicName ? `${publicName} · ` : ''}
               {view.title}
-            </h2>
+            </h1>
             <p className="mt-1.5 max-w-2xl text-[13px] leading-[1.55] text-[color:var(--ink-5)]">
               {view.subtitle}
             </p>
@@ -155,6 +247,9 @@ export default function ProReportShell({
             </a>
             <a href="#pro-risks" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
               避险
+            </a>
+            <a href="#engine-surface" className="text-[color:var(--ink-2)] underline-offset-2 hover:underline">
+              引擎结构
             </a>
             <Link
               href={`/predictions?reportId=${encodeURIComponent(reportId)}`}
@@ -220,41 +315,44 @@ export default function ProReportShell({
             </a>
           </li>
           <li>
+            <a href="#engine-surface" className="underline-offset-2 hover:underline">
+              ⑨ 引擎结构台
+            </a>
+          </li>
+          <li>
             <a href="#pro-topics" className="underline-offset-2 hover:underline">
-              ⑨ 议题 · 继续问
+              ⑩ 议题 · 继续问
             </a>
           </li>
           <li>
             <a href="#pro-teachers" className="underline-offset-2 hover:underline">
-              ⑩ 问老师
+              ⑪ 问老师
             </a>
           </li>
           <li>
             <a href="#pro-learn" className="underline-offset-2 hover:underline">
-              ⑪ 相关阅读
+              ⑫ 相关阅读
             </a>
           </li>
         </ol>
       </section>
 
-      <ReportEmailCapture
-        reportId={reportId}
-        surfaceKey="pro_report_shell_top"
-        variant="inline"
-        visitThreshold={1}
+      <EngineSurfaceCite
+        pack={enginePack}
+        modules={['pillars', 'yongji', 'kline', 'months', 'dayun', 'almanac']}
       />
-      <ReportFoundationStrip reportId={reportId} source="pro_report_shell" />
-      <ReportToolsStrip
-        reportId={reportId}
-        dayMaster={view.dayMaster}
-        yongShen={view.elements?.yongShen}
-        source="pro_report_shell"
-        compact
-      />
+
       <ReportIllustrationCite
         keys={['cover', 'reading-path']}
         title="怎么读本报告"
         limit={1}
+      />
+
+      <ProDecisionSheet
+        sheet={decisionSheet}
+        reportId={reportId}
+        birthTimeUncertain={birthTimeUncertain}
+        publicName={publicName}
       />
 
       <ReportConsultantCards
@@ -289,34 +387,38 @@ export default function ProReportShell({
         />
       </div>
 
-      <div id="pro-pillars" className="scroll-mt-header">
-        <ProPillarsBar pillars={view.pillars} />
-      </div>
+      <ReportIllustrationCite keys={['dayun', 'timing']} title="大运与节奏" limit={1} />
 
-      {/* 人生 K 线：引擎 klineData，放在命理总评之前 */}
-      <div id="pro-kline" className="scroll-mt-header space-y-3">
-        <ReportIllustrationCite keys={['dayun', 'timing']} title="节奏窗口" limit={1} />
-        <ProKlineSection
-          klineData={klineData}
-          peak={view.klinePeak}
-          trough={view.klineTrough}
-          birthYear={
-            birthYear ||
-            (() => {
-              const years = Array.isArray(klineData)
-                ? klineData.map((p) => p.year).filter((y): y is number => typeof y === 'number')
-                : [];
-              // 仅当样本已像人生跨度时用最小年，否则交给 inferBirthYear
-              if (years.length && Math.max(...years) - Math.min(...years) >= 40) {
-                return Math.min(...years);
-              }
-              return undefined;
-            })()
-          }
-          yongShen={view.elements.yongShen}
-          jiShen={view.elements.jiShen}
-        />
-      </div>
+      {/* 人生 K 线：client island，校准后即时标到图上（无需刷新） */}
+      <ProKlineLiveIsland
+        reportId={reportId}
+        klineData={klineData}
+        peak={view.klinePeak}
+        trough={view.klineTrough}
+        birthYear={
+          birthYear ||
+          (() => {
+            const years = Array.isArray(klineData)
+              ? klineData.map((p) => p.year).filter((y): y is number => typeof y === 'number')
+              : [];
+            if (years.length && Math.max(...years) - Math.min(...years) >= 40) {
+              return Math.min(...years);
+            }
+            return undefined;
+          })()
+        }
+        yongShen={view.elements.yongShen}
+        jiShen={view.elements.jiShen}
+        dayun={dayun}
+        publicName={publicName}
+        locale={locale}
+        initialMarkers={calibrationMarkers}
+        between={
+          <div id="pro-pillars" className="scroll-mt-header">
+            <ProPillarsBar pillars={view.pillars} />
+          </div>
+        }
+      />
 
       <div id="pro-overview" className="scroll-mt-header">
         <ProOverviewCard overview={view.overview} />
@@ -324,7 +426,7 @@ export default function ProReportShell({
 
       <div id="pro-elements" className="scroll-mt-header space-y-3">
         <ReportIllustrationCite keys={['yongshen', 'structure']} title="结构示意" limit={1} />
-        <ProElementsCard elements={view.elements} />
+        <ProElementsCard elements={view.elements} reportId={reportId} />
       </div>
 
       <div id="pro-time" className="scroll-mt-header">
@@ -337,6 +439,13 @@ export default function ProReportShell({
         <ReportIllustrationCite keys={['boundary']} title="判断边界" limit={1} />
         <ProRiskAlerts alerts={view.riskAlerts} reportId={reportId} canManage={canManage} />
       </div>
+
+      {/* 引擎结构台：四柱/用忌/大运/K线/近月/通书 — 与叙事同盘可引用 */}
+      <EngineSurfaceMount
+        pack={enginePack}
+        prefer={['pillars', 'yongji', 'kline', 'months', 'dayun', 'almanac', 'risks']}
+        title="引擎结构台"
+      />
 
       <div id="pro-outlook" className="scroll-mt-header">
         <ProOutlookPair month={view.month} year={view.year} />
@@ -375,6 +484,32 @@ export default function ProReportShell({
         birthSignature={birthSignature}
         initialCohortCalibration={initialCohortCalibration}
         locale={locale}
+      />
+
+      <ReportShareViral
+        reportId={reportId}
+        publicName={publicName}
+        locale={locale}
+        headline={[
+          view.dayMaster ? `日主${view.dayMaster}` : '',
+          view.patternLabel || '',
+          view.overview.oneLiner?.slice(0, 48) || view.title,
+        ]
+          .filter(Boolean)
+          .join(' · ')}
+        lines={[
+          view.elements.yongShen?.length
+            ? `主用神 ${view.elements.yongShen.slice(0, 3).join('、')}${
+                view.elements.tiaohuoElement ? ` · 调候 ${view.elements.tiaohuoElement}` : ''
+              }`
+            : '',
+          view.klinePeak
+            ? `高点参考 ${view.klinePeak.year} · ${view.klinePeak.label || view.klinePeak.score}`
+            : '',
+          view.nowAction?.doThis
+            ? `现在宜：${String(view.nowAction.doThis).slice(0, 40)}`
+            : '结构与节奏参考 · 免费再测一份',
+        ].filter(Boolean)}
       />
 
       <nav className="flex flex-wrap gap-x-4 gap-y-1 border-t border-[color:var(--hairline)] pt-4 text-[13px]">
