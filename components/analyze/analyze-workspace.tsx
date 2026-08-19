@@ -2,10 +2,9 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowRight, ChevronDown } from 'lucide-react';
 import { AlertBanner } from '@/components/layout/alert-banner';
-import { FeatureImmersionHero } from '@/components/brand/feature-immersion-hero';
 import { PortalLayout } from '@/components/layout/portal-layout';
 import { PortalRailLeft, PortalRailRight } from '@/components/analyze/portal-rail';
 import FreeMembershipClaimBanner from '@/components/membership/free-membership-claim-banner';
@@ -15,15 +14,15 @@ import { cn } from '@/lib/utils';
 import { useLocale } from '@/components/i18n/locale-provider';
 import { funnelCopy } from '@/lib/i18n/funnel-copy';
 import { buildTeacherChatHref } from '@/lib/teachers';
-import { PageIllustrationStrip } from '@/components/content/page-illustration-strip';
 import {
-  formatPlaceWithLongitude,
-  getQuickPickCities,
+  formatLatitudeLabel,
+  formatLongitudeLabel,
   resolveCityLongitude,
-  type CityLongitude,
 } from '@/lib/geo/city-longitudes';
+import { BirthPlacePicker } from '@/components/analyze/birth-place-picker';
 import { calculateTrueSolarTime } from '@/lib/solar-time';
 import { loadRememberedBirthForm, saveRememberedBirthForm } from '@/lib/birth-form-storage';
+import { PrestigeMark } from '@/components/brand/prestige-banner';
 
 const INTENT_KEYS = ['career', 'wealth', 'relationship', 'yearly'] as const;
 type IntentKey = (typeof INTENT_KEYS)[number];
@@ -59,6 +58,7 @@ export default function AnalyzeWorkspace({
   source = 'analyze_workspace',
   initialIntent,
   initialSource,
+  layout = 'portal',
 }: {
   stats: SystemCapabilityStats;
   activePath?: string;
@@ -66,7 +66,10 @@ export default function AnalyzeWorkspace({
   /** Server-passed URL intent (optional; client searchParams also applied). */
   initialIntent?: string | null;
   initialSource?: string | null;
+  /** `inline` = homepage: form only, no duplicate rails / hero / FAQ. */
+  layout?: 'portal' | 'inline';
 }) {
+  const isInline = layout === 'inline';
   const searchParams = useSearchParams();
   const { locale } = useLocale();
   const copy = useMemo(() => funnelCopy(locale), [locale]);
@@ -87,16 +90,19 @@ export default function AnalyzeWorkspace({
   );
 
   const [birthDate, setBirthDate] = useState('');
-  const [birthTime, setBirthTime] = useState('12:00');
+  const [birthTime, setBirthTime] = useState('');
   const [birthPlace, setBirthPlace] = useState('');
   const [gender, setGender] = useState<'male' | 'female'>('male');
   const [timeUnknown, setTimeUnknown] = useState(false);
   /** 晚子时(23:00–23:59)是否按次日日柱（sect1）。默认不换日（sect2），与主流排盘一致。 */
   const [lateZiNextDay, setLateZiNextDay] = useState(false);
+  const [useTrueSolarTime, setUseTrueSolarTime] = useState(true);
+  const [useDaylightSaving, setUseDaylightSaving] = useState(false);
   const [intent, setIntent] = useState<IntentKey>(() => normalizeAnalyzeIntent(urlIntent || 'career'));
   const [relation, setRelation] = useState<RelationKey>('self');
   const [name, setName] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showYmd, setShowYmd] = useState(true);
   const [email, setEmail] = useState('');
   const [sessionEmail, setSessionEmail] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -109,42 +115,60 @@ export default function AnalyzeWorkspace({
   const [entryBanner, setEntryBanner] = useState<string | null>(null);
   const [timeTouched, setTimeTouched] = useState(false);
   const [ymdDraft, setYmdDraft] = useState({ y: '', m: '', d: '' });
+  const dateRef = useRef<HTMLInputElement>(null);
+  const placeRef = useRef<HTMLInputElement>(null);
 
-  const quickCities = useMemo(() => getQuickPickCities(), []);
   const resolvedLon = useMemo(() => resolveCityLongitude(birthPlace), [birthPlace]);
 
-  /** Educational client preview only — engine applies true solar when hour known + place resolves. */
+  /** Educational client preview — engine applies the same flags on submit. */
   const trueSolarPreview = useMemo(() => {
     if (!birthDate || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate) || !resolvedLon) return null;
-    if (timeUnknown) return null;
+    if (timeUnknown || !birthTime) return null;
     const [y, m, d] = birthDate.split('-').map(Number);
-    const [hh, mm] = (birthTime || '12:00').split(':').map((n) => Number(n) || 0);
+    let [hh, mm] = (birthTime || '12:00').split(':').map((n) => Number(n) || 0);
     if (!y || !m || !d) return null;
+    let year = y;
+    let month = m;
+    let day = d;
+    if (useDaylightSaving) {
+      const utc = new Date(Date.UTC(year, month - 1, day, hh, mm, 0));
+      utc.setUTCMinutes(utc.getUTCMinutes() - 60);
+      year = utc.getUTCFullYear();
+      month = utc.getUTCMonth() + 1;
+      day = utc.getUTCDate();
+      hh = utc.getUTCHours();
+      mm = utc.getUTCMinutes();
+    }
     try {
-      const st = calculateTrueSolarTime(y, m, d, hh, mm, 0, resolvedLon.longitude, 8);
+      const st = useTrueSolarTime
+        ? calculateTrueSolarTime(year, month, day, hh, mm, 0, resolvedLon.longitude, 8)
+        : {
+            year,
+            month,
+            day,
+            hour: hh,
+            minute: mm,
+            correctionMinutes: 0,
+          };
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const clock = `${st.year}-${pad(st.month)}-${pad(st.day)} ${pad(st.hour)}:${pad(st.minute)}`;
       const sign = st.correctionMinutes >= 0 ? '+' : '−';
       const absMin = Math.abs(Math.round(st.correctionMinutes));
-      const hhmm = `${String(st.hour).padStart(2, '0')}:${String(st.minute).padStart(2, '0')}`;
+      const coordLocale = locale === 'en' ? 'en' : 'zh';
+      const lonLabel = formatLongitudeLabel(resolvedLon.longitude, coordLocale);
+      const latLabel =
+        resolvedLon.latitude != null ? formatLatitudeLabel(resolvedLon.latitude, coordLocale) : '';
       return {
-        label: `真太阳时约 ${sign}${absMin} 分 · ${hhmm}`,
-        labelEn: `True solar ~ ${sign}${absMin} min · ${hhmm}`,
+        clock,
+        coord: [latLabel, lonLabel].filter(Boolean).join(' '),
+        label: `真太阳时约 ${sign}${absMin} 分 · ${pad(st.hour)}:${pad(st.minute)}`,
+        labelEn: `True solar ~ ${sign}${absMin} min · ${pad(st.hour)}:${pad(st.minute)}`,
         correctionMinutes: st.correctionMinutes,
       };
     } catch {
       return null;
     }
-  }, [birthDate, birthTime, resolvedLon, timeUnknown]);
-
-  const activeCityId = useMemo(() => {
-    if (!birthPlace) return null;
-    const hit = quickCities.find(
-      (c) => birthPlace.includes(c.zh) || birthPlace.toLowerCase().includes(c.en.toLowerCase()),
-    );
-    return hit?.id ?? null;
-  }, [birthPlace, quickCities]);
-
-  const step = birthDate && (timeUnknown || birthTime) && birthPlace ? 2 : birthDate ? 1 : 0;
-  const canSubmit = !!birthDate && !!birthPlace;
+  }, [birthDate, birthTime, locale, resolvedLon, timeUnknown, useDaylightSaving, useTrueSolarTime]);
 
   useEffect(() => {
     // Prefill from deep links (knowledge / tools / chat / dimensions)
@@ -177,10 +201,17 @@ export default function AnalyzeWorkspace({
     const remembered = loadRememberedBirthForm();
     if (remembered) {
       if (!date && remembered.birthDate) setBirthDate(remembered.birthDate);
-      if (!time && remembered.birthTime) setBirthTime(remembered.birthTime);
+      if (!time && remembered.birthTime && remembered.birthTime !== '12:00') {
+        setBirthTime(remembered.birthTime);
+        setTimeTouched(true);
+      }
       if (g !== 'male' && g !== 'female' && remembered.gender) setGender(remembered.gender);
       if (!place && remembered.birthPlace) setBirthPlace(remembered.birthPlace);
       if (!n && remembered.name) setName(remembered.name.slice(0, 32));
+    }
+
+    if (searchParams.get('intent') || initialIntent) {
+      setShowAdvanced(true);
     }
 
     const from = searchParams.get('from') || searchParams.get('source') || initialSource || '';
@@ -194,10 +225,6 @@ export default function AnalyzeWorkspace({
       setEntryBanner(null);
     }
   }, [searchParams, initialIntent, initialSource, copy]);
-
-  function pickCity(city: CityLongitude) {
-    setBirthPlace(formatPlaceWithLongitude(city.zh, city.longitude));
-  }
 
   useEffect(() => {
     trackFunnel('report_page_view', {
@@ -228,13 +255,20 @@ export default function AnalyzeWorkspace({
   }, [searchParams]);
 
   async function handleSubmit() {
-    if (!canSubmit) return;
+    if (!birthDate) {
+      dateRef.current?.focus();
+      return;
+    }
+    if (!birthPlace.trim()) {
+      placeRef.current?.focus();
+      return;
+    }
     setLoading(true);
     setError(null);
     // exact only when user set a time or we already know accuracy; else range (not over-trust hour).
     const resolvedAccuracy = timeUnknown
       ? 'unknown'
-      : timeTouched || (birthTime && birthTime !== '12:00')
+      : timeTouched && birthTime
         ? 'exact'
         : 'range';
     const relationLabel = relationOptions.find((item) => item.key === relation)?.label || copy.relation.self;
@@ -247,7 +281,7 @@ export default function AnalyzeWorkspace({
     });
 
     const resolvedPlace = birthPlace.trim() || copy.defaultPlace;
-    const clockTime = timeUnknown ? '12:00' : birthTime;
+    const clockTime = timeUnknown || !birthTime ? '12:00' : birthTime;
     const payload = {
       birthDate,
       birthTime: clockTime,
@@ -264,7 +298,9 @@ export default function AnalyzeWorkspace({
       locale,
       // Engine options: keep clock time identity aligned with what user typed
       longitude: resolvedLon?.longitude,
-      useSolarTime: !timeUnknown && Boolean(resolvedLon?.longitude),
+      latitude: resolvedLon?.latitude ?? undefined,
+      useSolarTime: useTrueSolarTime && !timeUnknown && Boolean(resolvedLon?.longitude),
+      useDaylightSaving,
       useSeparateZiHour: !timeUnknown && lateZiNextDay,
       timezone: 8,
     };
@@ -378,55 +414,32 @@ export default function AnalyzeWorkspace({
     }
   }
 
-  const fieldLabel = 'text-[12px] font-medium text-[color:var(--ink-2)]';
+  const fieldLabel = 'text-[12px] font-semibold text-[color:var(--ink-2)]';
   const fieldHint = 'text-[12px] leading-[1.45] text-[color:var(--ink-5)]';
   const chipBase =
-    'rounded-[var(--radius)] border px-2.5 py-1.5 text-[12px] font-medium transition';
+    'rounded-lg border px-2.5 py-1.5 text-[12px] font-medium transition';
   const chipActive =
-    'border-[color:var(--ink-1)] bg-[color:var(--ink-1)] text-white';
+    'border-[#3366cc] bg-[#3366cc] text-white';
   const chipIdle =
-    'border-[color:var(--hairline)] bg-[color:var(--paper)] text-[color:var(--ink-3)] hover:border-[color:var(--hairline-strong)] hover:text-[color:var(--ink-1)]';
+    'border-[color:var(--hairline)] bg-white text-[color:var(--ink-3)] hover:border-[color:var(--hairline-strong)] hover:text-[color:var(--ink-1)]';
 
   /** 站内导航：就是链接，不要花图标 */
   const quietLink =
     'text-[13px] text-[color:var(--ink-2)] underline-offset-2 transition hover:text-[color:var(--ink-1)] hover:underline';
   const muteNote = 'text-[12px] leading-[1.55] text-[color:var(--ink-5)]';
 
-  return (
-    <PortalLayout
-      left={<PortalRailLeft activePath={activePath} />}
-      right={<PortalRailRight />}
-      main={
-        <div className="mx-auto w-full max-w-[var(--content-max)] space-y-4 md:space-y-5">
+  const main = (
+        <div className={cn('mx-auto w-full space-y-4 md:space-y-5', isInline ? 'max-w-[40rem]' : 'max-w-[var(--content-max)]')}>
           {entryBanner ? (
             <p className={cn('rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/50 px-3 py-2', muteNote)}>
               {entryBanner}
             </p>
           ) : null}
 
-          <FreeMembershipClaimBanner source="analyze_workspace" compact />
-
-          <PageIllustrationStrip
-            surface="home/workspace"
-            title="使用路径"
-            compact
-            limit={1}
-            className="mb-1"
-          />
-
-          {/* Linear-clean：有报告用户直接进顾问开场，不打断排盘主路径 */}
-          <section className="border-y border-[color:var(--hairline)] py-3.5">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="text-[11px] font-medium text-[color:var(--ink-5)]">顾问</div>
-                <h2 className="mt-0.5 text-[14px] font-semibold tracking-[-0.01em] text-[color:var(--ink-1)]">
-                  已有报告？直接开场
-                </h2>
-                <p className="mt-1 max-w-xl text-[12px] leading-[1.55] text-[color:var(--ink-5)]">
-                  不预填长问题。老师先开场，点议题或一键开口即可追问
-                </p>
-              </div>
-              <div className="flex shrink-0 flex-wrap items-center gap-x-4 gap-y-1 text-[13px]">
+          {!isInline ? (
+            <section className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[color:var(--hairline)] pb-3">
+              <p className="text-[13px] text-[color:var(--ink-3)]">已有报告？直接开场</p>
+              <div className="flex shrink-0 flex-wrap items-center gap-x-4 text-[13px]">
                 <Link
                   href={buildTeacherChatHref({
                     teacherId: 'overview',
@@ -443,47 +456,69 @@ export default function AnalyzeWorkspace({
                   全部老师
                 </Link>
               </div>
+            </section>
+          ) : null}
+
+          {/* Natal form — date / time / place / gender, then generate */}
+          <section id="analyze-workspace" className="fb-card overflow-hidden rounded-2xl border border-[color:var(--hairline)] shadow-[0_4px_24px_rgba(15,23,42,0.06)]">
+            <div className="px-5 pt-6 md:px-6 md:pt-7">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-[#c9a227]/35 bg-black px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#e8c76a]">
+                <PrestigeMark icon="app" size={14} />
+                LIFE K-LINE · 命盘推演
+              </span>
+              {isInline ? (
+                <h1 className="mt-2.5 text-[24px] font-bold leading-[1.2] tracking-[-0.03em] text-[color:var(--ink-1)] md:text-[30px]">
+                  看清原局底色、岁运起伏与当下决断
+                </h1>
+              ) : (
+                <h2 className="mt-2 text-[20px] font-bold tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[22px]">
+                  {copy.heroTitle}
+                </h2>
+              )}
+              <p className="mt-1.5 text-[13px] leading-[1.6] text-[color:var(--ink-4)]">
+                {copy.heroDescription}
+              </p>
             </div>
-          </section>
 
-          {/* 主表单：页面唯一重块 */}
-          <section id="analyze-workspace" className="fb-card overflow-hidden">
-            <FeatureImmersionHero
-              surfaceKey="analyze"
-              priority
-              compact
-              className="mb-0 [&>div:last-child]:px-4 md:[&>div:last-child]:px-5"
-              eyebrow={copy.heroEyebrow}
-              title={copy.heroTitle}
-              description={
-                <span className="text-[13px] leading-[1.55] text-[color:var(--ink-5)] md:text-[14px]">
-                  {copy.heroDescription}
-                </span>
-              }
-              footer={
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12px]">
-                  <Link href="/docs/birth-info" className={quietLink}>
-                    {copy.howTo}
-                  </Link>
-                  <span className="text-[color:var(--ink-5)]">·</span>
-                  <Link href="/docs/true-solar-time" className={quietLink}>
-                    {copy.trueSolar}
-                  </Link>
-                </div>
-              }
-            />
-
-            <div className="px-4 py-5 md:px-5 md:py-6">
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <label className="space-y-2 sm:col-span-2 lg:col-span-1">
-                  <span className={fieldLabel}>{copy.birthTime}</span>
-                  <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <form
+              className="px-5 pb-0 pt-5 md:px-6"
+              noValidate
+              onSubmit={(e) => {
+                e.preventDefault();
+                void handleSubmit();
+              }}
+            >
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <span className={fieldLabel}>{copy.birthDate}</span>
+                  <div className="grid gap-2 sm:grid-cols-2">
                     <input
+                      ref={dateRef}
                       type="date"
+                      autoComplete="bday"
                       value={birthDate}
                       onChange={(e) => setBirthDate(e.target.value)}
-                      className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
+                      className="fb-input h-10 min-h-[var(--control-h)] w-full min-w-0 px-3 text-[13px]"
+                      aria-label={copy.birthDate}
                     />
+                    {timeUnknown ? (
+                      <div className="fb-input flex h-10 min-h-[var(--control-h)] items-center px-3 text-[13px] text-[color:var(--ink-5)]">
+                        按日柱估算
+                      </div>
+                    ) : (
+                      <input
+                        type="time"
+                        value={birthTime}
+                        onChange={(e) => {
+                          setBirthTime(e.target.value);
+                          setTimeTouched(true);
+                        }}
+                        className="fb-input h-10 min-h-[var(--control-h)] w-full min-w-0 px-3 text-[13px]"
+                        aria-label={copy.birthTime}
+                      />
+                    )}
+                  </div>
+                  {showYmd ? (
                     <div className="grid grid-cols-3 gap-1.5">
                       {(['y', 'm', 'd'] as const).map((part) => {
                         const bits = (birthDate || '').split('-');
@@ -521,95 +556,94 @@ export default function AnalyzeWorkspace({
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-[color:var(--ink-5)]">
-                      年份较早时，可直接输入数字（如 1984 10 08）。晚子时 23:00–23:59 换日请勾选下方。
-                    </p>
-                    {!timeUnknown ? (
-                      <input
-                        type="time"
-                        value={birthTime}
-                        onChange={(e) => {
-                          setBirthTime(e.target.value);
-                          setTimeTouched(true);
-                        }}
-                        className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
-                      />
-                    ) : null}
-                  </div>
-                  <label className="mt-1 flex items-center gap-2 text-[12px] text-[color:var(--ink-3)]">
-                    <input
-                      type="checkbox"
-                      checked={timeUnknown}
-                      onChange={(e) => setTimeUnknown(e.target.checked)}
-                      className="h-3.5 w-3.5 rounded border-[color:var(--hairline-strong)]"
-                    />
-                    {copy.timeUnknown}
-                  </label>
-                  {!timeUnknown ? (
-                    <label className="mt-1.5 flex items-start gap-2 text-[12px] leading-snug text-[color:var(--ink-3)]">
-                      <input
-                        type="checkbox"
-                        checked={lateZiNextDay}
-                        onChange={(e) => {
-                          setLateZiNextDay(e.target.checked);
-                          setShowAdvanced(true);
-                        }}
-                        className="mt-0.5 h-3.5 w-3.5 shrink-0 rounded border-[color:var(--hairline-strong)]"
-                      />
-                      <span>
-                        晚子时换日
-                        <span className="mt-0.5 block text-[11px] text-[color:var(--ink-5)]">
-                          勾选后，当日 23:00–23:59 按次日日柱排盘（早子时仍属次日）。默认不换日。
-                        </span>
-                      </span>
-                    </label>
                   ) : null}
-                </label>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                    <button
+                      type="button"
+                      aria-pressed={timeUnknown}
+                      onClick={() => setTimeUnknown((v) => !v)}
+                      className={cn(
+                        'text-[12px] underline-offset-2 hover:underline',
+                        timeUnknown
+                          ? 'font-medium text-[color:var(--ink-1)]'
+                          : 'text-[color:var(--ink-4)] hover:text-[color:var(--ink-1)]',
+                      )}
+                    >
+                      {timeUnknown ? '改填具体时间' : copy.timeUnknown}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowYmd((v) => !v)}
+                      className="text-[12px] text-[color:var(--ink-4)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+                    >
+                      {showYmd ? '改用日历选择' : '较早年份用数字填写'}
+                    </button>
+                  </div>
+                </div>
 
                 <div className="space-y-2">
                   <span className={fieldLabel}>{copy.birthPlace}</span>
-                  <input
+                  <BirthPlacePicker
+                    ref={placeRef}
                     value={birthPlace}
-                    onChange={(e) => setBirthPlace(e.target.value)}
+                    onChange={setBirthPlace}
+                    locale={locale}
                     placeholder={copy.placePlaceholder}
-                    className="fb-input h-10 min-h-[var(--control-h)] w-full px-3 text-[13px]"
+                    emptyHint={copy.placePopularHint}
+                    searchHint={copy.placeSearchHint}
                     aria-label={copy.birthPlace}
                   />
-                  <div>
-                    <div className={cn('mb-1.5', fieldHint)}>{copy.cityQuickPick}</div>
-                    <div className="flex flex-wrap gap-1.5">
-                      {quickCities.map((city) => (
-                        <button
-                          key={city.id}
-                          type="button"
-                          onClick={() => pickCity(city)}
-                          className={cn(
-                            chipBase,
-                            activeCityId === city.id ? chipActive : chipIdle,
-                          )}
-                        >
-                          {locale === 'en' ? city.en : city.zh}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
+                    <label className="inline-flex items-center gap-1.5 text-[13px] text-[color:var(--ink-2)]">
+                      <input
+                        type="checkbox"
+                        checked={useDaylightSaving}
+                        onChange={(e) => setUseDaylightSaving(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-[color:var(--hairline-strong)] accent-[color:var(--brand)]"
+                      />
+                      {copy.optDst}
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 text-[13px] text-[color:var(--ink-2)]">
+                      <input
+                        type="checkbox"
+                        checked={useTrueSolarTime && !timeUnknown}
+                        disabled={timeUnknown}
+                        onChange={(e) => setUseTrueSolarTime(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-[color:var(--hairline-strong)] accent-[color:var(--brand)]"
+                      />
+                      {copy.optTrueSolar}
+                    </label>
+                    <label className="inline-flex items-center gap-1.5 text-[13px] text-[color:var(--ink-2)]">
+                      <input
+                        type="checkbox"
+                        checked={lateZiNextDay}
+                        disabled={timeUnknown}
+                        onChange={(e) => setLateZiNextDay(e.target.checked)}
+                        className="h-3.5 w-3.5 rounded border-[color:var(--hairline-strong)] accent-[color:var(--brand)]"
+                      />
+                      {copy.optLateZi}
+                    </label>
                   </div>
                   {timeUnknown ? (
                     <p className={fieldHint}>{copy.trueSolarSkippedUnknownHour}</p>
-                  ) : trueSolarPreview ? (
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <span
-                        className={cn(
-                          chipBase,
-                          'border-[color:var(--hairline-strong)] bg-[color:var(--bg-sunken)]/60 text-[color:var(--ink-2)]',
-                        )}
-                        title={copy.trueSolarAppliedNote}
-                      >
-                        {locale === 'en' ? trueSolarPreview.labelEn : trueSolarPreview.label}
-                      </span>
-                      <span className={fieldHint}>{copy.trueSolarAppliedNote}</span>
+                  ) : useTrueSolarTime && trueSolarPreview ? (
+                    <div className="space-y-0.5 text-[12px] leading-[1.6] text-[color:var(--ink-4)]">
+                      <p>
+                        {copy.trueSolarClockLabel}：{trueSolarPreview.clock}
+                        {trueSolarPreview.correctionMinutes
+                          ? `（${locale === 'en' ? trueSolarPreview.labelEn : trueSolarPreview.label}）`
+                          : ''}
+                      </p>
+                      {trueSolarPreview.coord ? (
+                        <p>
+                          {copy.coordLabel}：{trueSolarPreview.coord}
+                        </p>
+                      ) : null}
                     </div>
-                  ) : birthPlace.trim() && !resolvedLon ? (
+                  ) : useTrueSolarTime && birthPlace.trim() && !resolvedLon ? (
                     <p className={fieldHint}>{copy.trueSolarNeedPlace}</p>
+                  ) : !useTrueSolarTime ? (
+                    <p className={fieldHint}>{copy.trueSolarOffNote}</p>
                   ) : (
                     <p className={fieldHint}>{copy.placeHint}</p>
                   )}
@@ -617,7 +651,7 @@ export default function AnalyzeWorkspace({
 
                 <div className="space-y-2">
                   <span className={fieldLabel}>{copy.gender}</span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2" role="group" aria-label={copy.gender}>
                     {(['male', 'female'] as const).map((value) => (
                       <button
                         key={value}
@@ -635,82 +669,61 @@ export default function AnalyzeWorkspace({
                 </div>
               </div>
 
-              <div className="mt-5">
-                <div className={fieldLabel}>{copy.whoseChart}</div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {relationOptions.map((tag) => (
-                    <button
-                      key={tag.key}
-                      type="button"
-                      onClick={() => setRelation(tag.key)}
-                      className={cn(chipBase, relation === tag.key ? chipActive : chipIdle)}
-                    >
-                      {tag.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className={fieldLabel}>{copy.themeLabel}</div>
-                  <Link
-                    href={`/dimensions?source=analyze_intent_${intent}`}
-                    className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
-                  >
-                    {copy.dimensionsShortcut}
-                  </Link>
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {intentOptions.map((option) => (
-                    <button
-                      key={option.key}
-                      type="button"
-                      onClick={() => setIntent(option.key)}
-                      className={cn(chipBase, intent === option.key ? chipActive : chipIdle)}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="mt-5 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 p-3.5 md:p-4">
-                <div className="flex flex-wrap items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="text-[12px] font-medium text-[color:var(--ink-2)]">
-                      {copy.emailStripTitle}
-                    </div>
-                    <p className={cn('mt-1', fieldHint)}>{copy.emailStripBody}</p>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-[color:var(--ink-5)]">可选</span>
-                </div>
-                <label className="mt-3 block space-y-1.5">
-                  <span className="sr-only">{copy.emailRecommend}</span>
-                  <input
-                    type="email"
-                    autoComplete="email"
-                    inputMode="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={copy.emailPlaceholder}
-                    className="fb-input h-9 w-full px-3 text-[13px]"
-                  />
-                </label>
-              </div>
-
               <button
                 type="button"
+                aria-expanded={showAdvanced}
                 onClick={() => setShowAdvanced((v) => !v)}
                 className="mt-5 flex items-center gap-1.5 text-[12px] font-medium text-[color:var(--ink-3)] transition hover:text-[color:var(--ink-1)]"
               >
                 <ChevronDown className={cn('h-3.5 w-3.5 transition', showAdvanced ? 'rotate-180' : '')} />
                 {copy.advanced}
+                {!showAdvanced && relation !== 'self' ? ` · ${copy.relation[relation]}` : null}
+                {!showAdvanced && intent !== 'career' ? ` · ${copy.intent[intent]}` : null}
               </button>
 
               {showAdvanced ? (
-                <div className="mt-3 grid gap-4 rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)]/40 p-3.5 md:grid-cols-2 md:p-4">
-                  <label className="space-y-2 md:col-span-2">
+                <div className="mt-3 space-y-4 border-t border-[color:var(--hairline)] pt-4">
+                  <div>
+                    <div className={fieldLabel}>{copy.whoseChart}</div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {relationOptions.map((tag) => (
+                        <button
+                          key={tag.key}
+                          type="button"
+                          onClick={() => setRelation(tag.key)}
+                          className={cn(chipBase, relation === tag.key ? chipActive : chipIdle)}
+                        >
+                          {tag.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className={fieldLabel}>{copy.themeLabel}</div>
+                      <Link
+                        href={`/dimensions?source=analyze_intent_${intent}`}
+                        className="text-[12px] text-[color:var(--ink-3)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
+                      >
+                        {copy.dimensionsShortcut}
+                      </Link>
+                    </div>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {intentOptions.map((option) => (
+                        <button
+                          key={option.key}
+                          type="button"
+                          onClick={() => setIntent(option.key)}
+                          className={cn(chipBase, intent === option.key ? chipActive : chipIdle)}
+                        >
+                          {option.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <label className="block space-y-2">
                     <span className={fieldLabel}>{copy.nameOptional}</span>
                     <input
                       value={name}
@@ -719,9 +732,22 @@ export default function AnalyzeWorkspace({
                       className="fb-input h-9 w-full px-3 text-[13px]"
                     />
                   </label>
-                  <div className="rounded-[var(--radius)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 py-2.5 text-[12px] leading-[1.5] text-[color:var(--ink-3)] md:col-span-2">
-                    {copy.solarDefault}
-                  </div>
+
+                  <label className="block space-y-2">
+                    <span className={fieldLabel}>{copy.emailStripTitle}</span>
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      inputMode="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder={copy.emailPlaceholder}
+                      className="fb-input h-9 w-full px-3 text-[13px]"
+                    />
+                    <span className={fieldHint}>{copy.emailStripBody}</span>
+                  </label>
+
+                  <p className={fieldHint}>{copy.solarDefault}</p>
                 </div>
               ) : null}
 
@@ -759,31 +785,36 @@ export default function AnalyzeWorkspace({
 
               <div className="lk-sticky-cta">
                 <button
-                  type="button"
-                  disabled={!canSubmit || loading}
-                  onClick={() => void handleSubmit()}
-                  className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-[var(--radius-sm)] bg-[color:var(--ink-1)] text-[14px] font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                  type="submit"
+                  disabled={loading}
+                  className="inline-flex h-11.5 w-full items-center justify-center gap-2 rounded-sm bg-[#3366cc] text-[15px] font-semibold text-white transition-all hover:bg-[#3056a9] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {loading ? copy.submitLoading : canSubmit ? copy.submitReady : copy.submitDisabled}
-                  {!loading && canSubmit ? <ArrowRight className="h-4 w-4" /> : null}
+                  {loading ? copy.submitLoading : copy.submitReady}
+                  {!loading ? <ArrowRight className="h-4 w-4" /> : null}
                 </button>
-                <p className="mt-2 text-center text-[11px] leading-relaxed text-[color:var(--ink-5)]">
-                  报告将给出你的{' '}
-                  <span className="font-semibold text-[color:var(--ink-3)]">人生 K 线</span>
-                  （事业 / 财 / 关系 / 健康多年趋势）+ 结构判断与行动建议。
-                  {' '}
-                  <a
-                    href="#life-kline-showcase"
-                    className="underline-offset-2 hover:underline"
-                  >
-                    先看示例曲线
-                  </a>
+                <p className="mt-2 text-center text-[11px] leading-relaxed text-[color:var(--ink-4)]">
+                  不必先注册。直接生成人生 K 线、命理师判词与决策建议。
+                  {activePath === '/' ? (
+                    <>
+                      {' '}
+                      <a href="#life-kline-showcase" className="underline-offset-2 hover:underline">
+                        先看示例
+                      </a>
+                    </>
+                  ) : null}
+                  {' · '}
+                  <Link href="/docs/birth-info" className="underline-offset-2 hover:underline">
+                    {copy.howTo}
+                  </Link>
                 </p>
               </div>
-            </div>
+            </form>
           </section>
 
-          {/* 下游入口：合并为一块，避免多卡片错位堆叠 */}
+          <FreeMembershipClaimBanner source="analyze_workspace" compact />
+
+          {!isInline ? (
+          <>
           <section
             aria-label="继续探索"
             className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 md:px-5"
@@ -862,8 +893,9 @@ export default function AnalyzeWorkspace({
               </dl>
             </section>
           ) : null}
+          </>
+          ) : null}
 
-          {/* stats 仅淡化一行数字，不作花哨面板 */}
           {stats ? (
             <p className={cn('px-0.5', muteNote)}>
               {[
@@ -878,7 +910,17 @@ export default function AnalyzeWorkspace({
             </p>
           ) : null}
         </div>
-      }
+  );
+
+  if (isInline) {
+    return <div className="page-content-wide py-5 md:py-7">{main}</div>;
+  }
+
+  return (
+    <PortalLayout
+      left={<PortalRailLeft activePath={activePath} />}
+      right={<PortalRailRight />}
+      main={main}
     />
   );
 }

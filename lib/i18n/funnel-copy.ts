@@ -321,6 +321,26 @@ export function contentHubCopy(kind: 'knowledge' | 'cases', locale: SiteLocale) 
 
 export function funnelCopy(locale: SiteLocale) {
   return {
+    prestigeEyebrow: pick(locale, {
+      'zh-CN': 'Life K-Line · 人生K线',
+      'zh-Hant': 'Life K-Line · 人生K線',
+      en: 'Life K-Line',
+    }),
+    prestigeTitle: pick(locale, {
+      'zh-CN': '结构判断 · 阶段与下一步',
+      'zh-Hant': '結構判斷 · 階段與下一步',
+      en: 'Structure, stage, and the next move',
+    }),
+    prestigeDescription: pick(locale, {
+      'zh-CN': '海外华人决策研究。填出生信息即可生成人生K线；结论可回访，不是命运保证。',
+      'zh-Hant': '海外華人決策研究。填出生資訊即可生成人生K線；結論可回訪，不是命運保證。',
+      en: 'Decision research for overseas Chinese. Enter birth details for a Life K-Line — verifiable, not a fate guarantee.',
+    }),
+    prestigeSeal: pick(locale, {
+      'zh-CN': '可回访验证',
+      'zh-Hant': '可回訪驗證',
+      en: 'Verifiable judgment',
+    }),
     heroEyebrow: pick(locale, {
       'zh-CN': '世界易学说 · 命理门户',
       'zh-Hant': '世界易學說 · 命理門戶',
@@ -332,9 +352,9 @@ export function funnelCopy(locale: SiteLocale) {
       en: 'See your structure, stage, and next move in one place',
     }),
     heroDescription: pick(locale, {
-      'zh-CN': '先补齐出生时间与地点，再选择判断主题。不需要一次填完所有信息，高级选项可稍后展开。',
-      'zh-Hant': '先補齊出生時間與地點，再選擇判斷主題。不需要一次填完所有資訊，高級選項可稍後展開。',
-      en: 'Add birth time and place first, then choose a focus. You do not need every field at once—advanced options can wait.',
+      'zh-CN': '填出生日期、时间和地点即可。不必先注册。主题与关系可稍后补。',
+      'zh-Hant': '填出生日期、時間和地點即可。不必先註冊。主題與關係可稍後補。',
+      en: 'Date, time, and place are enough. No account required. Theme and relation can wait.',
     }),
     howTo: pick(locale, { 'zh-CN': '使用方法', en: 'How to use' }),
     trueSolar: pick(locale, {
@@ -357,15 +377,20 @@ export function funnelCopy(locale: SiteLocale) {
       'zh-Hant': '生成報告',
       en: 'Report',
     }),
+    birthDate: pick(locale, {
+      'zh-CN': '出生日期',
+      'zh-Hant': '出生日期',
+      en: 'Birth date',
+    }),
     birthTime: pick(locale, {
       'zh-CN': '出生时间',
       'zh-Hant': '出生時間',
       en: 'Birth time',
     }),
     timeUnknown: pick(locale, {
-      'zh-CN': '时辰未知',
-      'zh-Hant': '時辰未知',
-      en: 'Hour unknown',
+      'zh-CN': '时间不详',
+      'zh-Hant': '時間不詳',
+      en: 'Time unknown',
     }),
     birthPlace: pick(locale, {
       'zh-CN': '出生地点',
@@ -373,9 +398,19 @@ export function funnelCopy(locale: SiteLocale) {
       en: 'Birth place',
     }),
     placePlaceholder: pick(locale, {
-      'zh-CN': '例如：上海',
-      'zh-Hant': '例如：上海',
-      en: 'e.g. Shanghai',
+      'zh-CN': '点击选择出生地',
+      'zh-Hant': '點擊選擇出生地',
+      en: 'Tap to choose birth place',
+    }),
+    placeSearchHint: pick(locale, {
+      'zh-CN': '全球地点',
+      'zh-Hant': '全球地點',
+      en: 'Places worldwide',
+    }),
+    placePopularHint: pick(locale, {
+      'zh-CN': '热门出生地',
+      'zh-Hant': '熱門出生地',
+      en: 'Popular destinations',
     }),
     placeHint: pick(locale, {
       'zh-CN': '影响真太阳时与时区校正',
@@ -402,6 +437,24 @@ export function funnelCopy(locale: SiteLocale) {
       'zh-Hant': '時辰未知：不應用真太陽時，優先年/月/日結構',
       en: 'Hour unknown: true solar is not applied; year/month/day structure is prioritized',
     }),
+    optDst: pick(locale, { 'zh-CN': '夏令时', 'zh-Hant': '夏令時', en: 'DST' }),
+    optTrueSolar: pick(locale, { 'zh-CN': '真太阳时', 'zh-Hant': '真太陽時', en: 'True solar time' }),
+    optLateZi: pick(locale, { 'zh-CN': '早晚子时', 'zh-Hant': '早晚子時', en: 'Early/late Zi' }),
+    trueSolarClockLabel: pick(locale, {
+      'zh-CN': '真太阳时',
+      'zh-Hant': '真太陽時',
+      en: 'True solar',
+    }),
+    coordLabel: pick(locale, {
+      'zh-CN': '地址经纬',
+      'zh-Hant': '地址經緯',
+      en: 'Coordinates',
+    }),
+    trueSolarOffNote: pick(locale, {
+      'zh-CN': '已按钟表时间排盘，不校正真太阳时',
+      'zh-Hant': '已按鐘表時間排盤，不校正真太陽時',
+      en: 'Using clock time; true solar correction is off',
+    }),
     gender: pick(locale, { 'zh-CN': '性别', 'zh-Hant': '性別', en: 'Gender' }),
     male: pick(locale, { 'zh-CN': '男', en: 'Male' }),
     female: pick(locale, { 'zh-CN': '女', en: 'Female' }),
@@ -426,9 +479,9 @@ export function funnelCopy(locale: SiteLocale) {
       en: 'Full reports cover global structure; 10 dimensions fit naming, industry, capital, or relationship questions—with checkable predictions.',
     }),
     advanced: pick(locale, {
-      'zh-CN': '高级选项',
-      'zh-Hant': '高級選項',
-      en: 'Advanced options',
+      'zh-CN': '更多选项',
+      'zh-Hant': '更多選項',
+      en: 'More options',
     }),
     nameOptional: pick(locale, {
       'zh-CN': '命主姓名（可选）',

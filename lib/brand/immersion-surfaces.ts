@@ -14,6 +14,9 @@ export type ImmersionAccent =
 
 export type ImmersionOverlay = 'light-paper' | 'deep-ink';
 
+/** editorial = paper immersion art; prestige = gold-on-black award plate. */
+export type ImmersionSkin = 'editorial' | 'prestige';
+
 export type ImmersionSurfaceKey =
   | 'home'
   | 'analyze'
@@ -47,6 +50,7 @@ export type ImmersionSurface = {
   mood: string;
   accent: ImmersionAccent;
   overlay: ImmersionOverlay;
+  skin: ImmersionSkin;
   /** Filename without extension under /images/brand-immersion/ */
   artId: string;
   alt: string;
@@ -62,6 +66,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '从生辰到结构节奏',
     accent: 'ink',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-home',
     alt: '人生K线首页：结构节奏意象',
   },
@@ -72,6 +77,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '结构优先的完整报告',
     accent: 'teal',
     overlay: 'deep-ink',
+    skin: 'prestige',
     artId: 'surface-analyze',
     alt: '测算工作台：人生节奏结构图',
   },
@@ -82,6 +88,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '按问题匹配工具',
     accent: 'slate',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-tools',
     alt: '工具中心：模块化工具托盘',
   },
@@ -92,6 +99,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '十个高频场景深拆',
     accent: 'violet',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-dimensions',
     alt: '十维度：场景罗盘',
   },
@@ -102,6 +110,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '方法与结构，不是神话',
     accent: 'indigo',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-knowledge',
     alt: '知识库：结构阅读空间',
   },
@@ -112,6 +121,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '按问题选领域老师',
     accent: 'teal',
     overlay: 'deep-ink',
+    skin: 'prestige',
     artId: 'surface-teachers',
     alt: '请老师：顾问桌意象',
   },
@@ -122,6 +132,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '完整度与参数底座',
     accent: 'ink',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-profile',
     alt: '我的档案：个人参数面板',
   },
@@ -132,6 +143,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '双盘对照，结构匹配',
     accent: 'rose',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-hehun',
     alt: '合婚：双盘对齐意象',
   },
@@ -142,6 +154,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '日节律与宜忌日历',
     accent: 'amber',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-almanac',
     alt: '黄历：日节律意象',
   },
@@ -152,6 +165,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '用神与笔画结构',
     accent: 'indigo',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-naming',
     alt: '起名工坊：字形结构意象',
   },
@@ -162,6 +176,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '环境层结构化分析',
     accent: 'slate',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-fengshui',
     alt: '空间场：户型与方位意象',
   },
@@ -172,6 +187,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '窗口与现实对照',
     accent: 'violet',
     overlay: 'deep-ink',
+    skin: 'editorial',
     artId: 'surface-predictions',
     alt: '预测回访：验证时间线',
   },
@@ -182,6 +198,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '记录节点，验证判断',
     accent: 'teal',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-events',
     alt: '事件日历：验证闭环时间线',
   },
@@ -192,6 +209,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '研究深度与提醒，不是命运保证',
     accent: 'amber',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-membership',
     alt: '会员：研究访问意象',
   },
@@ -202,6 +220,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '结构落到现实的路径',
     accent: 'rose',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-cases',
     alt: '案例库：证据面板意象',
   },
@@ -212,6 +231,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '长期会话 · 可选邮箱订阅',
     accent: 'teal',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-login',
     alt: '登录：账户与结构底座入口',
   },
@@ -222,6 +242,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '报告与测算记录',
     accent: 'ink',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-profile',
     alt: '历史记录：个人测算档案',
   },
@@ -232,6 +253,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '出生信息与报告读法',
     accent: 'slate',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-knowledge',
     alt: '文档：方法与读法',
   },
@@ -242,6 +264,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '结构化讨论与问答',
     accent: 'indigo',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-cases',
     alt: '社区：结构问答',
   },
@@ -252,6 +275,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '完整结构报告列表',
     accent: 'teal',
     overlay: 'light-paper',
+    skin: 'prestige',
     artId: 'surface-analyze',
     alt: '报告列表：结构判断',
   },
@@ -262,6 +286,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '结合报告持续追问',
     accent: 'teal',
     overlay: 'deep-ink',
+    skin: 'editorial',
     artId: 'surface-teachers',
     alt: '对话：老师开场',
   },
@@ -272,6 +297,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '生辰 · 星座 · 相学信号',
     accent: 'ink',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-profile',
     alt: '人生数据底座',
   },
@@ -282,6 +308,7 @@ export const IMMERSION_SURFACES: Record<ImmersionSurfaceKey, ImmersionSurface> =
     mood: '回到主路径',
     accent: 'slate',
     overlay: 'light-paper',
+    skin: 'editorial',
     artId: 'surface-home',
     alt: '页面未找到',
   },

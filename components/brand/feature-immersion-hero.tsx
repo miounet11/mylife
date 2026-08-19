@@ -6,8 +6,11 @@ import {
   immersionArtJpg,
   immersionArtSrc,
   type ImmersionOverlay,
+  type ImmersionSkin,
   type ImmersionSurfaceKey,
 } from '@/lib/brand/immersion-surfaces';
+import { PRESTIGE_ASSETS } from '@/lib/brand/prestige';
+import { PrestigeBanner } from '@/components/brand/prestige-banner';
 
 /**
  * Immersive feature hero: 16:9 media band + eyebrow/title/desc/actions.
@@ -24,6 +27,7 @@ export function FeatureImmersionHero({
   className,
   compact = false,
   overlay: overlayOverride,
+  skin: skinOverride,
 }: {
   surfaceKey: ImmersionSurfaceKey;
   eyebrow?: string;
@@ -37,22 +41,45 @@ export function FeatureImmersionHero({
   /** Tighter media height on dense hubs */
   compact?: boolean;
   overlay?: ImmersionOverlay;
+  /** Override registry skin (prestige = gold-on-black plate). */
+  skin?: ImmersionSkin;
 }) {
   const surface = getImmersionSurface(surfaceKey);
   const overlay = overlayOverride ?? surface.overlay;
+  const skin = skinOverride ?? surface.skin ?? 'editorial';
+  const label = eyebrow ?? surface.eyebrow;
+
+  if (skin === 'prestige') {
+    return (
+      <header className={cn('mb-6 space-y-0', className)}>
+        <PrestigeBanner
+          compact={compact}
+          headingAs="h1"
+          priority={priority}
+          eyebrow={label}
+          title={title}
+          description={description}
+          actions={actions}
+        />
+        {footer ? (
+          <div className="mt-3 text-[13px] leading-[1.55] text-[color:var(--ink-4)]">{footer}</div>
+        ) : null}
+      </header>
+    );
+  }
+
   const isDeep = overlay === 'deep-ink';
   const webp = immersionArtSrc(surface.artId, true);
   const jpg = immersionArtJpg(surface.artId);
-  const label = eyebrow ?? surface.eyebrow;
 
   return (
     <header className={cn('mb-6 space-y-0', className)}>
       <div
         className={cn(
-          'relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)] ring-1',
+          'relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:var(--hairline)] shadow-[var(--shadow-card)]',
           ACCENT_CHIP_CLASS[surface.accent].includes('text-') ? '' : '',
           isDeep ? 'bg-[color:var(--ink-1)]' : 'bg-[color:var(--bg-sunken,#f5f7f2)]',
-          compact ? 'aspect-[21/9] min-h-[120px] max-h-[200px]' : 'aspect-[16/9] min-h-[140px] max-h-[280px] md:max-h-[320px]',
+          compact ? 'aspect-[21/9] min-h-[88px] max-h-[140px]' : 'aspect-[16/9] min-h-[140px] max-h-[280px] md:max-h-[320px]',
         )}
       >
         <picture>
@@ -108,7 +135,7 @@ export function FeatureImmersionHero({
         >
           {label}
         </div>
-        <h1 className="mt-1 text-[24px] font-semibold leading-[1.25] tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[26px]">
+        <h1 className="mt-1.5 text-[24px] font-bold leading-[1.22] tracking-[-0.03em] text-[color:var(--ink-1)] md:text-[28px]">
           {title}
         </h1>
         {description ? (
@@ -140,22 +167,37 @@ export function ImmersionMediaBand({
   className?: string;
 }) {
   const surface = getImmersionSurface(surfaceKey);
-  const webp = immersionArtSrc(surface.artId, true);
-  const jpg = immersionArtJpg(surface.artId);
+  const prestige = surface.skin === 'prestige';
+  const webp = prestige ? undefined : immersionArtSrc(surface.artId, true);
+  const jpg = prestige ? PRESTIGE_ASSETS.plateWide : immersionArtJpg(surface.artId);
 
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-[var(--radius-md)] border border-[color:var(--hairline)]',
+        'relative overflow-hidden rounded-[var(--radius-xl)] border shadow-[var(--shadow-card)]',
+        prestige ? 'border-[#c9a227]/40 bg-black' : 'border-[color:var(--hairline)]',
         compact
-          ? 'aspect-[21/9] min-h-[100px] max-h-[180px]'
+          ? 'aspect-[21/9] min-h-[72px] max-h-[128px]'
           : 'aspect-[16/9] min-h-[140px] max-h-[280px]',
         className,
       )}
     >
-      <picture>
-        <source srcSet={webp} type="image/webp" />
-        {/* eslint-disable-next-line @next/next/no-img-element */}
+      {webp ? (
+        <picture>
+          <source srcSet={webp} type="image/webp" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={jpg}
+            alt={surface.alt}
+            width={1280}
+            height={720}
+            loading={priority ? 'eager' : 'lazy'}
+            decoding={priority ? 'sync' : 'async'}
+            className="absolute inset-0 h-full w-full object-cover"
+          />
+        </picture>
+      ) : (
+        // eslint-disable-next-line @next/next/no-img-element
         <img
           src={jpg}
           alt={surface.alt}
@@ -165,7 +207,7 @@ export function ImmersionMediaBand({
           decoding={priority ? 'sync' : 'async'}
           className="absolute inset-0 h-full w-full object-cover"
         />
-      </picture>
+      )}
     </div>
   );
 }

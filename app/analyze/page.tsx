@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Suspense } from 'react';
 import AnalyticsPageView from '@/components/analytics-page-view';
 import AnalyzeWorkspace from '@/components/analyze/analyze-workspace';
+import { PrestigeBanner } from '@/components/brand/prestige-banner';
 import { AppPage } from '@/components/layout/app-page';
 import { getSystemCapabilityStats } from '@/lib/system-capability-stats';
 import { withLocalePrefix } from '@/lib/seo';
@@ -58,31 +59,31 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
           geoReady: true,
         }}
       />
-            <Suspense
+      <div className="page-content-wide pt-5 md:pt-6">
+        <PrestigeBanner
+          compact
+          headingAs="p"
+          priority
+          eyebrow={copy.prestigeEyebrow}
+          title={copy.heroTitle}
+          description={copy.heroDescription}
+          seal={copy.prestigeSeal}
+        />
+      </div>
+      <Suspense
         fallback={
-          <div className="page-content-wide space-y-4 py-6 md:py-8">
-            <section className="rounded-xl border border-[color:var(--hairline)] bg-white p-5 shadow-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--brand-strong)]">
-                工作台
+          <div className="page-content-wide py-6 md:py-8">
+            <section className="mx-auto max-w-[40rem] rounded-[12px] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-5 py-6 shadow-[var(--shadow-card)]">
+              <p className="text-[11px] font-medium tracking-[0.12em] text-[color:var(--ink-5)]">
+                LIFE K-LINE
               </p>
-              <h2 className="mt-2 text-[20px] font-bold tracking-tight text-[color:var(--ink-1)]">
-                填生辰，先出结构判断
-              </h2>
-              <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--ink-4)]">
-                免费生成人生 K 线报告：日主用神、阶段窗口与可执行下一步。加载交互表单中…
+              <h1 className="mt-2 text-[26px] font-semibold leading-[1.2] tracking-[-0.03em] text-[color:var(--ink-1)]">
+                免费看清结构、阶段与下一步
+              </h1>
+              <p className="mt-1.5 text-[13px] leading-[1.55] text-[color:var(--ink-4)]">
+                填出生日期、时间和地点即可。不必先注册。
               </p>
-              <div className="mt-4 grid gap-2 sm:grid-cols-3">
-                {['事业节奏', '财富窗口', '关系边界'].map((label) => (
-                  <div
-                    key={label}
-                    className="rounded-lg border border-[color:var(--hairline)] bg-[color:var(--bg-sunken)] px-3 py-2 text-[12px] font-medium text-[color:var(--ink-3)]"
-                  >
-                    {label}
-                  </div>
-                ))}
-              </div>
             </section>
-            <p className="text-center text-[12px] text-[color:var(--ink-5)]">{copy.loadingWorkspace}</p>
           </div>
         }
       >
@@ -92,6 +93,7 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
           source="analyze_workspace"
           initialIntent={initialIntent}
           initialSource={initialSource}
+          layout="inline"
         />
       </Suspense>
       <div className="page-content pb-16">

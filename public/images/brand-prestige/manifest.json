@@ -1,0 +1,22 @@
+{
+  "pack": "brand-prestige",
+  "style": "overseas-chinese-award-gold-black",
+  "note": "Decorative plates only. Overlay product type in PrestigeBanner. No real-person likeness.",
+  "assets": [
+    { "id": "plate-vertical", "src": "/images/brand-prestige/plate-vertical.jpg", "ratio": "9:16" },
+    { "id": "plate-wide", "src": "/images/brand-prestige/plate-wide.jpg", "ratio": "16:9" },
+    { "id": "plate-wide-seal", "src": "/images/brand-prestige/plate-wide-seal.jpg", "ratio": "16:9" },
+    { "id": "icon-trophy", "src": "/images/brand-prestige/icon-trophy.jpg", "ratio": "1:1" },
+    { "id": "icon-trophy-sm", "src": "/images/brand-prestige/icon-trophy-sm.jpg", "ratio": "1:1" },
+    { "id": "icon-seal", "src": "/images/brand-prestige/icon-seal.jpg", "ratio": "1:1" },
+    { "id": "icon-seal-sm", "src": "/images/brand-prestige/icon-seal-sm.jpg", "ratio": "1:1" },
+    { "id": "icon-app", "src": "/images/brand-prestige/icon-app.jpg", "ratio": "1:1" },
+    { "id": "icon-app-sm", "src": "/images/brand-prestige/icon-app-sm.jpg", "ratio": "1:1" },
+    { "id": "icon-elements", "src": "/images/brand-prestige/icon-elements.jpg", "ratio": "1:1" },
+    { "id": "icon-elements-sm", "src": "/images/brand-prestige/icon-elements-sm.jpg", "ratio": "1:1" },
+    { "id": "icon-timing", "src": "/images/brand-prestige/icon-timing.jpg", "ratio": "1:1" },
+    { "id": "icon-timing-sm", "src": "/images/brand-prestige/icon-timing-sm.jpg", "ratio": "1:1" },
+    { "id": "icon-membership", "src": "/images/brand-prestige/icon-membership.jpg", "ratio": "1:1" },
+    { "id": "icon-membership-sm", "src": "/images/brand-prestige/icon-membership-sm.jpg", "ratio": "1:1" }
+  ]
+}
