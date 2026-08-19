@@ -12,6 +12,7 @@ import { usePathname } from 'next/navigation';
 import { FEEDBACK_CATEGORIES, type FeedbackCategoryKey } from '@/lib/user-feedback-types';
 import { isBlankStructuredFeedback } from '@/lib/feedback-signal';
 import { trackClientEvent } from '@/lib/analytics-client';
+import { useLocale } from '@/components/i18n/locale-provider';
 
 type Status = 'idle' | 'submitting' | 'done' | 'error';
 
@@ -32,6 +33,7 @@ export function openSiteFeedback(options: OpenFeedbackOptions = {}) {
 
 export default function SiteFeedbackWidget() {
   const pathname = usePathname();
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [category, setCategory] = useState<string>('content_wrong');
   const [message, setMessage] = useState('');
@@ -179,10 +181,10 @@ export default function SiteFeedbackWidget() {
           type="button"
           onClick={() => handleOpen(onReportPage ? 'content_wrong' : 'message')}
           className="inline-flex h-10 items-center gap-1.5 rounded-full border border-[color:var(--hairline)] bg-[color:var(--paper)] px-3 text-[12px] font-semibold text-[color:var(--ink-2)] shadow-[0_8px_24px_rgba(0,0,0,0.12)] transition hover:border-[color:var(--brand)] hover:text-[color:var(--brand-strong)]"
-          aria-label="报错或留言"
+          aria-label={t('feedbackTitle')}
         >
           <MessageSquarePlus className="h-3.5 w-3.5" />
-          反馈
+          {t('feedback')}
           <AlertTriangle className="h-3.5 w-3.5 text-[color:var(--signal-strong)]" />
         </button>
       </div>
@@ -201,17 +203,17 @@ export default function SiteFeedbackWidget() {
             <div className="flex items-start justify-between gap-3 border-b border-[color:var(--hairline)] px-4 py-3">
               <div>
                 <h2 id="site-feedback-title" className="text-[15px] font-bold text-[color:var(--ink-1)]">
-                  匿名报错 / 留言
+                  {t('feedbackTitle')}
                 </h2>
                 <p className="mt-0.5 text-[12px] leading-5 text-[color:var(--ink-4)]">
-                  无需登录。我们会在后台收集并定期修正（用神、身强弱、页面故障等）。
+                  {t('feedbackHint')}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
                 className="inline-flex h-8 w-8 items-center justify-center rounded-full text-[color:var(--ink-4)] hover:bg-[color:var(--bg-sunken)]"
-                aria-label="关闭"
+                aria-label={t('close')}
               >
                 <X className="h-4 w-4" />
               </button>
@@ -222,7 +224,7 @@ export default function SiteFeedbackWidget() {
                 <div className="flex items-start gap-2 text-[color:var(--success)]">
                   <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
                   <div>
-                    <p className="text-[14px] font-semibold text-[color:var(--ink-1)]">已收到，谢谢你的反馈</p>
+                    <p className="text-[14px] font-semibold text-[color:var(--ink-1)]">{t('feedbackThanks')}</p>
                     <p className="mt-1 text-[12px] leading-5 text-[color:var(--ink-3)]">
                       运营后台会看到类型、页面、报告 ID 与说明，用于后续修正。
                       {ticketId ? (

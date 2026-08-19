@@ -335,7 +335,7 @@ export default function AnalyzeWorkspace({
             (data as { error?: string; message?: string }).error ||
             (data as { message?: string }).message ||
             (res.status === 502 || res.status === 503
-              ? '服务刚在更新，请再点一次生成'
+              ? copy.serviceUpdating
               : copy.errors.generateFailed);
           throw new Error(msg);
         }
@@ -380,7 +380,7 @@ export default function AnalyzeWorkspace({
             if (event.type === 'stage') {
               setStreamProgress({
                 progress: typeof event.progress === 'number' ? event.progress : 0,
-                label: event.label || '分析进行中',
+                label: event.label || copy.streamAnalyzing,
                 detail: event.detail,
               });
             } else if (event.type === 'complete' && event.reportId) {
@@ -402,7 +402,7 @@ export default function AnalyzeWorkspace({
     }
 
     try {
-      setStreamProgress({ progress: 2, label: '正在提交测算…' });
+      setStreamProgress({ progress: 2, label: copy.streamSubmitting });
       const reportId = await postAnalyzeStream(0);
       window.location.href = `/result/${reportId}?source=${encodeURIComponent(resolvedSource)}&intent=${encodeURIComponent(intent)}&lang=${encodeURIComponent(locale)}`;
       return;
@@ -438,7 +438,7 @@ export default function AnalyzeWorkspace({
 
           {!isInline ? (
             <section className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b border-[color:var(--hairline)] pb-3">
-              <p className="text-[13px] text-[color:var(--ink-3)]">已有报告？直接开场</p>
+              <p className="text-[13px] text-[color:var(--ink-3)]">{copy.existingReport}</p>
               <div className="flex shrink-0 flex-wrap items-center gap-x-4 text-[13px]">
                 <Link
                   href={buildTeacherChatHref({
@@ -447,13 +447,13 @@ export default function AnalyzeWorkspace({
                   })}
                   className="font-medium text-[color:var(--ink-1)] underline-offset-2 hover:underline"
                 >
-                  总览开场 →
+                  {copy.openOverview}
                 </Link>
                 <Link
                   href="/teachers"
                   className="text-[color:var(--ink-3)] underline-offset-2 hover:underline"
                 >
-                  全部老师
+                  {copy.allTeachers}
                 </Link>
               </div>
             </section>
@@ -464,11 +464,11 @@ export default function AnalyzeWorkspace({
             <div className="px-5 pt-6 md:px-6 md:pt-7">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-[#c9a227]/35 bg-black px-2.5 py-0.5 text-[11px] font-bold tracking-wider text-[#e8c76a]">
                 <PrestigeMark icon="app" size={14} />
-                LIFE K-LINE · 命盘推演
+                {copy.formEyebrow}
               </span>
               {isInline ? (
                 <h1 className="mt-2.5 text-[24px] font-bold leading-[1.2] tracking-[-0.03em] text-[color:var(--ink-1)] md:text-[30px]">
-                  看清原局底色、岁运起伏与当下决断
+                  {copy.formTitleInline}
                 </h1>
               ) : (
                 <h2 className="mt-2 text-[20px] font-bold tracking-[-0.02em] text-[color:var(--ink-1)] md:text-[22px]">
@@ -503,7 +503,7 @@ export default function AnalyzeWorkspace({
                     />
                     {timeUnknown ? (
                       <div className="fb-input flex h-10 min-h-[var(--control-h)] items-center px-3 text-[13px] text-[color:var(--ink-5)]">
-                        按日柱估算
+                        {copy.hourByDayPillar}
                       </div>
                     ) : (
                       <input
@@ -527,7 +527,7 @@ export default function AnalyzeWorkspace({
                           m: ymdDraft.m || bits[1] || '',
                           d: ymdDraft.d || bits[2] || '',
                         };
-                        const ph = part === 'y' ? '年 1984' : part === 'm' ? '月' : '日';
+                        const ph = part === 'y' ? copy.ymdYear : part === 'm' ? copy.ymdMonth : copy.ymdDay;
                         const maxL = part === 'y' ? 4 : 2;
                         return (
                           <input
@@ -569,14 +569,14 @@ export default function AnalyzeWorkspace({
                           : 'text-[color:var(--ink-4)] hover:text-[color:var(--ink-1)]',
                       )}
                     >
-                      {timeUnknown ? '改填具体时间' : copy.timeUnknown}
+                      {timeUnknown ? copy.fillExactTime : copy.timeUnknown}
                     </button>
                     <button
                       type="button"
                       onClick={() => setShowYmd((v) => !v)}
                       className="text-[12px] text-[color:var(--ink-4)] underline-offset-2 hover:text-[color:var(--ink-1)] hover:underline"
                     >
-                      {showYmd ? '改用日历选择' : '较早年份用数字填写'}
+                      {showYmd ? copy.useCalendarPicker : copy.useYmdDigits}
                     </button>
                   </div>
                 </div>
@@ -777,7 +777,7 @@ export default function AnalyzeWorkspace({
                     </p>
                   ) : (
                     <p className="mt-2 text-[11px] leading-[1.5] text-[color:var(--ink-4)]">
-                      先锁定命盘结构，再完善正文与行动清单——无需等待全部完成再离开。
+                      {copy.streamLockNote}
                     </p>
                   )}
                 </div>
@@ -793,12 +793,12 @@ export default function AnalyzeWorkspace({
                   {!loading ? <ArrowRight className="h-4 w-4" /> : null}
                 </button>
                 <p className="mt-2 text-center text-[11px] leading-relaxed text-[color:var(--ink-4)]">
-                  不必先注册。直接生成人生 K 线、命理师判词与决策建议。
+                  {copy.noAccountNote}
                   {activePath === '/' ? (
                     <>
                       {' '}
                       <a href="#life-kline-showcase" className="underline-offset-2 hover:underline">
-                        先看示例
+                        {copy.seeSample}
                       </a>
                     </>
                   ) : null}
@@ -816,18 +816,18 @@ export default function AnalyzeWorkspace({
           {!isInline ? (
           <>
           <section
-            aria-label="继续探索"
+            aria-label={copy.keepExploring}
             className="rounded-[var(--radius-md)] border border-[color:var(--hairline)] bg-[color:var(--paper)] px-4 py-4 md:px-5"
           >
-            <div className="text-[12px] font-medium text-[color:var(--ink-5)]">填生日即可测</div>
+            <div className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.quickExploreTitle}</div>
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
               {[
-                { href: '/tools/fengshui-space?source=home_birth_quick', label: '空间场' },
-                { href: '/tools/naming?source=home_birth_quick', label: '起名工坊' },
-                { href: '/tools/physiognomy?source=home_birth_quick', label: '面相' },
-                { href: '/tools/palmistry?source=home_birth_quick', label: '手相' },
-                { href: '/hehun?source=home_birth_quick', label: '合婚双盘' },
-                { href: '/tools?source=home_birth_quick', label: '全部工具' },
+                { href: '/tools/fengshui-space?source=home_birth_quick', label: copy.linkSpace },
+                { href: '/tools/naming?source=home_birth_quick', label: copy.linkNaming },
+                { href: '/tools/physiognomy?source=home_birth_quick', label: copy.linkFace },
+                { href: '/tools/palmistry?source=home_birth_quick', label: copy.linkPalm },
+                { href: '/hehun?source=home_birth_quick', label: copy.linkHehun },
+                { href: '/tools?source=home_birth_quick', label: copy.allTools },
               ].map((item) => (
                 <Link
                   key={item.href}
@@ -840,16 +840,16 @@ export default function AnalyzeWorkspace({
             </div>
 
             <div className="mt-4 border-t border-[color:var(--hairline)] pt-3">
-              <div className="text-[12px] font-medium text-[color:var(--ink-5)]">站点入口</div>
+              <div className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.siteEntriesTitle}</div>
               <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
                 {[
-                  { href: '/dimensions', label: copy.openDimensions || '十维度' },
-                  { href: '/teachers', label: '请老师' },
-                  { href: '/predictions', label: copy.predictions || '预测回访' },
-                  { href: '/events', label: '事件日历' },
-                  { href: '/knowledge', label: copy.knowledge || '知识库' },
-                  { href: '/cases', label: '案例' },
-                  { href: '/profile', label: '资料' },
+                  { href: '/dimensions', label: copy.openDimensions },
+                  { href: '/teachers', label: copy.linkTeachers },
+                  { href: '/predictions', label: copy.predictions },
+                  { href: '/events', label: copy.linkEvents },
+                  { href: '/knowledge', label: copy.knowledge },
+                  { href: '/cases', label: copy.linkCases },
+                  { href: '/profile', label: copy.linkProfile },
                 ].map((item) => (
                   <Link key={item.href} href={item.href} className={quietLink}>
                     {item.label}
@@ -860,7 +860,7 @@ export default function AnalyzeWorkspace({
 
             {copy.tools?.length ? (
               <div className="mt-4 border-t border-[color:var(--hairline)] pt-3">
-                <div className="text-[12px] font-medium text-[color:var(--ink-5)]">常用工具</div>
+                <div className="text-[12px] font-medium text-[color:var(--ink-5)]">{copy.commonToolsTitle}</div>
                 <ul className="mt-1 divide-y divide-[color:var(--hairline)]">
                   {copy.tools.slice(0, 4).map((item) => (
                     <li key={item.href}>
@@ -871,7 +871,7 @@ export default function AnalyzeWorkspace({
                         <span className="text-[13px] text-[color:var(--ink-1)] group-hover:underline">
                           {item.title}
                         </span>
-                        <span className={cn('shrink-0', muteNote)}>{item.cta || '打开'}</span>
+                        <span className={cn('shrink-0', muteNote)}>{item.cta || copy.openLink}</span>
                       </Link>
                     </li>
                   ))}
@@ -899,11 +899,11 @@ export default function AnalyzeWorkspace({
           {stats ? (
             <p className={cn('px-0.5', muteNote)}>
               {[
-                stats.engineCount != null ? `引擎 ${stats.engineCount}` : null,
+                stats.engineCount != null ? `${copy.statsEngines} ${stats.engineCount}` : null,
                 stats.publishedKnowledgeCount != null
-                  ? `知识 ${stats.publishedKnowledgeCount}`
+                  ? `${copy.statsKnowledge} ${stats.publishedKnowledgeCount}`
                   : null,
-                stats.publishedCaseCount != null ? `案例 ${stats.publishedCaseCount}` : null,
+                stats.publishedCaseCount != null ? `${copy.statsCases} ${stats.publishedCaseCount}` : null,
               ]
                 .filter(Boolean)
                 .join(' · ')}

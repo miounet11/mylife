@@ -27,7 +27,7 @@ const footerLinks: Array<{ href: string; labelKey: string; labelFallback?: strin
   { href: '/learn', labelKey: 'navLearn' },
   { href: '/membership', labelKey: 'navMembership' },
   { href: '/docs', labelKey: 'navDocs' },
-  { href: '/engines', labelKey: 'navEngines', labelFallback: '引擎' },
+  { href: '/engines', labelKey: 'navEngines', labelFallback: 'Engines' },
 ];
 
 export default function SiteFooter() {
@@ -63,18 +63,27 @@ export default function SiteFooter() {
 
             {/* Popular destiny topics + tools (people-facing labels only) */}
             <div className="mt-6 max-w-xl text-[12px] leading-[1.7] text-[color:var(--ink-4)]">
-              <span className="font-medium text-[color:var(--ink-3)]">热门关注：</span>
+              <span className="font-medium text-[color:var(--ink-3)]">{t('footerHot')}</span>
               {[
-                { href: '/topics/q-should-i-change-job', label: '该不该换工作' },
-                { href: '/topics/q-when-to-marry', label: '谈婚论嫁' },
-                { href: '/world-yi/logic', label: '世界易定义' },
-                { href: '/topics/q-move-city', label: '迁城择居' },
-                { href: '/topics/dimension-fortune-rhythm', label: '运势节奏' },
-                { href: '/topics/dimension-career-industry', label: '工作行业' },
-                { href: '/topics/tool-bazi-chart', label: '八字排盘' },
-                { href: '/hehun', label: '合婚' },
-                { href: '/tools/naming', label: '起名' },
-                { href: '/hotlist', label: '更新榜' },
+                {
+                  href: '/topics/q-should-i-change-job',
+                  label: locale === 'en' ? 'Should I change jobs' : '该不该换工作',
+                },
+                { href: '/topics/q-when-to-marry', label: locale === 'en' ? 'Marriage timing' : '谈婚论嫁' },
+                { href: '/world-yi/logic', label: locale === 'en' ? 'World Yi' : '世界易定义' },
+                { href: '/topics/q-move-city', label: locale === 'en' ? 'City move' : '迁城择居' },
+                {
+                  href: '/topics/dimension-fortune-rhythm',
+                  label: locale === 'en' ? 'Luck rhythm' : '运势节奏',
+                },
+                {
+                  href: '/topics/dimension-career-industry',
+                  label: locale === 'en' ? 'Industry' : '工作行业',
+                },
+                { href: '/topics/tool-bazi-chart', label: locale === 'en' ? 'Bazi chart' : '八字排盘' },
+                { href: '/hehun', label: locale === 'en' ? 'Match' : '合婚' },
+                { href: '/tools/naming', label: locale === 'en' ? 'Naming' : '起名' },
+                { href: '/hotlist', label: locale === 'en' ? 'Updates' : '更新榜' },
               ].map((item, i) => (
                 <span key={item.href}>
                   {i > 0 ? ' · ' : ''}

@@ -28,7 +28,7 @@ export async function generateMetadata({ searchParams }: HomePageProps): Promise
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const meta = funnelMeta('home', locale);
-  const pack = getPageSeoGeoPack('/');
+  const pack = getPageSeoGeoPack('/', locale);
   return metadataFromPagePack('/', {
     title: pack?.title || meta.title,
     description: pack?.description || meta.description,
@@ -48,7 +48,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
   const initialSource = sp.source || sp.from || 'home_workspace';
   const initialIntent = sp.intent || null;
   const klineSamples = getKlineShowcaseSamples();
-  const seoPack = getPageSeoGeoPack('/');
+  const seoPack = getPageSeoGeoPack('/', locale);
 
   return (
     <AppPage
@@ -88,10 +88,10 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 LIFE K-LINE
               </p>
               <h1 className="mt-2 text-[26px] font-semibold leading-[1.2] tracking-[-0.03em] text-[color:var(--ink-1)]">
-                免费看清结构、阶段与下一步
+                {copy.fallbackTitle}
               </h1>
               <p className="mt-1.5 text-[13px] leading-[1.55] text-[color:var(--ink-4)]">
-                填出生日期、时间和地点即可。不必先注册。
+                {copy.heroDescription}
               </p>
             </section>
           </div>
@@ -117,11 +117,11 @@ export default async function HomePage({ searchParams }: HomePageProps) {
       ) : null}
 
       {/* 4 · Secondary paths & tools */}
-      <HomeExplore />
+      <HomeExplore locale={locale} />
 
       {/* 5 · SEO / GEO */}
       <div className="page-content pb-10 pt-8 md:pb-12">
-        <PageSeoGeoSection pathOrSlug="/" />
+        <PageSeoGeoSection pathOrSlug="/" locale={locale} />
       </div>
     </AppPage>
   );

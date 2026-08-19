@@ -6,6 +6,7 @@
  */
 
 import Link from 'next/link';
+import { useLocale } from '@/components/i18n/locale-provider';
 import {
   getMembershipPromoCopy,
   isMembershipFreePromoActive,
@@ -19,10 +20,12 @@ export default function FreeMembershipClaimBanner({
   source?: string;
   compact?: boolean;
 }) {
+  const { locale } = useLocale();
   if (!isMembershipFreePromoActive()) return null;
 
-  const promo = getMembershipPromoCopy('zh-CN');
+  const promo = getMembershipPromoCopy(locale);
   const href = `/membership?source=${encodeURIComponent(source)}`;
+  const en = locale === 'en';
 
   if (compact) {
     return (
@@ -31,11 +34,13 @@ export default function FreeMembershipClaimBanner({
         className="flex items-center justify-between gap-3 border-b border-[color:var(--hairline)] px-0.5 py-2.5 no-underline transition hover:no-underline"
       >
         <span className="text-[13px] text-[color:var(--ink-2)]">
-          限时免费会员
-          <span className="ml-2 text-[12px] text-[color:var(--ink-5)]">截止 {MEMBERSHIP_FREE_PROMO_END}</span>
+          {en ? 'Limited free membership' : '限时免费会员'}
+          <span className="ml-2 text-[12px] text-[color:var(--ink-5)]">
+            {en ? `until ${MEMBERSHIP_FREE_PROMO_END}` : `截止 ${MEMBERSHIP_FREE_PROMO_END}`}
+          </span>
         </span>
         <span className="shrink-0 text-[12px] text-[color:var(--ink-1)] underline-offset-2 hover:underline">
-          领取
+          {en ? 'Claim' : '领取'}
         </span>
       </Link>
     );
@@ -54,9 +59,11 @@ export default function FreeMembershipClaimBanner({
             href={href}
             className="text-[13px] text-[color:var(--ink-1)] underline-offset-2 hover:underline"
           >
-            0 元领取会员
+            {en ? 'Claim ¥0 membership' : '0 元领取会员'}
           </Link>
-          <span className="text-[11px] text-[color:var(--ink-5)]">需邮箱登录 · 无需支付</span>
+          <span className="text-[11px] text-[color:var(--ink-5)]">
+            {en ? 'Email login · no payment' : '需邮箱登录 · 无需支付'}
+          </span>
         </div>
       </div>
     </section>

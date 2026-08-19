@@ -13,13 +13,14 @@ import {
   type PageSeoGeoPack,
 } from '@/lib/page-seo-geo-packs';
 import type { Metadata } from 'next';
+import type { SiteLocale } from '@/lib/i18n/site-locale';
 
 /** Metadata helper: pack title/description/keywords (no public SEO/GEO labels). */
 export function metadataFromPagePack(
   pathOrSlug: string,
   overrides?: Partial<{ title: string; description: string; path: string; locale: string }>,
 ): Metadata {
-  const pack = getPageSeoGeoPack(pathOrSlug);
+  const pack = getPageSeoGeoPack(pathOrSlug, overrides?.locale);
   if (!pack) {
     return buildPageMetadata({
       title: overrides?.title || SITE_NAME,
@@ -97,18 +98,21 @@ export function PageSeoGeoSection({
   pathOrSlug,
   pack: packProp,
   compact = false,
+  locale,
 }: {
   pathOrSlug?: string;
   pack?: PageSeoGeoPack | null;
   compact?: boolean;
+  locale?: SiteLocale | string | null;
 }) {
-  const pack = packProp || (pathOrSlug ? getPageSeoGeoPack(pathOrSlug) : null);
+  const pack = packProp || (pathOrSlug ? getPageSeoGeoPack(pathOrSlug, locale) : null);
   if (!pack) return null;
+  const en = `${locale || ''}`.toLowerCase().startsWith('en');
 
   return (
     <section
       className="space-y-5 border-t border-[color:var(--hairline)] pt-8"
-      aria-label={`${pack.name} 说明与常见问题`}
+      aria-label={en ? `${pack.name} explainer and FAQ` : `${pack.name} 说明与常见问题`}
       data-page-explainer={pack.slug}
     >
       <div
@@ -116,10 +120,10 @@ export function PageSeoGeoSection({
         data-page-answer
       >
         <p className="text-[11px] font-bold tracking-[0.08em] text-[color:var(--brand-strong)]">
-          直接回答
+          {en ? 'Direct answer' : '直接回答'}
         </p>
         <h2 className="mt-1 text-[17px] font-bold tracking-tight text-[color:var(--ink-1)] md:text-[19px]">
-          {pack.name}是什么？
+          {en ? `What is ${pack.name}?` : `${pack.name}是什么？`}
         </h2>
         <p className="mt-2 text-[13px] leading-relaxed text-[color:var(--ink-3)] md:text-[14px]">
           {pack.answerSummary}
@@ -140,7 +144,7 @@ export function PageSeoGeoSection({
 
       {!compact && pack.howTo.length > 0 ? (
         <div>
-          <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">如何使用</h2>
+          <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">{en ? 'How to use' : '如何使用'}</h2>
           <ol className="mt-2 space-y-2">
             {pack.howTo.map((step, i) => (
               <li
@@ -162,7 +166,7 @@ export function PageSeoGeoSection({
 
       {pack.faqs.length > 0 ? (
         <div>
-          <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">常见问题</h2>
+          <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">{en ? 'FAQ' : '常见问题'}</h2>
           <div className="mt-2 divide-y divide-[color:var(--hairline)] rounded-xl border border-[color:var(--hairline)]">
             {pack.faqs.map((faq) => (
               <details key={faq.question} className="group px-3 py-2.5">
@@ -181,7 +185,7 @@ export function PageSeoGeoSection({
 
       {pack.related.length > 0 ? (
         <div>
-          <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">相关页面</h2>
+          <h2 className="text-[15px] font-bold text-[color:var(--ink-1)]">{en ? 'Related' : '相关页面'}</h2>
           <ul className="mt-2 grid gap-2 sm:grid-cols-2">
             {pack.related.map((link) => (
               <li key={link.href}>
@@ -206,13 +210,16 @@ export function PageSeoGeoSection({
         <p className="text-[11px] leading-relaxed text-[color:var(--ink-5)]">{pack.disclaimer}</p>
       ) : (
         <p className="text-[11px] leading-relaxed text-[color:var(--ink-5)]">
-          内容为结构与节奏参考，不构成投资、医疗、法律或婚姻保证。公开案例均经脱敏处理。
+          {en
+            ? 'Structural and timing reference only — not investment, medical, legal, or marriage advice. Public cases are redacted.'
+            : '内容为结构与节奏参考，不构成投资、医疗、法律或婚姻保证。公开案例均经脱敏处理。'}
         </p>
       )}
 
       {!compact && pack.entityKeywords.length > 0 ? (
         <p className="text-[10px] leading-relaxed text-[color:var(--ink-5)]">
-          相关概念：{pack.entityKeywords.join(' · ')}
+          {en ? 'Related terms: ' : '相关概念：'}
+          {pack.entityKeywords.join(' · ')}
         </p>
       ) : null}
     </section>

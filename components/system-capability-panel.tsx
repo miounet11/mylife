@@ -153,21 +153,28 @@ export default function SystemCapabilityPanel({
   );
 }
 
-export function SystemCapabilityFooterSignals({ stats }: { stats: SystemCapabilityStats }) {
+export function SystemCapabilityFooterSignals({
+  stats,
+  locale = 'zh-CN',
+}: {
+  stats: SystemCapabilityStats;
+  locale?: string;
+}) {
+  const en = `${locale}`.toLowerCase().startsWith('en');
   const signals = [
-    { label: '命理引擎', value: stats.engineCount || 0 },
-    { label: '当前活跃', value: stats.onlineNow || 0 },
-    { label: '今日测算', value: stats.calculationsToday || 0 },
-    { label: '注册用户', value: stats.registeredUsers || 0 },
-    { label: '会员', value: stats.activeMembers || 0 },
-    { label: '订阅', value: stats.emailSubscribers || 0 },
-    { label: '社区问答', value: stats.forumQuestionCount },
+    { label: en ? 'Engines' : '命理引擎', value: stats.engineCount || 0 },
+    { label: en ? 'Active now' : '当前活跃', value: stats.onlineNow || 0 },
+    { label: en ? 'Today' : '今日测算', value: stats.calculationsToday || 0 },
+    { label: en ? 'Accounts' : '注册用户', value: stats.registeredUsers || 0 },
+    { label: en ? 'Members' : '会员', value: stats.activeMembers || 0 },
+    { label: en ? 'Subscribers' : '订阅', value: stats.emailSubscribers || 0 },
+    { label: en ? 'Q&A' : '社区问答', value: stats.forumQuestionCount },
   ];
 
   return (
     <div className="space-y-2">
       <div className="text-[11px] font-semibold uppercase tracking-[0.06em] text-[color:var(--ink-4)]">
-        站内人气
+        {en ? 'Live activity' : '站内人气'}
       </div>
       <div className="flex flex-wrap gap-x-3 gap-y-1.5 text-[12px] text-[color:var(--ink-3)]">
         {signals.map((signal) => (
@@ -183,10 +190,11 @@ export function SystemCapabilityFooterSignals({ stats }: { stats: SystemCapabili
   );
 }
 
-export function SystemCapabilityFooterSignalsFallback() {
+export function SystemCapabilityFooterSignalsFallback({ locale = 'zh-CN' }: { locale?: string }) {
+  const en = `${locale}`.toLowerCase().startsWith('en');
   return (
     <div className="text-[12px] text-[color:var(--ink-4)]">
-      人气数据同步中 · 内容库持续补全
+      {en ? 'Activity stats syncing · library still filling' : '人气数据同步中 · 内容库持续补全'}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { TOOL_SLUG_ALIASES } from '@/lib/tool-slug-aliases';
 import {
   LOCALE_COOKIE,
   LOCALE_HEADER,
+  localeCookieDomain,
   resolveSiteLocale,
 } from '@/lib/i18n/site-locale';
 
@@ -87,10 +88,12 @@ export function middleware(request: NextRequest) {
     const response = NextResponse.rewrite(url, {
       request: { headers: requestHeaders },
     });
+    const localeDomain = localeCookieDomain(request.nextUrl.hostname);
     response.cookies.set(LOCALE_COOKIE, mappedLocale, {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
+      ...(localeDomain ? { domain: localeDomain } : {}),
     });
     response.headers.set(LOCALE_HEADER, mappedLocale);
     response.headers.set('Vary', 'Accept-Language, Cookie');
@@ -143,10 +146,12 @@ export function middleware(request: NextRequest) {
   // Persist auto-detected / query locale so subsequent navigations stay consistent
   const existing = request.cookies.get(LOCALE_COOKIE)?.value;
   if (queryLang || !existing || existing !== locale) {
+    const localeDomain = localeCookieDomain(request.nextUrl.hostname);
     response.cookies.set(LOCALE_COOKIE, locale, {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
       sameSite: 'lax',
+      ...(localeDomain ? { domain: localeDomain } : {}),
     });
   }
   response.headers.set(LOCALE_HEADER, locale);

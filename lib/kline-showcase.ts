@@ -32,12 +32,15 @@ export type KlineShowcaseSample = {
   id: string;
   /** 展示用化名 */
   label: string;
+  labelEn?: string;
   /** 一句话人设 */
   persona: string;
+  personaEn?: string;
   /** 可读的出生摘要（演示） */
   birthSummary: string;
   /** 本例要教什么 */
   teach: string;
+  teachEn?: string;
   peakYear: number | null;
   troughYear: number | null;
   series: KlineShowcaseChartPoint[];
@@ -46,11 +49,17 @@ export type KlineShowcaseSample = {
 export const LIFE_KLINE_PRODUCT = {
   name: '人生 K 线',
   english: 'Life K-Line',
-  oneLiner: '把八字大运与流年，画成一条可对照的人生趋势曲线。',
+  oneLiner: '把八字大运与流年，画成可对照的人生 K 线（蜡烛图 + 均线）。',
+  oneLinerEn: 'Dayun and yearly luck drawn as a readable Life K-Line (candles + moving averages).',
   whatItIs: [
-    '不是股市 K 线，也不是占卜「定生死」。',
-    '以你的日主、用神与大运为底，按年（可切到月）给出事业 / 财富 / 关系 / 健康四条可解释分数。',
-    '高点与低谷会标出参考年：用来对照人生阶段，而不是替代你的选择。',
+    '借用股价走势的读法：每年一根蜡烛，颜色看质量，均线看阶段。',
+    '以你的日主、用神与大运为底，按年给出事业 / 财富 / 关系 / 健康可解释分数。',
+    '峰值、谷值、换运、本命年、冲太岁会标在图上，用来对照阶段，不是定生死。',
+  ],
+  whatItIsEn: [
+    'Read it like a price chart: one candle a year, color for quality, averages for the stage.',
+    'Day master, useful god, and decade luck set the floor; each year scores career, wealth, relationship, and health.',
+    'Peaks, troughs, luck changes, and clash years are marked for stage-reading — not fate decrees.',
   ],
   howBuilt: [
     { step: '1', title: '原局基线', detail: '四柱五行与用神 / 忌神，定事业、财、关系、健康的底色。' },
@@ -58,9 +67,15 @@ export const LIFE_KLINE_PRODUCT = {
     { step: '3', title: '流年触发', detail: '每年干支再叠加合冲刑害与十神关系，得到当年分。' },
     { step: '4', title: '读图行动', detail: '看当前处于高 / 平 / 低段，再决定冲刺、布局或防守。' },
   ],
+  howBuiltEn: [
+    { step: '1', title: 'Natal baseline', detail: 'Four pillars, five elements, and useful/avoiding gods set career, wealth, relationship, and health tone.' },
+    { step: '2', title: 'Decade weighting', detail: 'Ten-year stems/branches vs. useful gods form the stage background.' },
+    { step: '3', title: 'Yearly trigger', detail: 'Annual stems overlay combinations, clashes, and ten-god relations for that year’s score.' },
+    { step: '4', title: 'Read, then act', detail: 'See whether you are in a high, flat, or low band — then push, lay groundwork, or defend.' },
+  ],
   howToRead: [
-    { title: '先看综合线', detail: '把握整段人生的起伏，不必盯住某一年的绝对数字。' },
-    { title: '再切事业 / 财 / 关系 / 健康', detail: '同一年不同板块可能一强一弱——这是结构差异，不是「全好或全坏」。' },
+    { title: '先看蜡烛与均线', detail: '颜色是当年质量，MA5/MA10 看阶段；不必盯住某一年的绝对数字。' },
+    { title: '再切曲线看事业 / 财 / 关系 / 健康', detail: '同一年不同板块可能一强一弱——这是结构差异，不是「全好或全坏」。' },
     { title: '对照当下与未来 2–3 年', detail: '当前年附近最有决策价值；远期只作阶段参考。' },
     { title: '低谷不等于坏事', detail: '常对应宜稳、宜修结构的窗口；高峰也要避免过度扩张。' },
   ],
@@ -71,8 +86,11 @@ export const LIFE_KLINE_PRODUCT = {
 type DemoSeed = {
   id: string;
   label: string;
+  labelEn: string;
   persona: string;
+  personaEn: string;
   teach: string;
+  teachEn: string;
   birthDate: string; // YYYY-MM-DD
   birthTime: string;
   gender: 'male' | 'female';
@@ -84,8 +102,11 @@ const DEMO_SEEDS: DemoSeed[] = [
   {
     id: 'steady-builder',
     label: '稳建型 · 阿森',
+    labelEn: 'Steady · Arsen',
     persona: '偏事业节奏清晰、财富线随大运抬升的示例',
+    personaEn: 'Clear career rhythm, with the wealth line lifting on decade luck',
     teach: '看清「十年大运背景」如何托起或压低事业与财线。',
+    teachEn: 'See how a ten-year luck background lifts or suppresses career and wealth.',
     birthDate: '1988-05-12',
     birthTime: '09:30',
     gender: 'male',
@@ -94,8 +115,11 @@ const DEMO_SEEDS: DemoSeed[] = [
   {
     id: 'wave-connector',
     label: '波段型 · 小林',
+    labelEn: 'Wave · Lin',
     persona: '关系与事业波段更明显、宜择窗推进的示例',
+    personaEn: 'Relationship and career waves are more visible — pick windows to advance',
     teach: '同一人生里，板块节奏可以不同步——先保优势线。',
+    teachEn: 'Tracks in one life can be out of sync — protect the strong line first.',
     birthDate: '1992-11-03',
     birthTime: '14:20',
     gender: 'female',
@@ -104,8 +128,11 @@ const DEMO_SEEDS: DemoSeed[] = [
   {
     id: 'late-bloom',
     label: '后发型 · 老周',
+    labelEn: 'Late bloom · Zhou',
     persona: '前段偏稳、中后段窗口抬升的示例',
+    personaEn: 'Earlier years stay even; the mid-to-late window lifts',
     teach: '人生 K 线不是「越早越高越好」，关键看你所在的大运段。',
+    teachEn: 'A Life K-Line is not “higher earlier is better” — the decade you are in matters.',
     birthDate: '1978-03-21',
     birthTime: '07:45',
     gender: 'male',
@@ -189,9 +216,12 @@ function buildOneSample(seed: DemoSeed): KlineShowcaseSample | null {
     return {
       id: seed.id,
       label: seed.label,
+      labelEn: seed.labelEn,
       persona: seed.persona,
+      personaEn: seed.personaEn,
       birthSummary: `演示生辰 ${seed.birthDate} ${seed.birthTime} · ${seed.birthPlace}（非真人）`,
       teach: seed.teach,
+      teachEn: seed.teachEn,
       peakYear: extremes.peakYear,
       troughYear: extremes.troughYear,
       series,

@@ -963,6 +963,103 @@ const SPACE_REPORTS: PageSeoGeoPack = {
   disclaimer: '结构启发式评估，供对照与教学，不构成置业、装修或殡葬法定意见。',
 };
 
+const HOME_EN: PageSeoGeoPack = {
+  path: '/',
+  slug: 'home',
+  name: 'Life K-Line workbench',
+  title: 'Free Bazi chart & Life K-Line | Structure, timing, 10 dimensions',
+  description:
+    'Enter birth details free for a Life K-Line: day master, useful god, decade/year windows, and next moves for career, wealth, and relationships. Structural reference — not scare tactics.',
+  keywords: ['free bazi', 'bazi chart', 'Life K-Line', 'dayun', '10 dimensions'],
+  answerSummary:
+    'Life K-Line turns birth time and place into a structured chart and stage rhythm: lock the day master and useful god, read decade and yearly windows, then land on career, wealth, and relationship actions. Built for “judge first, then act” — not daily fortune scares.',
+  searchIntents: [
+    'free online bazi chart',
+    'what is Life K-Line',
+    'how to read dayun and yearly luck',
+    'bazi career and wealth',
+    'natal structure tool',
+  ],
+  entityKeywords: [
+    'Bazi',
+    'day master',
+    'useful god',
+    'dayun',
+    'yearly luck',
+    'Life K-Line',
+    '10 dimensions',
+    'structure',
+    'World Yi',
+  ],
+  howTo: [
+    { step: 'Enter birth details', body: 'Solar date, hour, and place. We convert true solar time and four pillars.' },
+    { step: 'Read the structural spine', body: 'Day master and useful god first, then this decade and this year’s window.' },
+    { step: 'Land on actions', body: 'Pick career, wealth, or relationship tools and set a checkable review point.' },
+  ],
+  faqs: [
+    {
+      question: 'How is this different from fortune-telling?',
+      answer: 'We emphasize structure, stage, and executable bounds — reviewable rhythm, not scare-style luck decrees.',
+    },
+    {
+      question: 'Do I need an exact birth hour?',
+      answer: 'The more precise the hour, the more stable the day pillar and useful god. If unsure, start coarse; the report labels hour confidence.',
+    },
+    {
+      question: 'Is my report public?',
+      answer: 'You can share a summary. High-quality anonymous cases may enter the public stream after redaction. Private reports can stay closed.',
+    },
+    {
+      question: 'Is it for overseas Chinese?',
+      answer: 'Yes. Time zones and birth places are supported, with World Yi and city notes for domestic and overseas decisions.',
+    },
+  ],
+  related: [
+    { href: '/analyze', label: 'Full analyze workbench', description: 'Same engine, focused generate path' },
+    { href: '/almanac', label: 'Daily almanac', description: 'Tongshu, hours, personal day luck' },
+    { href: '/tools', label: 'Tools', description: 'Match, yearly timing, dimension drills' },
+    { href: '/reports', label: 'Public cases', description: 'Anonymous reports and tool results' },
+    { href: '/dimensions', label: '10 dimensions', description: 'Career, marriage, wealth scenes' },
+  ],
+  breadcrumbs: [{ name: 'Home', path: '/' }],
+  disclaimer: 'Structural and timing reference only — not investment, medical, legal, or marriage advice.',
+};
+
+const ANALYZE_EN: PageSeoGeoPack = {
+  path: '/analyze',
+  slug: 'analyze',
+  name: 'Bazi structure workbench',
+  title: 'Free Bazi workbench | Life K-Line report, useful god, dayun',
+  description:
+    'Focused generate path: enter birth details for a full structural report with useful god, decade/year windows, action board, and tool drills. Free to save.',
+  keywords: ['bazi analysis', 'structure report', 'useful god', 'dayun', 'Life K-Line report'],
+  answerSummary:
+    'The analyze page uses the same Life K-Line engine for a full report: lock four pillars and useful god, then stage windows and career/wealth/relationship direction — with match, yearly, and dimension tools next.',
+  searchIntents: ['online bazi analysis', 'free destiny report', 'dayun yearly luck', 'how useful god is set'],
+  entityKeywords: ['analyze', 'report', 'useful god', 'dayun', 'yearly luck', 'four pillars', 'action board', 'Life K-Line'],
+  howTo: [
+    { step: 'Enter birth details', body: 'Fuller date, time, and place make windows more stable.' },
+    { step: 'Pick a focus', body: 'Career, wealth, or relationship weights the reading path.' },
+    { step: 'Save and go deeper', body: 'Bind email to save, or continue in tools and consulting.' },
+  ],
+  faqs: [
+    { question: 'How is this different from the homepage?', answer: 'Home is the workbench overview; this page is focused on generating and reading the full report.' },
+    { question: 'Do I need to log in?', answer: 'Guests can read first. Bind email to reopen across devices and get timing alerts.' },
+    { question: 'How long does a report take?', answer: 'Structure usually appears within tens of seconds; deeper layers may complete asynchronously.' },
+  ],
+  related: [
+    { href: '/', label: 'Home workbench' },
+    { href: '/hehun', label: 'Match charts' },
+    { href: '/tools/timing-yearly-window', label: 'Yearly window tool' },
+    { href: '/docs/read-first-report', label: 'How to read the first report' },
+    { href: '/engines', label: 'System engines' },
+  ],
+  breadcrumbs: [
+    { name: 'Home', path: '/' },
+    { name: 'Analyze', path: '/analyze' },
+  ],
+};
+
 const PACKS: Record<string, PageSeoGeoPack> = {
   home: HOME,
   '/': HOME,
@@ -1008,9 +1105,24 @@ const PACKS: Record<string, PageSeoGeoPack> = {
   '/insights/space': SPACE_REPORTS,
 };
 
-export function getPageSeoGeoPack(pathOrSlug: string): PageSeoGeoPack | null {
+const PACKS_EN: Record<string, PageSeoGeoPack> = {
+  '/': HOME_EN,
+  home: HOME_EN,
+  '/analyze': ANALYZE_EN,
+  analyze: ANALYZE_EN,
+};
+
+export function getPageSeoGeoPack(pathOrSlug: string, locale?: string | null): PageSeoGeoPack | null {
   const key = `${pathOrSlug || ''}`.trim();
   if (!key) return null;
+  const en = `${locale || ''}`.toLowerCase().startsWith('en');
+  if (en) {
+    if (PACKS_EN[key]) return PACKS_EN[key];
+    const noSlashEn = key.startsWith('/') ? key : `/${key}`;
+    if (PACKS_EN[noSlashEn]) return PACKS_EN[noSlashEn];
+    const bareEn = key.replace(/^\//, '');
+    if (PACKS_EN[bareEn]) return PACKS_EN[bareEn];
+  }
   if (PACKS[key]) return PACKS[key];
   const noSlash = key.startsWith('/') ? key : `/${key}`;
   if (PACKS[noSlash]) return PACKS[noSlash];

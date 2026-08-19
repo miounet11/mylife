@@ -14,6 +14,7 @@ import {
   LOCALE_COOKIE,
   LOCALE_STORAGE_KEY,
   htmlLangAttr,
+  localeCookieDomain,
   normalizeSiteLocale,
   resolveSiteLocale,
 } from '@/lib/i18n/site-locale';
@@ -32,7 +33,10 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 function writeCookie(locale: SiteLocale) {
   if (typeof document === 'undefined') return;
   const maxAge = 60 * 60 * 24 * 365;
-  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${maxAge}; samesite=lax`;
+  const domain = localeCookieDomain(window.location.hostname);
+  document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=${maxAge}; samesite=lax${
+    domain ? `; domain=${domain}` : ''
+  }`;
   try {
     localStorage.setItem(LOCALE_STORAGE_KEY, locale);
   } catch {

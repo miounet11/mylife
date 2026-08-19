@@ -27,7 +27,7 @@ export async function generateMetadata({ searchParams }: AnalyzePageProps): Prom
   const sp = searchParams ? await searchParams : {};
   const locale = await getRequestLocale(sp.lang);
   const meta = funnelMeta('analyze', locale);
-  const pack = getPageSeoGeoPack('/analyze');
+  const pack = getPageSeoGeoPack('/analyze', locale);
   return metadataFromPagePack('/analyze', {
     title: pack?.title || meta.title,
     description: pack?.description || meta.description,
@@ -44,7 +44,7 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
   const initialSource = sp.source || sp.from || 'analyze_workspace';
   const initialIntent = sp.intent || null;
 
-  const seoPack = getPageSeoGeoPack('/analyze');
+  const seoPack = getPageSeoGeoPack('/analyze', locale);
   return (
     <AppPage header={{ ctaHref: '#analyze-workspace', ctaLabel: copy.ctaStart, compact: true }}>
       {seoPack ? <PageJsonLd pack={seoPack} /> : null}
@@ -78,10 +78,10 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
                 LIFE K-LINE
               </p>
               <h1 className="mt-2 text-[26px] font-semibold leading-[1.2] tracking-[-0.03em] text-[color:var(--ink-1)]">
-                免费看清结构、阶段与下一步
+                {copy.fallbackTitle}
               </h1>
               <p className="mt-1.5 text-[13px] leading-[1.55] text-[color:var(--ink-4)]">
-                填出生日期、时间和地点即可。不必先注册。
+                {copy.heroDescription}
               </p>
             </section>
           </div>
@@ -97,7 +97,7 @@ export default async function AnalyzePage({ searchParams }: AnalyzePageProps) {
         />
       </Suspense>
       <div className="page-content pb-16">
-        <PageSeoGeoSection pathOrSlug="/analyze" />
+        <PageSeoGeoSection pathOrSlug="/analyze" locale={locale} />
       </div>
     </AppPage>
   );

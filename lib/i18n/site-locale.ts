@@ -11,6 +11,15 @@ export const LOCALE_COOKIE = 'lk_locale';
 export const LOCALE_STORAGE_KEY = 'lk_locale';
 export const LOCALE_HEADER = 'x-lk-locale';
 
+/** Share locale across apex + www (host-only cookies used to split the two). */
+export function localeCookieDomain(hostname?: string | null): string | undefined {
+  const host = `${hostname || ''}`.toLowerCase();
+  if (host === 'life-kline.com' || host.endsWith('.life-kline.com')) {
+    return '.life-kline.com';
+  }
+  return undefined;
+}
+
 export const LOCALE_LABELS: Record<SiteLocale, string> = {
   'zh-CN': '简体',
   'zh-Hant': '繁體',

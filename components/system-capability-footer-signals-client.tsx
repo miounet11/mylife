@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useLocale } from '@/components/i18n/locale-provider';
 
 import {
   SystemCapabilityFooterSignals,
@@ -9,6 +10,7 @@ import {
 import type { SystemCapabilityStats } from '@/lib/system-capability-stats';
 
 export default function SystemCapabilityFooterSignalsClient() {
+  const { locale } = useLocale();
   const [stats, setStats] = useState<SystemCapabilityStats | null>(null);
 
   useEffect(() => {
@@ -33,8 +35,8 @@ export default function SystemCapabilityFooterSignalsClient() {
   }, []);
 
   if (!stats) {
-    return <SystemCapabilityFooterSignalsFallback />;
+    return <SystemCapabilityFooterSignalsFallback locale={locale} />;
   }
 
-  return <SystemCapabilityFooterSignals stats={stats} />;
+  return <SystemCapabilityFooterSignals stats={stats} locale={locale} />;
 }
